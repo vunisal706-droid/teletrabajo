@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="App para reuniones telemáticas con orden del día y votaciones">
+    <link rel="manifest" href="manifest-teletrabajo.json">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📋</text></svg>">
+    <title>Teletrabajo Capitulaciones</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --coordinador: #8b5cf6;
+            --maestro: #06b6d4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .code-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .code-display .code {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .code-display p {
+            font-size: 14px;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+
+        .user-badge.coordinador {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--coordinador);
+            border: 2px solid var(--coordinador);
+        }
+
+        .user-badge.maestro {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--maestro);
+            border: 2px solid var(--maestro);
+        }
+
+        .punto-item {
+            background: var(--background);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .punto-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .punto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .punto-numero {
+            background: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .punto-titulo {
+            font-weight: 600;
+            font-size: 16px;
+            flex-grow: 1;
+            padding: 0 15px;
+        }
+
+        .aportacion {
+            background: white;
+            border-left: 4px solid var(--secondary);
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .aportacion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .aportacion-autor {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .aportacion-hora {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .aportacion-texto {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text);
+        }
+
+        .votacion-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .votacion-opciones {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .voto-btn {
+            padding: 15px;
+            border: 2px solid white;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .voto-btn:hover,
+        .voto-btn.selected {
+            background: white;
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .resultados-votacion {
+            background: white;
+            color: var(--text);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .resultado-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: var(--background);
+            border-radius: 6px;
+        }
+
+        .resultado-barra {
+            flex-grow: 1;
+            height: 24px;
+            background: var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+
+        .resultado-progreso {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: rgba(37, 99, 235, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state .emoji {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .session-info {
+            background: var(--background);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-code {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .status-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+
+            .code-display .code {
+                font-size: 36px;
+                letter-spacing: 6px;
+            }
+
+            .votacion-opciones {
+                grid-template-columns: 1fr;
+            }
+
+            .status-indicator {
+                top: auto;
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Teletrabajo Capitulaciones</h1>
+        <div class="subtitle">CEIP Capitulaciones de Santa Fe</div>
+    </div>
+
+    <div class="status-indicator" id="statusIndicator" style="display: none;">
+        Conectado en tiempo real
+    </div>
+
+    <!-- Pantalla de inicio -->
+    <div id="screenInicio" class="screen active">
+        <div class="container">
+            <div class="card">
+                <h2>Bienvenido</h2>
+                <div class="form-group">
+                    <label>Tu nombre:</label>
+                    <input type="text" id="inputNombre" placeholder="Ej: María García">
+                </div>
+                <div class="form-group">
+                    <label>Tu rol:</label>
+                    <select id="selectRol">
+                        <option value="maestro">Maestro/a</option>
+                        <option value="coordinador">Coordinador/a</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Nueva Reunión</h2>
+                <p style="margin-bottom: 15px; color: var(--text-light);">Crea una nueva sesión y comparte el código con los participantes</p>
+                <button class="btn btn-primary" onclick="crearSesion()">
+                    ➕ Crear Nueva Reunión
+                </button>
+            </div>
+
+            <div class="card">
+                <h2>Unirse a Reunión</h2>
+                <div class="form-group">
+                    <label>Código de reunión:</label>
+                    <input type="text" id="inputCodigo" placeholder="Ej: ABC123" maxlength="6" style="text-transform: uppercase;">
+                </div>
+                <button class="btn btn-secondary" onclick="unirseASesion()">
+                    🚀 Unirse a Reunión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de configuración (solo coordinador) -->
+    <div id="screenConfig" class="screen">
+        <div class="container">
+            <div class="code-display">
+                <div>Código de tu reunión:</div>
+                <div class="code" id="codigoSesion">------</div>
+                <p>Comparte este código con los participantes</p>
+            </div>
+
+            <div class="card">
+                <h2>Orden del Día</h2>
+                <div class="info-box">
+                    ℹ️ Define los puntos que se tratarán en la reunión
+                </div>
+                <div id="listaPuntos"></div>
+                <div class="form-group">
+                    <label>Nuevo punto del orden del día:</label>
+                    <input type="text" id="inputNuevoPunto" placeholder="Ej: Revisión de objetivos del trimestre">
+                </div>
+                <button class="btn btn-secondary" onclick="agregarPunto()">
+                    ➕ Agregar Punto
+                </button>
+            </div>
+
+            <button class="btn btn-primary" onclick="iniciarReunion()" style="margin-top: 20px;">
+                🚀 Iniciar Reunión
+            </button>
+        </div>
+    </div>
+
+    <!-- Pantalla de reunión -->
+    <div id="screenReunion" class="screen">
+        <div class="container">
+            <div class="session-info">
+                <div>
+                    <strong>Código:</strong> <span class="session-code" id="codigoActual"></span>
+                </div>
+                <button class="btn btn-danger btn-small" onclick="salirDeReunion()">
+                    🚪 Salir
+                </button>
+            </div>
+
+            <div class="card">
+                <h2>Participantes <span id="numParticipantes"></span></h2>
+                <div id="listaParticipantes"></div>
+            </div>
+
+            <div id="contenidoPuntos"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove, get, update, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDchcaSp2M8uRZxMbMG7sop_ypkZP7w8CI",
+            authDomain: "teletrabajo-capitulaciones.firebaseapp.com",
+            databaseURL: "https://teletrabajo-capitulaciones-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "teletrabajo-capitulaciones",
+            storageBucket: "teletrabajo-capitulaciones.firebasestorage.app",
+            messagingSenderId: "227282426388",
+            appId: "1:227282426388:web:2e1e4a600d069f60b8a501"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Variables globales
+        let sesionActual = null;
+        let usuarioActual = null;
+
+        // Exponer funciones al scope global
+        window.database = database;
+        window.ref = ref;
+        window.set = set;
+        window.push = push;
+        window.onValue = onValue;
+        window.remove = remove;
+        window.get = get;
+        window.update = update;
+        window.onChildAdded = onChildAdded;
+        window.onChildChanged = onChildChanged;
+        
+        window.sesionActual = null;
+        window.usuarioActual = null;
+
+        // Mostrar indicador de conexión
+        document.getElementById('statusIndicator').style.display = 'flex';
+
+        // Cambiar pantalla
+        window.cambiarPantalla = function(pantalla) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(pantalla).classList.add('active');
+        };
+
+        // Generar código aleatorio
+        window.generarCodigo = function() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let codigo = '';
+            for (let i = 0; i < 6; i++) {
+                codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return codigo;
+        };
+
+        // Crear sesión
+        window.crearSesion = function() {
+            const nombre = document.getElementById('inputNombre').value.trim();
+            const rol = document.getElementById('selectRol').value;
+
+            if (!nombre) {
+                alert('Por favor, introduce tu nombre');
+                return;
+            }
+
+            const codigo = generarCodigo();
+            window.sesionActual = codigo;
+            window.usuarioActual = { nombre, rol };
+
+            const sesionRef = ref(database, 'sesiones/' + codigo);
+            set(sesionRef, {
+                codigo: codigo,
+                creada: new Date().toISOString(),
+                estado: 'config',
+                coordinador: nombre
+            });
+
+            document.getElementById('codigoSesion').textContent = codigo;
+            cambiarPantalla('screenConfig');
+        };
+
+        // Unirse a sesión
+        window.unirseASesion = async function() {
+            const nombre = document.getElementById('inputNombre').value.trim();
+            const rol = document.getElementById('selectRol').value;
+            const codigo = document.getElementById('inputCodigo').value.trim().toUpperCase();
+
+            if (!nombre) {
+                alert('Por favor, introduce tu nombre');
+                return;
+            }
+
+            if (!codigo || codigo.length !== 6) {
+                alert('Por favor, introduce un código válido de 6 caracteres');
+                return;
+            }
+
+            window.sesionActual = codigo;
+            window.usuarioActual = { nombre, rol };
+
+            const sesionRef = ref(database, 'sesiones/' + codigo);
+            const snapshot = await get(sesionRef);
+
+            if (!snapshot.exists()) {
+                alert('No existe una reunión con ese código');
+                return;
+            }
+
+            const sesionData = snapshot.val();
+            if (sesionData.estado === 'config') {
+                alert('La reunión aún no ha iniciado. Espera a que el coordinador la inicie.');
+                return;
+            }
+
+            // Registrar participante
+            const participanteRef = ref(database, `sesiones/${codigo}/participantes/${nombre}`);
+            set(participanteRef, {
+                nombre: nombre,
+                rol: rol,
+                timestamp: Date.now()
+            });
+
+            document.getElementById('codigoActual').textContent = codigo;
+            cargarReunion();
+            cambiarPantalla('screenReunion');
+        };
+
+        // Agregar punto del orden del día
+        window.agregarPunto = function() {
+            const texto = document.getElementById('inputNuevoPunto').value.trim();
+            if (!texto) {
+                alert('Escribe el punto del orden del día');
+                return;
+            }
+
+            const puntosRef = ref(database, `sesiones/${window.sesionActual}/puntos`);
+            const nuevoPuntoRef = push(puntosRef);
+            
+            set(nuevoPuntoRef, {
+                texto: texto,
+                orden: Date.now()
+            });
+
+            document.getElementById('inputNuevoPunto').value = '';
+        };
+
+        // Eliminar punto
+        window.eliminarPunto = function(puntoId) {
+            const puntoRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}`);
+            remove(puntoRef);
+        };
+
+        // Iniciar reunión
+        window.iniciarReunion = async function() {
+            const sesionRef = ref(database, `sesiones/${window.sesionActual}`);
+            update(sesionRef, { estado: 'activa' });
+
+            // Registrar coordinador como participante
+            const participanteRef = ref(database, `sesiones/${window.sesionActual}/participantes/${window.usuarioActual.nombre}`);
+            set(participanteRef, {
+                nombre: window.usuarioActual.nombre,
+                rol: window.usuarioActual.rol,
+                timestamp: Date.now()
+            });
+
+            document.getElementById('codigoActual').textContent = window.sesionActual;
+            cargarReunion();
+            cambiarPantalla('screenReunion');
+        };
+
+        // Cargar reunión
+        window.cargarReunion = function() {
+            cargarParticipantes();
+            cargarPuntos();
+
+            // Escuchar cambios en tiempo real
+            const participantesRef = ref(database, `sesiones/${window.sesionActual}/participantes`);
+            onValue(participantesRef, () => {
+                cargarParticipantes();
+            });
+
+            const puntosRef = ref(database, `sesiones/${window.sesionActual}/puntos`);
+            onValue(puntosRef, () => {
+                cargarPuntos();
+            });
+        };
+
+        // Cargar participantes
+        window.cargarParticipantes = async function() {
+            const lista = document.getElementById('listaParticipantes');
+            lista.innerHTML = '';
+
+            const participantesRef = ref(database, `sesiones/${window.sesionActual}/participantes`);
+            const snapshot = await get(participantesRef);
+
+            if (!snapshot.exists()) {
+                document.getElementById('numParticipantes').textContent = '(0)';
+                return;
+            }
+
+            const participantes = snapshot.val();
+            const participantesArray = Object.values(participantes);
+
+            participantesArray.forEach(p => {
+                const badge = document.createElement('span');
+                badge.className = `user-badge ${p.rol}`;
+                badge.innerHTML = `${p.rol === 'coordinador' ? '👑' : '👤'} ${p.nombre}`;
+                lista.appendChild(badge);
+            });
+
+            document.getElementById('numParticipantes').textContent = `(${participantesArray.length})`;
+        };
+
+        // Cargar puntos del orden del día
+        window.cargarPuntos = async function() {
+            const contenedor = document.getElementById('contenidoPuntos');
+            contenedor.innerHTML = '';
+
+            const puntosRef = ref(database, `sesiones/${window.sesionActual}/puntos`);
+            const snapshot = await get(puntosRef);
+
+            if (!snapshot.exists()) {
+                contenedor.innerHTML = '<div class="empty-state"><div class="emoji">📋</div><p>No hay puntos del orden del día</p></div>';
+                return;
+            }
+
+            const puntos = snapshot.val();
+            const puntosArray = Object.entries(puntos).map(([id, data]) => ({ id, ...data }));
+            puntosArray.sort((a, b) => a.orden - b.orden);
+
+            puntosArray.forEach((punto, index) => {
+                const card = crearPuntoCard(punto, index + 1);
+                contenedor.appendChild(card);
+            });
+        };
+
+        // Crear card de punto
+        window.crearPuntoCard = function(punto, numero) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="punto-header">
+                    <div class="punto-numero">${numero}</div>
+                    <div class="punto-titulo">${punto.texto}</div>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <strong style="display: block; margin-bottom: 10px;">💬 Aportaciones:</strong>
+                    <div id="aportaciones_${punto.id}"></div>
+                    <textarea id="input_${punto.id}" placeholder="Escribe tu aportación..." style="margin-top: 10px;"></textarea>
+                    <button class="btn btn-secondary" onclick="agregarAportacion('${punto.id}')" style="margin-top: 10px;">
+                        📝 Enviar Aportación
+                    </button>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                    <strong style="display: block; margin-bottom: 10px;">🗳️ Votación:</strong>
+                    ${window.usuarioActual.rol === 'coordinador' ? `
+                        <div class="btn-group">
+                            <button class="btn btn-outline btn-small" onclick="crearVotacion('${punto.id}', false)">
+                                Votación Anónima
+                            </button>
+                            <button class="btn btn-outline btn-small" onclick="crearVotacion('${punto.id}', true)">
+                                Votación con Nombres
+                            </button>
+                        </div>
+                    ` : ''}
+                    <div id="votacion_${punto.id}"></div>
+                </div>
+            `;
+
+            // Cargar aportaciones en tiempo real
+            const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/puntos/${punto.id}/aportaciones`);
+            onValue(aportacionesRef, () => {
+                cargarAportaciones(punto.id);
+            });
+
+            // Cargar votación en tiempo real
+            const votacionRef = ref(database, `sesiones/${window.sesionActual}/puntos/${punto.id}/votacion`);
+            onValue(votacionRef, () => {
+                cargarVotacion(punto.id);
+            });
+
+            return card;
+        };
+
+        // Agregar aportación
+        window.agregarAportacion = function(puntoId) {
+            const input = document.getElementById('input_' + puntoId);
+            const texto = input.value.trim();
+
+            if (!texto) {
+                alert('Escribe una aportación');
+                return;
+            }
+
+            const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}/aportaciones`);
+            const nuevaAportacionRef = push(aportacionesRef);
+
+            set(nuevaAportacionRef, {
+                autor: window.usuarioActual.nombre,
+                rol: window.usuarioActual.rol,
+                texto: texto,
+                timestamp: Date.now()
+            });
+
+            input.value = '';
+        };
+
+        // Cargar aportaciones
+        window.cargarAportaciones = async function(puntoId) {
+            const contenedor = document.getElementById('aportaciones_' + puntoId);
+            if (!contenedor) return;
+
+            contenedor.innerHTML = '';
+
+            const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}/aportaciones`);
+            const snapshot = await get(aportacionesRef);
+
+            if (!snapshot.exists()) {
+                contenedor.innerHTML = '<div class="empty-state"><div class="emoji">💭</div><p>No hay aportaciones aún</p></div>';
+                return;
+            }
+
+            const aportaciones = snapshot.val();
+            const aportacionesArray = Object.values(aportaciones);
+            aportacionesArray.sort((a, b) => a.timestamp - b.timestamp);
+
+            aportacionesArray.forEach(aport => {
+                const div = document.createElement('div');
+                div.className = 'aportacion';
+                div.innerHTML = `
+                    <div class="aportacion-header">
+                        <span class="aportacion-autor">
+                            ${aport.rol === 'coordinador' ? '👑' : '👤'} ${aport.autor}
+                        </span>
+                        <span class="aportacion-hora">${new Date(aport.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div class="aportacion-texto">${aport.texto}</div>
+                `;
+                contenedor.appendChild(div);
+            });
+        };
+
+        // Crear votación
+        window.crearVotacion = function(puntoId, conNombres) {
+            if (window.usuarioActual.rol !== 'coordinador') return;
+
+            const votacionRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}/votacion`);
+            set(votacionRef, {
+                activa: true,
+                conNombres: conNombres
+            });
+        };
+
+        // Cargar votación
+        window.cargarVotacion = async function(puntoId) {
+            const contenedor = document.getElementById('votacion_' + puntoId);
+            if (!contenedor) return;
+
+            const votacionRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}/votacion`);
+            const snapshot = await get(votacionRef);
+
+            if (!snapshot.exists()) {
+                contenedor.innerHTML = '';
+                return;
+            }
+
+            const votacion = snapshot.val();
+            if (!votacion.activa) {
+                contenedor.innerHTML = '';
+                return;
+            }
+
+            const miVotoRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}/votacion/votos/${window.usuarioActual.nombre}`);
+            const miVotoSnapshot = await get(miVotoRef);
+            const miVoto = miVotoSnapshot.exists() ? miVotoSnapshot.val().voto : null;
+
+            contenedor.innerHTML = `
+                <div class="votacion-card">
+                    <strong style="display: block; margin-bottom: 10px;">
+                        ${votacion.conNombres ? '📢 Votación Pública' : '🤫 Votación Anónima'}
+                    </strong>
+                    <div class="votacion-opciones">
+                        <button class="voto-btn ${miVoto === 'si' ? 'selected' : ''}" onclick="votar('${puntoId}', 'si')">
+                            ✅ Sí
+                        </button>
+                        <button class="voto-btn ${miVoto === 'no' ? 'selected' : ''}" onclick="votar('${puntoId}', 'no')">
+                            ❌ No
+                        </button>
+                        <button class="voto-btn ${miVoto === 'abstencion' ? 'selected' : ''}" onclick="votar('${puntoId}', 'abstencion')">
+                            ⚪ Abstención
+                        </button>
+                    </div>
+                    <div id="resultados_${puntoId}"></div>
+                </div>
+            `;
+
+            cargarResultadosVotacion(puntoId, votacion.conNombres);
+
+            // Escuchar cambios en tiempo real
+            const votosRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}/votacion/votos`);
+            onValue(votosRef, () => {
+                cargarResultadosVotacion(puntoId, votacion.conNombres);
+            });
+        };
+
+        // Votar
+        window.votar = function(puntoId, voto) {
+            const votoRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}/votacion/votos/${window.usuarioActual.nombre}`);
+            set(votoRef, {
+                voto: voto,
+                nombre: window.usuarioActual.nombre,
+                timestamp: Date.now()
+            });
+        };
+
+        // Cargar resultados de votación
+        window.cargarResultadosVotacion = async function(puntoId, conNombres) {
+            const contenedor = document.getElementById('resultados_' + puntoId);
+            if (!contenedor) return;
+
+            const votosRef = ref(database, `sesiones/${window.sesionActual}/puntos/${puntoId}/votacion/votos`);
+            const snapshot = await get(votosRef);
+
+            const votos = { si: [], no: [], abstencion: [] };
+            let total = 0;
+
+            if (snapshot.exists()) {
+                const votosData = snapshot.val();
+                Object.values(votosData).forEach(v => {
+                    total++;
+                    votos[v.voto].push(v.nombre);
+                });
+            }
+
+            contenedor.innerHTML = `
+                <div class="resultados-votacion">
+                    <strong style="display: block; margin-bottom: 15px;">📊 Resultados (${total} votos):</strong>
+                    ${['si', 'no', 'abstencion'].map(tipo => {
+                        const count = votos[tipo].length;
+                        const porcentaje = total > 0 ? Math.round((count / total) * 100) : 0;
+                        const emoji = tipo === 'si' ? '✅' : tipo === 'no' ? '❌' : '⚪';
+                        const label = tipo === 'si' ? 'Sí' : tipo === 'no' ? 'No' : 'Abstención';
+                        
+                        return `
+                            <div class="resultado-item">
+                                <span style="font-weight: 600; min-width: 100px;">${emoji} ${label}</span>
+                                <div class="resultado-barra">
+                                    <div class="resultado-progreso" style="width: ${porcentaje}%">
+                                        ${porcentaje > 0 ? porcentaje + '%' : ''}
+                                    </div>
+                                </div>
+                                <span style="font-weight: 700; min-width: 40px; text-align: right;">${count}</span>
+                            </div>
+                            ${conNombres && count > 0 ? `
+                                <div style="font-size: 12px; color: var(--text-light); margin-left: 110px; margin-bottom: 10px;">
+                                    ${votos[tipo].join(', ')}
+                                </div>
+                            ` : ''}
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        };
+
+        // Salir de reunión
+        window.salirDeReunion = function() {
+            if (confirm('¿Seguro que quieres salir de la reunión?')) {
+                location.reload();
+            }
+        };
+
+        // Cargar puntos en configuración con listener en tiempo real
+        const setupPuntosListener = () => {
+            if (!window.sesionActual) return;
+            
+            const puntosRef = ref(database, `sesiones/${window.sesionActual}/puntos`);
+            onValue(puntosRef, async (snapshot) => {
+                const lista = document.getElementById('listaPuntos');
+                if (!lista) return;
+                
+                lista.innerHTML = '';
+
+                if (!snapshot.exists()) return;
+
+                const puntos = snapshot.val();
+                const puntosArray = Object.entries(puntos).map(([id, data]) => ({ id, ...data }));
+                puntosArray.sort((a, b) => a.orden - b.orden);
+
+                puntosArray.forEach(punto => {
+                    const div = document.createElement('div');
+                    div.className = 'punto-item';
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 600;">${punto.texto}</span>
+                            <button class="btn btn-danger btn-small" onclick="eliminarPunto('${punto.id}')">❌</button>
+                        </div>
+                    `;
+                    lista.appendChild(div);
+                });
+            });
+        };
+
+        // Cuando se crea una sesión, configurar el listener
+        const originalCrearSesion = window.crearSesion;
+        window.crearSesion = function() {
+            originalCrearSesion();
+            setTimeout(setupPuntosListener, 500);
+        };
+    </script>
+
+    <script>
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw-teletrabajo.js');
+        }
+    </script>
+</body>
+</html>
