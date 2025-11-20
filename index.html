@@ -660,7 +660,7 @@
             <div class="card">
                 <h2>Seleccionar Reunión</h2>
                 <div class="form-group">
-                    <label>Curso / Ciclo / Equipo:</label>
+                    <label>Curso / Ciclo / Equipo / Órgano Colegiado:</label>
                     <select id="selectReunion">
                         <option value="">-- Selecciona --</option>
                         <optgroup label="🎨 Educación Infantil">
@@ -685,7 +685,11 @@
                         <optgroup label="👥 Equipos y Aulas">
                             <option value="orientacion">Equipo de Orientación</option>
                             <option value="aula-tea">Aula TEA</option>
+                        </optgroup>
+                        <optgroup label="🏛️ Órganos Colegiados">
                             <option value="claustro">Claustro</option>
+                            <option value="etcp">ETCP (Equipo Técnico de Coordinación Pedagógica)</option>
+                            <option value="consejo-escolar">Consejo Escolar</option>
                         </optgroup>
                     </select>
                 </div>
@@ -797,6 +801,7 @@
         let sesionActual = null;
         let usuarioActual = null;
         let fechaActual = null;
+        let puntosListeners = {}; // Almacenar referencias a los listeners para evitar duplicación
 
         // Exponer funciones al scope global
         window.database = database;
@@ -834,7 +839,9 @@
             'tercer-ciclo': 'Tercer Ciclo Primaria',
             'orientacion': 'Equipo de Orientación',
             'aula-tea': 'Aula TEA',
-            'claustro': 'Claustro'
+            'claustro': 'Claustro',
+            'etcp': 'ETCP (Equipo Técnico de Coordinación Pedagógica)',
+            'consejo-escolar': 'Consejo Escolar'
         };
 
         // Formatear fecha
@@ -870,7 +877,7 @@
             }
 
             if (!idReunion) {
-                alert('Por favor, selecciona un curso/ciclo/equipo');
+                alert('Por favor, selecciona un curso/ciclo/equipo/órgano');
                 return;
             }
 
@@ -898,48 +905,31 @@
                 const confirmacion = confirm(
                     `Ya existe una reunión de ${getNombreReunion(idReunion, fecha)} creada el ${new Date(sesionData.creada).toLocaleString('es-ES')}.\n\n` +
                     `¿Qué quieres hacer?\n\n` +
-                    `Aceptar: Volver a entrar a la reunión existente\n` +
-                    `Cancelar: Crear una nueva reunión (se borrará la anterior)`
+                    `OK = Continuar editando esta reunión\n` +
+                    `Cancelar = Volver atrás`
                 );
-
-                if (confirmacion) {
-                    // Volver a la reunión existente
-                    // Registrar como participante
-                    const participanteRef = ref(database, `sesiones/${idReunion}/${fecha}/participantes/${nombre}`);
-                    set(participanteRef, {
-                        nombre: nombre,
-                        rol: rol,
-                        timestamp: Date.now()
-                    });
-
-                    // Verificar si la reunión está iniciada
-                    if (sesionData.puntos && Object.keys(sesionData.puntos).length > 0) {
-                        // Ya hay puntos, ir directamente a la reunión
-                        document.getElementById('nombreActual').textContent = getNombreReunion(idReunion, fecha);
-                        cargarReunion();
-                        cambiarPantalla('screenReunion');
-                    } else {
-                        // No hay puntos, ir a configuración
-                        document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
-                        cambiarPantalla('screenConfig');
-                    }
+                
+                if (!confirmacion) {
                     return;
                 }
-                // Si cancela, continúa para crear nueva (borrando la anterior)
+                
+                // Configurar y mostrar pantalla de configuración
+                document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
+                setupPuntosListener();
+                cambiarPantalla('screenConfig');
+            } else {
+                // Crear nueva reunión
+                await set(sesionRef, {
+                    creada: Date.now(),
+                    estado: 'configurando',
+                    fecha: fecha,
+                    nombre: getNombreReunion(idReunion, fecha)
+                });
+                
+                document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
+                setupPuntosListener();
+                cambiarPantalla('screenConfig');
             }
-            
-            // Crear reunión nueva
-            set(sesionRef, {
-                id: idReunion,
-                fecha: fecha,
-                nombre: getNombreReunion(idReunion, fecha),
-                creada: new Date().toISOString(),
-                estado: 'activa',
-                coordinador: nombre
-            });
-
-            document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
-            cambiarPantalla('screenConfig');
         };
 
         // Unirse a sesión
@@ -955,12 +945,12 @@
             }
 
             if (!idReunion) {
-                alert('Por favor, selecciona un curso/ciclo/equipo');
+                alert('Por favor, selecciona un curso/ciclo/equipo/órgano');
                 return;
             }
 
             if (!fecha) {
-                alert('Por favor, selecciona una fecha');
+                alert('Por favor, selecciona una fecha para la reunión');
                 return;
             }
 
@@ -968,31 +958,29 @@
             window.fechaActual = fecha;
             window.usuarioActual = { nombre, rol };
 
+            // Verificar si existe la reunión
             const sesionRef = ref(database, `sesiones/${idReunion}/${fecha}`);
             const snapshot = await get(sesionRef);
 
             if (!snapshot.exists()) {
-                if (rol === 'coordinador') {
-                    alert('No existe una reunión de ' + getNombreReunion(idReunion, fecha) + '. Usa "Crear Reunión" para crearla.');
-                } else {
-                    alert('No existe una reunión de ' + getNombreReunion(idReunion, fecha) + '. El coordinador debe crearla primero.');
-                }
+                alert('La reunión no existe. El coordinador debe crearla primero.');
                 return;
             }
 
             const sesionData = snapshot.val();
 
-            // Registrar participante
+            // Registrar como participante
             const participanteRef = ref(database, `sesiones/${idReunion}/${fecha}/participantes/${nombre}`);
-            set(participanteRef, {
+            await set(participanteRef, {
                 nombre: nombre,
                 rol: rol,
                 timestamp: Date.now()
             });
 
-            // Si es coordinador y la reunión no tiene puntos aún, llevarlo a configuración
-            if (rol === 'coordinador' && (!sesionData.puntos || Object.keys(sesionData.puntos).length === 0)) {
+            // Si la reunión aún está en configuración y eres coordinador, ir a configuración
+            if (sesionData.estado === 'configurando' && rol === 'coordinador') {
                 document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
+                setupPuntosListener();
                 cambiarPantalla('screenConfig');
                 return;
             }
@@ -1046,27 +1034,72 @@
             cambiarPantalla('screenReunion');
         };
 
-        // Cargar reunión
+        // Cargar reunión - CORREGIDO: Eliminado el listener duplicado de puntos
         window.cargarReunion = function() {
             cargarParticipantes();
-            cargarPuntos();
-            cargarVideollamada(); // Cargar enlace de videollamada
+            cargarPuntos(); // Solo carga inicial, sin listener global
+            cargarVideollamada();
 
-            // Escuchar cambios en tiempo real
+            // Escuchar cambios en participantes
             const participantesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
             onValue(participantesRef, () => {
                 cargarParticipantes();
             });
 
-            const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
-            onValue(puntosRef, () => {
-                cargarPuntos();
-            });
-
-            // Escuchar cambios en videollamada en tiempo real
+            // Escuchar cambios en videollamada
             const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             onValue(videollamadaRef, () => {
                 cargarVideollamada();
+            });
+
+            // NUEVO: Listener para nuevos puntos y eliminaciones
+            const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
+            onValue(puntosRef, (snapshot) => {
+                // Solo actualizar la lista de puntos sin recrear todos los listeners
+                actualizarListaPuntos(snapshot);
+            });
+        };
+
+        // NUEVA función para actualizar lista de puntos sin recrear listeners
+        window.actualizarListaPuntos = function(snapshot) {
+            const contenedor = document.getElementById('contenidoPuntos');
+            
+            if (!snapshot.exists()) {
+                contenedor.innerHTML = '<div class="empty-state"><div class="emoji">📋</div><p>No hay puntos del orden del día</p></div>';
+                return;
+            }
+
+            const puntos = snapshot.val();
+            const puntosArray = Object.entries(puntos).map(([id, data]) => ({ id, ...data }));
+            puntosArray.sort((a, b) => a.orden - b.orden);
+
+            // Obtener IDs actuales en el DOM
+            const puntosActualesDOM = Array.from(contenedor.querySelectorAll('.card[data-punto-id]'))
+                .map(el => el.getAttribute('data-punto-id'));
+            
+            const puntosNuevosIDs = puntosArray.map(p => p.id);
+
+            // Eliminar puntos que ya no existen
+            puntosActualesDOM.forEach(id => {
+                if (!puntosNuevosIDs.includes(id)) {
+                    const elemento = contenedor.querySelector(`[data-punto-id="${id}"]`);
+                    if (elemento) elemento.remove();
+                }
+            });
+
+            // Añadir nuevos puntos o reordenar
+            puntosArray.forEach((punto, index) => {
+                let card = contenedor.querySelector(`[data-punto-id="${punto.id}"]`);
+                
+                if (!card) {
+                    // Crear nuevo punto
+                    card = crearPuntoCard(punto, index + 1);
+                    contenedor.appendChild(card);
+                } else {
+                    // Actualizar número si es necesario
+                    const numeroEl = card.querySelector('.punto-numero');
+                    if (numeroEl) numeroEl.textContent = index + 1;
+                }
             });
         };
 
@@ -1096,7 +1129,7 @@
             document.getElementById('numParticipantes').textContent = `(${participantesArray.length})`;
         };
 
-        // Cargar puntos del orden del día
+        // Cargar puntos del orden del día - Solo carga inicial
         window.cargarPuntos = async function() {
             const contenedor = document.getElementById('contenidoPuntos');
             contenedor.innerHTML = '';
@@ -1119,10 +1152,11 @@
             });
         };
 
-        // Crear card de punto
+        // Crear card de punto - MODIFICADO para incluir data-punto-id
         window.crearPuntoCard = function(punto, numero) {
             const card = document.createElement('div');
             card.className = 'card';
+            card.setAttribute('data-punto-id', punto.id); // Identificador único
             card.innerHTML = `
                 <div class="punto-header">
                     <div class="punto-numero">${numero}</div>
@@ -1171,32 +1205,35 @@
                 </div>
             `;
 
-            // Cargar aportaciones inmediatamente
-            setTimeout(() => cargarAportaciones(punto.id), 100);
-
-            // Listener en tiempo real para aportaciones
-            const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/aportaciones`);
-            onValue(aportacionesRef, (snapshot) => {
+            // Cargar contenido inicial
+            setTimeout(() => {
                 cargarAportaciones(punto.id);
-            });
-
-            // Cargar votación inmediatamente
-            setTimeout(() => cargarVotacion(punto.id), 100);
-
-            // Listener en tiempo real para votación
-            const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/votacion`);
-            onValue(votacionRef, (snapshot) => {
                 cargarVotacion(punto.id);
-            });
-
-            // Cargar documentos inmediatamente
-            setTimeout(() => cargarDocumentos(punto.id), 100);
-
-            // Listener en tiempo real para documentos
-            const documentosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/documentos`);
-            onValue(documentosRef, (snapshot) => {
                 cargarDocumentos(punto.id);
-            });
+            }, 100);
+
+            // Listeners en tiempo real - SOLO SI NO EXISTEN YA
+            if (!puntosListeners[punto.id]) {
+                puntosListeners[punto.id] = {};
+                
+                // Listener para aportaciones
+                const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/aportaciones`);
+                puntosListeners[punto.id].aportaciones = onValue(aportacionesRef, () => {
+                    cargarAportaciones(punto.id);
+                });
+
+                // Listener para votación
+                const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/votacion`);
+                puntosListeners[punto.id].votacion = onValue(votacionRef, () => {
+                    cargarVotacion(punto.id);
+                });
+
+                // Listener para documentos
+                const documentosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/documentos`);
+                puntosListeners[punto.id].documentos = onValue(documentosRef, () => {
+                    cargarDocumentos(punto.id);
+                });
+            }
 
             return card;
         };
@@ -1222,9 +1259,6 @@
             });
 
             input.value = '';
-            
-            // Forzar recarga inmediata
-            setTimeout(() => cargarAportaciones(puntoId), 100);
         };
 
         // Cargar aportaciones (estilo WhatsApp)
@@ -1308,11 +1342,9 @@
                 timestamp: Date.now()
             });
 
+            // Limpiar campos
             nombreInput.value = '';
             linkInput.value = '';
-            
-            // Forzar recarga inmediata
-            setTimeout(() => cargarDocumentos(puntoId), 100);
         };
 
         // Cargar documentos
@@ -1331,41 +1363,31 @@
                 }
 
                 const documentos = snapshot.val();
-                const documentosArray = Object.entries(documentos).map(([id, doc]) => ({ id, ...doc }));
+                const documentosArray = Object.values(documentos);
                 documentosArray.sort((a, b) => a.timestamp - b.timestamp);
 
-                contenedor.innerHTML = '<div style="border-top: 2px solid var(--border); padding-top: 15px;"><strong style="display: block; margin-bottom: 10px;">📄 Documentos adjuntos:</strong></div>';
+                contenedor.innerHTML = '<strong style="display: block; margin-bottom: 10px;">📎 Documentos adjuntos:</strong>';
                 
                 documentosArray.forEach(doc => {
-                    const docDiv = document.createElement('div');
-                    docDiv.className = 'documento-item';
-                    docDiv.style.cssText = 'background: var(--background); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;';
-                    docDiv.innerHTML = `
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: var(--primary); margin-bottom: 4px;">
-                                📎 ${doc.nombre}
+                    const div = document.createElement('div');
+                    div.style.cssText = 'background: var(--background); padding: 12px; border-radius: 8px; margin-bottom: 8px;';
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
+                            <div style="flex: 1;">
+                                <strong style="display: block; color: var(--primary); margin-bottom: 4px;">${doc.nombre}</strong>
+                                <a href="${doc.link}" target="_blank" style="color: var(--secondary); font-size: 13px; word-break: break-all;">🔗 Abrir enlace</a>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">
+                                    Subido por ${doc.autor} • ${new Date(doc.timestamp).toLocaleString('es-ES', { 
+                                        day: '2-digit', 
+                                        month: '2-digit', 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                    })}
+                                </div>
                             </div>
-                            <div style="font-size: 12px; color: var(--text-light);">
-                                Subido por ${doc.autor} - ${new Date(doc.timestamp).toLocaleString('es-ES', { 
-                                    day: '2-digit', 
-                                    month: '2-digit', 
-                                    hour: '2-digit', 
-                                    minute: '2-digit' 
-                                })}
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-small btn-primary" onclick="window.open('${doc.link}', '_blank')" title="Abrir documento">
-                                👁️ Ver
-                            </button>
-                            ${window.usuarioActual.rol === 'coordinador' ? `
-                                <button class="btn btn-small btn-danger" onclick="eliminarDocumento('${puntoId}', '${doc.id}')" title="Eliminar documento">
-                                    🗑️
-                                </button>
-                            ` : ''}
                         </div>
                     `;
-                    contenedor.appendChild(docDiv);
+                    contenedor.appendChild(div);
                 });
                 
             } catch (error) {
@@ -1373,201 +1395,15 @@
             }
         };
 
-        // Eliminar documento
-        window.eliminarDocumento = async function(puntoId, documentoId) {
-            if (window.usuarioActual.rol !== 'coordinador') return;
-            
-            if (!confirm('¿Seguro que quieres eliminar este documento?')) return;
-
-            const documentoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/documentos/${documentoId}`);
-            await remove(documentoRef);
-
-            // Forzar recarga inmediata
-            setTimeout(() => cargarDocumentos(puntoId), 100);
-        };
-
-        // ===== GESTIÓN DE VIDEOLLAMADA =====
-        
-        // Mostrar/ocultar formulario de videollamada
-        window.mostrarFormularioVideollamada = function() {
-            const formulario = document.getElementById('formularioVideollamada');
-            if (formulario) {
-                formulario.style.display = formulario.style.display === 'none' ? 'block' : 'none';
-            }
-        };
-
-        // Guardar enlace de videollamada
-        window.guardarVideollamada = async function() {
-            if (window.usuarioActual.rol !== 'coordinador') return;
-
-            const input = document.getElementById('inputVideollamada');
-            const enlace = input.value.trim();
-
-            if (!enlace) {
-                alert('Por favor introduce un enlace de videollamada');
-                return;
-            }
-
-            // Validar que es una URL
-            try {
-                new URL(enlace);
-            } catch {
-                alert('El enlace no es válido. Asegúrate de incluir https://');
-                return;
-            }
-
-            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
-            await set(videollamadaRef, {
-                enlace: enlace,
-                autor: window.usuarioActual.nombre,
-                timestamp: Date.now()
-            });
-
-            input.value = '';
-            mostrarFormularioVideollamada();
-            
-            // Forzar recarga inmediata
-            setTimeout(() => cargarVideollamada(), 100);
-        };
-
-        // Eliminar enlace de videollamada
-        window.eliminarVideollamada = async function() {
-            if (window.usuarioActual.rol !== 'coordinador') return;
-            
-            if (!confirm('¿Seguro que quieres eliminar el enlace de videollamada?')) return;
-
-            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
-            await remove(videollamadaRef);
-
-            // Forzar recarga inmediata
-            setTimeout(() => cargarVideollamada(), 100);
-        };
-
-        // Cargar enlace de videollamada
-        window.cargarVideollamada = async function() {
-            const bannerContainer = document.getElementById('videollamadaBanner');
-            const gestionContainer = document.getElementById('gestionVideollamada');
-            
-            if (!bannerContainer || !gestionContainer) return;
-
-            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
-            
-            try {
-                const snapshot = await get(videollamadaRef);
-
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    
-                    // Mostrar banner
-                    bannerContainer.innerHTML = `
-                        <div class="videollamada-banner">
-                            <div class="videollamada-banner-content">
-                                <div class="videollamada-icon">📹</div>
-                                <div class="videollamada-texto">
-                                    <strong>Videollamada activa</strong>
-                                    <small>Haz clic para unirte a la reunión virtual</small>
-                                </div>
-                            </div>
-                            <div class="videollamada-actions">
-                                <button class="btn-videollamada" onclick="window.open('${data.enlace}', '_blank')">
-                                    🎥 Unirse a la videollamada
-                                </button>
-                                ${window.usuarioActual.rol === 'coordinador' ? `
-                                    <button class="btn-videollamada-edit" onclick="mostrarFormularioVideollamada()" title="Editar enlace">
-                                        ✏️
-                                    </button>
-                                    <button class="btn-videollamada-edit" onclick="eliminarVideollamada()" title="Eliminar enlace">
-                                        🗑️
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-
-                    // Mostrar formulario de edición (oculto por defecto)
-                    if (window.usuarioActual.rol === 'coordinador') {
-                        gestionContainer.innerHTML = `
-                            <div id="formularioVideollamada" style="display: none; margin-bottom: 20px;">
-                                <div class="card">
-                                    <h3>✏️ Editar enlace de videollamada</h3>
-                                    <div class="form-group">
-                                        <label>Nuevo enlace (Google Meet, Zoom, etc.):</label>
-                                        <input type="url" id="inputVideollamada" placeholder="https://meet.google.com/xxx-xxxx-xxx" value="${data.enlace}">
-                                    </div>
-                                    <div class="btn-group">
-                                        <button class="btn btn-primary" onclick="guardarVideollamada()">
-                                            💾 Guardar cambios
-                                        </button>
-                                        <button class="btn btn-outline" onclick="mostrarFormularioVideollamada()">
-                                            ❌ Cancelar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                } else {
-                    // No hay videollamada
-                    bannerContainer.innerHTML = '';
-                    
-                    // Mostrar botón para añadir (solo coordinador)
-                    if (window.usuarioActual.rol === 'coordinador') {
-                        gestionContainer.innerHTML = `
-                            <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px dashed var(--primary);">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <div style="font-size: 32px;">📹</div>
-                                    <div style="flex: 1;">
-                                        <strong style="display: block; color: var(--primary); margin-bottom: 5px;">¿Necesitas videollamada?</strong>
-                                        <p style="margin: 0; color: var(--text-light); font-size: 14px;">Añade un enlace de Google Meet, Zoom o cualquier plataforma de videollamadas</p>
-                                    </div>
-                                    <button class="btn btn-primary" onclick="mostrarFormularioVideollamada()">
-                                        ➕ Añadir enlace
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="formularioVideollamada" style="display: none; margin-bottom: 20px;">
-                                <div class="card">
-                                    <h3>📹 Añadir enlace de videollamada</h3>
-                                    <div class="form-group">
-                                        <label>Enlace de la videollamada:</label>
-                                        <input type="url" id="inputVideollamada" placeholder="https://meet.google.com/xxx-xxxx-xxx">
-                                    </div>
-                                    <div class="info-box">
-                                        ℹ️ Puedes usar Google Meet, Zoom, Microsoft Teams o cualquier plataforma de videollamadas
-                                    </div>
-                                    <div class="btn-group">
-                                        <button class="btn btn-primary" onclick="guardarVideollamada()">
-                                            💾 Guardar enlace
-                                        </button>
-                                        <button class="btn btn-outline" onclick="mostrarFormularioVideollamada()">
-                                            ❌ Cancelar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        gestionContainer.innerHTML = '';
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error cargando videollamada:', error);
-            }
-        };
-
         // Crear votación
         window.crearVotacion = async function(puntoId, conNombres) {
-            if (window.usuarioActual.rol !== 'coordinador') return;
-
             const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
+            
             await set(votacionRef, {
                 activa: true,
-                conNombres: conNombres
+                conNombres: conNombres,
+                timestamp: Date.now()
             });
-
-            // Forzar recarga inmediata
-            setTimeout(() => cargarVotacion(puntoId), 200);
         };
 
         // Cargar votación
@@ -1580,50 +1416,80 @@
             try {
                 const snapshot = await get(votacionRef);
 
-                if (!snapshot.exists()) {
+                if (!snapshot.exists() || !snapshot.val().activa) {
                     contenedor.innerHTML = '';
                     return;
                 }
 
                 const votacion = snapshot.val();
-                if (!votacion.activa) {
-                    contenedor.innerHTML = '';
-                    return;
-                }
+                const votos = votacion.votos || {};
+                const miVoto = votos[window.usuarioActual.nombre];
 
-                // Obtener mi voto
-                const miVotoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion/votos/${window.usuarioActual.nombre}`);
-                const miVotoSnapshot = await get(miVotoRef);
-                const miVoto = miVotoSnapshot.exists() ? miVotoSnapshot.val().voto : null;
+                // Contar votos
+                const conteo = { si: 0, no: 0, abstencion: 0 };
+                Object.values(votos).forEach(v => {
+                    conteo[v.voto]++;
+                });
+                const total = Object.keys(votos).length;
 
                 contenedor.innerHTML = `
                     <div class="votacion-card">
-                        <strong style="display: block; margin-bottom: 10px;">
-                            ${votacion.conNombres ? '📢 Votación Pública' : '🤫 Votación Anónima'}
-                        </strong>
+                        <h3 style="margin-bottom: 10px;">${votacion.conNombres ? '🗳️ Votación Pública' : '🔒 Votación Anónima'}</h3>
+                        ${miVoto ? 
+                            `<p style="margin-bottom: 15px;">Has votado: <strong>${miVoto.voto === 'si' ? '✅ Sí' : miVoto.voto === 'no' ? '❌ No' : '⚪ Abstención'}</strong></p>` 
+                            : '<p style="margin-bottom: 15px;">Emite tu voto:</p>'}
                         <div class="votacion-opciones">
-                            <button class="voto-btn ${miVoto === 'si' ? 'selected' : ''}" onclick="votar('${puntoId}', 'si')">
+                            <button class="voto-btn ${miVoto && miVoto.voto === 'si' ? 'selected' : ''}" 
+                                onclick="votar('${puntoId}', 'si')" ${miVoto ? 'disabled' : ''}>
                                 ✅ Sí
                             </button>
-                            <button class="voto-btn ${miVoto === 'no' ? 'selected' : ''}" onclick="votar('${puntoId}', 'no')">
+                            <button class="voto-btn ${miVoto && miVoto.voto === 'no' ? 'selected' : ''}" 
+                                onclick="votar('${puntoId}', 'no')" ${miVoto ? 'disabled' : ''}>
                                 ❌ No
                             </button>
-                            <button class="voto-btn ${miVoto === 'abstencion' ? 'selected' : ''}" onclick="votar('${puntoId}', 'abstencion')">
+                            <button class="voto-btn ${miVoto && miVoto.voto === 'abstencion' ? 'selected' : ''}" 
+                                onclick="votar('${puntoId}', 'abstencion')" ${miVoto ? 'disabled' : ''}>
                                 ⚪ Abstención
                             </button>
                         </div>
-                        <div id="resultados_${puntoId}"></div>
+                        ${window.usuarioActual.rol === 'coordinador' ? `
+                            <button class="btn btn-danger btn-small" onclick="cerrarVotacion('${puntoId}')" style="margin-top: 10px; width: 100%;">
+                                🔐 Cerrar Votación
+                            </button>
+                        ` : ''}
+                        <div class="resultados-votacion">
+                            <strong style="display: block; margin-bottom: 10px;">Resultados (${total} votos):</strong>
+                            ${['si', 'no', 'abstencion'].map(tipo => {
+                                const count = conteo[tipo];
+                                const porcentaje = total > 0 ? Math.round((count / total) * 100) : 0;
+                                const label = tipo === 'si' ? '✅ Sí' : tipo === 'no' ? '❌ No' : '⚪ Abstención';
+                                
+                                let nombres = '';
+                                if (votacion.conNombres) {
+                                    const votantes = Object.entries(votos)
+                                        .filter(([_, v]) => v.voto === tipo)
+                                        .map(([nombre, _]) => nombre);
+                                    if (votantes.length > 0) {
+                                        nombres = `<div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">${votantes.join(', ')}</div>`;
+                                    }
+                                }
+                                
+                                return `
+                                    <div class="resultado-item">
+                                        <strong>${label}</strong>
+                                        <div class="resultado-barra">
+                                            <div class="resultado-progreso" style="width: ${porcentaje}%;">
+                                                ${porcentaje}%
+                                            </div>
+                                        </div>
+                                        <span>${count}</span>
+                                    </div>
+                                    ${nombres}
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
                 `;
-
-                // Cargar resultados inmediatamente
-                setTimeout(() => cargarResultadosVotacion(puntoId, votacion.conNombres), 100);
-
-                // Listener para votos en tiempo real
-                const votosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion/votos`);
-                onValue(votosRef, (snapshot) => {
-                    cargarResultadosVotacion(puntoId, votacion.conNombres);
-                });
                 
             } catch (error) {
                 console.error('Error cargando votación:', error);
@@ -1633,69 +1499,84 @@
         // Votar
         window.votar = async function(puntoId, voto) {
             const votoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion/votos/${window.usuarioActual.nombre}`);
+            
             await set(votoRef, {
-                voto: voto,
                 nombre: window.usuarioActual.nombre,
+                voto: voto,
                 timestamp: Date.now()
             });
-
-            // Forzar recarga inmediata
-            setTimeout(() => cargarVotacion(puntoId), 100);
         };
 
-        // Cargar resultados de votación
-        window.cargarResultadosVotacion = async function(puntoId, conNombres) {
-            const contenedor = document.getElementById('resultados_' + puntoId);
-            if (!contenedor) return;
-
-            const votosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion/votos`);
+        // Cerrar votación
+        window.cerrarVotacion = async function(puntoId) {
+            if (!confirm('¿Cerrar la votación? No se podrán añadir más votos.')) {
+                return;
+            }
             
-            try {
-                const snapshot = await get(votosRef);
+            const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
+            await update(votacionRef, { activa: false });
+        };
 
-                const votos = { si: [], no: [], abstencion: [] };
-                let total = 0;
+        // Gestión de videollamada
+        window.gestionarVideollamada = function() {
+            const enlace = prompt('Introduce el enlace de la videollamada (Google Meet, Zoom, etc.):\n\nDeja vacío para eliminar el enlace actual.');
+            
+            if (enlace === null) return; // Cancelado
+            
+            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+            
+            if (enlace.trim() === '') {
+                // Eliminar enlace
+                remove(videollamadaRef);
+            } else {
+                // Guardar enlace
+                set(videollamadaRef, {
+                    enlace: enlace.trim(),
+                    timestamp: Date.now()
+                });
+            }
+        };
 
-                if (snapshot.exists()) {
-                    const votosData = snapshot.val();
-                    Object.values(votosData).forEach(v => {
-                        if (v && v.voto) {
-                            total++;
-                            votos[v.voto].push(v.nombre);
-                        }
-                    });
-                }
-
-                contenedor.innerHTML = `
-                    <div class="resultados-votacion">
-                        <strong style="display: block; margin-bottom: 15px;">📊 Resultados (${total} voto${total !== 1 ? 's' : ''}):</strong>
-                        ${['si', 'no', 'abstencion'].map(tipo => {
-                            const count = votos[tipo].length;
-                            const porcentaje = total > 0 ? Math.round((count / total) * 100) : 0;
-                            const emoji = tipo === 'si' ? '✅' : tipo === 'no' ? '❌' : '⚪';
-                            const label = tipo === 'si' ? 'Sí' : tipo === 'no' ? 'No' : 'Abstención';
-                            
-                            return `
-                                <div class="resultado-item">
-                                    <span style="font-weight: 600; min-width: 100px;">${emoji} ${label}</span>
-                                    <div class="resultado-barra">
-                                        <div class="resultado-progreso" style="width: ${porcentaje}%">
-                                            ${porcentaje > 0 ? porcentaje + '%' : ''}
-                                        </div>
-                                    </div>
-                                    <span style="font-weight: 700; min-width: 40px; text-align: right;">${count}</span>
-                                </div>
-                                ${conNombres && count > 0 ? `
-                                    <div style="font-size: 12px; color: var(--text-light); margin-left: 110px; margin-bottom: 10px;">
-                                        ${votos[tipo].join(', ')}
-                                    </div>
-                                ` : ''}
-                            `;
-                        }).join('')}
+        // Cargar videollamada
+        window.cargarVideollamada = async function() {
+            const bannerContainer = document.getElementById('videollamadaBanner');
+            const gestionContainer = document.getElementById('gestionVideollamada');
+            
+            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+            const snapshot = await get(videollamadaRef);
+            
+            // Botón de gestión para coordinador
+            if (window.usuarioActual.rol === 'coordinador') {
+                gestionContainer.innerHTML = `
+                    <button class="btn btn-outline btn-small" onclick="gestionarVideollamada()" style="margin-bottom: 20px;">
+                        🎥 ${snapshot.exists() ? 'Editar' : 'Añadir'} Enlace de Videollamada
+                    </button>
+                `;
+            } else {
+                gestionContainer.innerHTML = '';
+            }
+            
+            // Banner de videollamada
+            if (snapshot.exists()) {
+                const videollamada = snapshot.val();
+                bannerContainer.innerHTML = `
+                    <div class="videollamada-banner">
+                        <div class="videollamada-banner-content">
+                            <div class="videollamada-icon">🎥</div>
+                            <div class="videollamada-texto">
+                                <strong>Videollamada Activa</strong>
+                                <small>Haz clic para unirte a la reunión virtual</small>
+                            </div>
+                        </div>
+                        <div class="videollamada-actions">
+                            <a href="${videollamada.enlace}" target="_blank" class="btn-videollamada">
+                                🚀 Unirse
+                            </a>
+                        </div>
                     </div>
                 `;
-            } catch (error) {
-                console.error('Error cargando resultados:', error);
+            } else {
+                bannerContainer.innerHTML = '';
             }
         };
 
@@ -1704,6 +1585,7 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
+            // Configuración
             let y = 20;
             const lineHeight = 7;
             const pageHeight = 280;
@@ -1716,10 +1598,10 @@
                 }
             };
             
-            // Título
+            // Encabezado
             doc.setFontSize(18);
             doc.setFont(undefined, 'bold');
-            doc.text('Acta de Reunion', 20, y);
+            doc.text('CEIP Capitulaciones de Santa Fe', 20, y);
             y += 10;
             
             // Nombre de la reunión
