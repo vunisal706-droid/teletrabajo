@@ -801,7 +801,8 @@
         let sesionActual = null;
         let usuarioActual = null;
         let fechaActual = null;
-        let puntosListeners = {}; // Almacenar referencias a los listeners para evitar duplicación
+        let puntosListenerActivo = false;
+        let listenersPorPunto = new Map(); // Mapa para rastrear listeners por punto
 
         // Exponer funciones al scope global
         window.database = database;
@@ -1034,10 +1035,9 @@
             cambiarPantalla('screenReunion');
         };
 
-        // Cargar reunión - CORREGIDO: Eliminado el listener duplicado de puntos
+        // Cargar reunión
         window.cargarReunion = function() {
             cargarParticipantes();
-            cargarPuntos(); // Solo carga inicial, sin listener global
             cargarVideollamada();
 
             // Escuchar cambios en participantes
@@ -1052,18 +1052,26 @@
                 cargarVideollamada();
             });
 
-            // NUEVO: Listener para nuevos puntos y eliminaciones
-            const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
-            onValue(puntosRef, (snapshot) => {
-                // Solo actualizar la lista de puntos sin recrear todos los listeners
-                actualizarListaPuntos(snapshot);
-            });
+            // Listener ÚNICO para puntos - solo se activa una vez
+            if (!puntosListenerActivo) {
+                puntosListenerActivo = true;
+                const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
+                onValue(puntosRef, (snapshot) => {
+                    cargarPuntosDesdeCero(snapshot);
+                });
+            }
         };
 
-        // NUEVA función para actualizar lista de puntos sin recrear listeners
-        window.actualizarListaPuntos = function(snapshot) {
+        // Recargar puntos completamente desde cero
+        window.cargarPuntosDesdeCero = function(snapshot) {
             const contenedor = document.getElementById('contenidoPuntos');
             
+            // Limpiar listeners antiguos (los listeners de Firebase se limpian cuando se borra el DOM)
+            listenersPorPunto.clear();
+            
+            // Limpiar TODO el contenedor
+            contenedor.innerHTML = '';
+
             if (!snapshot.exists()) {
                 contenedor.innerHTML = '<div class="empty-state"><div class="emoji">📋</div><p>No hay puntos del orden del día</p></div>';
                 return;
@@ -1073,33 +1081,9 @@
             const puntosArray = Object.entries(puntos).map(([id, data]) => ({ id, ...data }));
             puntosArray.sort((a, b) => a.orden - b.orden);
 
-            // Obtener IDs actuales en el DOM
-            const puntosActualesDOM = Array.from(contenedor.querySelectorAll('.card[data-punto-id]'))
-                .map(el => el.getAttribute('data-punto-id'));
-            
-            const puntosNuevosIDs = puntosArray.map(p => p.id);
-
-            // Eliminar puntos que ya no existen
-            puntosActualesDOM.forEach(id => {
-                if (!puntosNuevosIDs.includes(id)) {
-                    const elemento = contenedor.querySelector(`[data-punto-id="${id}"]`);
-                    if (elemento) elemento.remove();
-                }
-            });
-
-            // Añadir nuevos puntos o reordenar
             puntosArray.forEach((punto, index) => {
-                let card = contenedor.querySelector(`[data-punto-id="${punto.id}"]`);
-                
-                if (!card) {
-                    // Crear nuevo punto
-                    card = crearPuntoCard(punto, index + 1);
-                    contenedor.appendChild(card);
-                } else {
-                    // Actualizar número si es necesario
-                    const numeroEl = card.querySelector('.punto-numero');
-                    if (numeroEl) numeroEl.textContent = index + 1;
-                }
+                const card = crearPuntoCard(punto, index + 1);
+                contenedor.appendChild(card);
             });
         };
 
@@ -1152,11 +1136,11 @@
             });
         };
 
-        // Crear card de punto - MODIFICADO para incluir data-punto-id
+        // Crear card de punto
         window.crearPuntoCard = function(punto, numero) {
             const card = document.createElement('div');
             card.className = 'card';
-            card.setAttribute('data-punto-id', punto.id); // Identificador único
+            card.setAttribute('data-punto-id', punto.id);
             card.innerHTML = `
                 <div class="punto-header">
                     <div class="punto-numero">${numero}</div>
@@ -1210,27 +1194,25 @@
                 cargarAportaciones(punto.id);
                 cargarVotacion(punto.id);
                 cargarDocumentos(punto.id);
-            }, 100);
+            }, 50);
 
-            // Listeners en tiempo real - SOLO SI NO EXISTEN YA
-            if (!puntosListeners[punto.id]) {
-                puntosListeners[punto.id] = {};
+            // Registrar que este punto tiene listeners activos
+            if (!listenersPorPunto.has(punto.id)) {
+                listenersPorPunto.set(punto.id, true);
                 
-                // Listener para aportaciones
+                // Listeners en tiempo real
                 const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/aportaciones`);
-                puntosListeners[punto.id].aportaciones = onValue(aportacionesRef, () => {
+                onValue(aportacionesRef, () => {
                     cargarAportaciones(punto.id);
                 });
 
-                // Listener para votación
                 const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/votacion`);
-                puntosListeners[punto.id].votacion = onValue(votacionRef, () => {
+                onValue(votacionRef, () => {
                     cargarVotacion(punto.id);
                 });
 
-                // Listener para documentos
                 const documentosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/documentos`);
-                puntosListeners[punto.id].documentos = onValue(documentosRef, () => {
+                onValue(documentosRef, () => {
                     cargarDocumentos(punto.id);
                 });
             }
