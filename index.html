@@ -627,6 +627,213 @@
                 width: 100%;
             }
         }
+
+        /* Chat lateral general */
+        .chat-lateral {
+            position: fixed;
+            right: 20px;
+            top: 100px;
+            width: 350px;
+            max-height: calc(100vh - 120px);
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 999;
+            transition: transform 0.3s ease;
+        }
+
+        .chat-lateral.minimizado {
+            transform: translateX(calc(100% - 60px));
+        }
+
+        .chat-lateral-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chat-lateral-header h3 {
+            font-size: 16px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-lateral-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .chat-lateral-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .chat-lateral-mensajes {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: var(--background);
+        }
+
+        .chat-lateral-mensajes::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-lateral-mensajes::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .mensaje-general {
+            background: white;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .mensaje-general-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .mensaje-general-autor {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--primary);
+        }
+
+        .mensaje-general-hora {
+            font-size: 10px;
+            color: var(--text-light);
+        }
+
+        .mensaje-general-texto {
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--text);
+            word-wrap: break-word;
+        }
+
+        .chat-lateral-input {
+            padding: 12px;
+            background: white;
+            border-top: 1px solid var(--border);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .chat-lateral-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-lateral-input input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-lateral-input input:focus {
+            border-color: var(--primary);
+        }
+
+        .chat-lateral-input button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .chat-lateral-input button:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .chat-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1200px) {
+            .chat-lateral {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-lateral {
+                right: 0;
+                left: 0;
+                top: auto;
+                bottom: 0;
+                width: 100%;
+                max-height: 60vh;
+                border-radius: 12px 12px 0 0;
+            }
+
+            .chat-lateral.minimizado {
+                transform: translateY(calc(100% - 60px));
+            }
+
+            .chat-lateral-header {
+                border-radius: 12px 12px 0 0;
+            }
+        }
+
+        /* Ajustar contenedor principal cuando está el chat */
+        .container.con-chat {
+            margin-right: 370px;
+        }
+
+        @media (max-width: 1200px) {
+            .container.con-chat {
+                margin-right: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container.con-chat {
+                margin-right: 0;
+                padding-bottom: 100px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -746,7 +953,7 @@
 
     <!-- Pantalla de reunión -->
     <div id="screenReunion" class="screen">
-        <div class="container">
+        <div class="container" id="containerReunion">
             <div class="session-info">
                 <div>
                     <strong>Reunión:</strong> <span class="session-code" id="nombreActual" style="font-size: 16px;"></span>
@@ -773,6 +980,24 @@
             </div>
 
             <div id="contenidoPuntos"></div>
+        </div>
+
+        <!-- Chat lateral general -->
+        <div class="chat-lateral" id="chatLateral">
+            <div class="chat-lateral-header" onclick="toggleChatLateral()">
+                <h3>
+                    💬 Chat General
+                    <span class="chat-badge" id="chatBadge" style="display: none;">0</span>
+                </h3>
+                <button class="chat-lateral-toggle" id="chatToggle">−</button>
+            </div>
+            <div class="chat-lateral-mensajes" id="mensajesGenerales"></div>
+            <div class="chat-lateral-input">
+                <div class="chat-lateral-input-group">
+                    <input type="text" id="inputChatGeneral" placeholder="Escribe un mensaje..." onkeydown="if(event.key === 'Enter') { enviarMensajeGeneral(); }">
+                    <button onclick="enviarMensajeGeneral()">📤</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1039,6 +1264,10 @@
         window.cargarReunion = function() {
             cargarParticipantes();
             cargarVideollamada();
+            inicializarChatGeneral();
+
+            // Ajustar margen del contenedor
+            document.getElementById('containerReunion').classList.add('con-chat');
 
             // Escuchar cambios en participantes
             const participantesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
@@ -1059,6 +1288,96 @@
                 onValue(puntosRef, (snapshot) => {
                     cargarPuntosDesdeCero(snapshot);
                 });
+            }
+        };
+
+        // Inicializar chat general
+        window.inicializarChatGeneral = function() {
+            const chatGeneralRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral`);
+            
+            onValue(chatGeneralRef, (snapshot) => {
+                cargarMensajesGenerales();
+            });
+        };
+
+        // Enviar mensaje al chat general
+        window.enviarMensajeGeneral = async function() {
+            const input = document.getElementById('inputChatGeneral');
+            const texto = input.value.trim();
+
+            if (!texto) return;
+
+            const chatGeneralRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral`);
+            const nuevoMensajeRef = push(chatGeneralRef);
+
+            await set(nuevoMensajeRef, {
+                autor: window.usuarioActual.nombre,
+                rol: window.usuarioActual.rol,
+                texto: texto,
+                timestamp: Date.now()
+            });
+
+            input.value = '';
+        };
+
+        // Cargar mensajes generales
+        window.cargarMensajesGenerales = async function() {
+            const contenedor = document.getElementById('mensajesGenerales');
+            if (!contenedor) return;
+
+            const chatGeneralRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral`);
+            
+            try {
+                const snapshot = await get(chatGeneralRef);
+
+                if (!snapshot.exists()) {
+                    contenedor.innerHTML = '<div class="empty-state"><div class="emoji">💬</div><p style="font-size: 13px;">No hay mensajes aún</p></div>';
+                    return;
+                }
+
+                const mensajes = snapshot.val();
+                const mensajesArray = Object.values(mensajes);
+                mensajesArray.sort((a, b) => a.timestamp - b.timestamp);
+
+                contenedor.innerHTML = '';
+                
+                mensajesArray.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'mensaje-general';
+                    div.innerHTML = `
+                        <div class="mensaje-general-header">
+                            <span class="mensaje-general-autor">
+                                ${msg.rol === 'coordinador' ? '👑' : '👤'} ${msg.autor}
+                            </span>
+                            <span class="mensaje-general-hora">${new Date(msg.timestamp).toLocaleTimeString('es-ES', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            })}</span>
+                        </div>
+                        <div class="mensaje-general-texto">${msg.texto}</div>
+                    `;
+                    contenedor.appendChild(div);
+                });
+
+                // Scroll automático al final
+                contenedor.scrollTop = contenedor.scrollHeight;
+                
+            } catch (error) {
+                console.error('Error cargando chat general:', error);
+            }
+        };
+
+        // Toggle chat lateral (minimizar/maximizar)
+        window.toggleChatLateral = function() {
+            const chat = document.getElementById('chatLateral');
+            const toggle = document.getElementById('chatToggle');
+            
+            if (chat.classList.contains('minimizado')) {
+                chat.classList.remove('minimizado');
+                toggle.textContent = '−';
+            } else {
+                chat.classList.add('minimizado');
+                toggle.textContent = '+';
             }
         };
 
@@ -1749,6 +2068,44 @@
                 doc.setFont(undefined, 'normal');
                 doc.setFontSize(10);
                 doc.text('No hay puntos del orden del dia', 25, y);
+                y += lineHeight;
+            }
+            
+            // Chat General
+            y += 5;
+            checkPage();
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Chat General:', 20, y);
+            y += lineHeight + 2;
+            
+            if (sesionData.chatGeneral) {
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                
+                const mensajesArray = Object.values(sesionData.chatGeneral);
+                mensajesArray.sort((a, b) => a.timestamp - b.timestamp);
+                
+                mensajesArray.forEach(msg => {
+                    checkPage();
+                    const hora = new Date(msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                    doc.text(`   [${hora}] ${msg.autor}:`, 25, y);
+                    y += lineHeight;
+                    
+                    // Dividir texto largo en líneas
+                    const maxWidth = 160;
+                    const lineas = doc.splitTextToSize(`   ${msg.texto}`, maxWidth);
+                    lineas.forEach(linea => {
+                        checkPage();
+                        doc.text(linea, 25, y);
+                        y += lineHeight - 1;
+                    });
+                    y += 2;
+                });
+            } else {
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                doc.text('No hay mensajes en el chat general', 25, y);
                 y += lineHeight;
             }
             
