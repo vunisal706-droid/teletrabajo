@@ -1408,6 +1408,7 @@
         window.sesionActual = null;
         window.usuarioActual = null;
         window.fechaActual = null;
+        window.ordenDia = []; // Array con los textos de los puntos del orden del día
 
         // Mostrar indicador de conexión
         document.getElementById('statusIndicator').style.display = 'flex';
@@ -2662,11 +2663,21 @@
                 
                 lista.innerHTML = '';
 
-                if (!snapshot.exists()) return;
+                // Inicializar ordenDia vacío
+                window.ordenDia = [];
+
+                if (!snapshot.exists()) {
+                    console.log('ℹ️ No hay puntos en el orden del día');
+                    return;
+                }
 
                 const puntos = snapshot.val();
                 const puntosArray = Object.entries(puntos).map(([id, data]) => ({ id, ...data }));
                 puntosArray.sort((a, b) => a.orden - b.orden);
+
+                // Actualizar window.ordenDia con los textos de los puntos
+                window.ordenDia = puntosArray.map(punto => punto.texto);
+                console.log('✅ Orden del día actualizado:', window.ordenDia);
 
                 puntosArray.forEach(punto => {
                     const div = document.createElement('div');
@@ -2830,11 +2841,29 @@
         
         // Generar citación con QR
         window.generarCitacion = async function() {
+            console.log('🔘 Botón Generar Citación pulsado');
+            
+            // Debug: verificar estado
+            console.log('Estado actual:');
+            console.log('  - sesionActual:', window.sesionActual);
+            console.log('  - fechaActual:', window.fechaActual);
+            console.log('  - ordenDia:', window.ordenDia);
+            console.log('  - ordenDia.length:', window.ordenDia ? window.ordenDia.length : 'undefined');
+            
+            // Verificar que las variables existen
+            if (!window.ordenDia) {
+                alert('❌ Error: No se ha inicializado el orden del día. Recarga la página.');
+                console.error('window.ordenDia no existe');
+                return;
+            }
+            
             // Verificar que hay orden del día
             if (window.ordenDia.length === 0) {
                 alert('⚠️ Debes añadir al menos un punto al orden del día antes de generar la citación');
                 return;
             }
+
+            console.log('✅ Verificaciones pasadas, generando citación...');
 
             // Obtener videollamadas si existen
             let videollamadas = null;
@@ -2843,84 +2872,105 @@
                 const snapshot = await get(videollamadaRef);
                 if (snapshot.exists()) {
                     videollamadas = snapshot.val();
+                    console.log('📞 Videollamadas encontradas:', videollamadas);
                 }
             } catch (e) {
-                console.log('No hay videollamadas configuradas');
+                console.log('ℹ️ No hay videollamadas configuradas:', e.message);
             }
 
             // Construir URL para el QR
             const baseUrl = window.location.origin + window.location.pathname;
             const qrUrl = `${baseUrl}?reunion=${encodeURIComponent(window.sesionActual)}&fecha=${window.fechaActual}`;
             
-            console.log('📱 Generando QR para:', qrUrl);
+            console.log('📱 URL del QR:', qrUrl);
 
-            // Llenar información del modal
-            document.getElementById('citacion-tipo-reunion').textContent = window.sesionActual;
-            
-            // Formatear fecha
-            const [year, month, day] = window.fechaActual.split('-');
-            const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
-                          'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-            const fechaFormateada = `${parseInt(day)} de ${meses[parseInt(month)-1]} de ${year}`;
-            document.getElementById('citacion-fecha-reunion').textContent = fechaFormateada;
-
-            // Llenar orden del día
-            const listaOrdenDia = document.getElementById('citacion-orden-dia');
-            listaOrdenDia.innerHTML = '';
-            window.ordenDia.forEach((punto, index) => {
-                const li = document.createElement('li');
-                li.textContent = `${index + 1}. ${punto}`;
-                listaOrdenDia.appendChild(li);
-            });
-
-            // Mostrar videollamadas si existen
-            const videollamadasSection = document.getElementById('citacion-videollamadas-section');
-            const videollamadasDiv = document.getElementById('citacion-videollamadas');
-            
-            if (videollamadas) {
-                videollamadasSection.style.display = 'block';
-                videollamadasDiv.innerHTML = '';
+            try {
+                // Llenar información del modal
+                document.getElementById('citacion-tipo-reunion').textContent = window.sesionActual;
                 
-                const enlace1 = videollamadas.enlace1 || videollamadas.enlace;
-                if (enlace1) {
-                    const div1 = document.createElement('div');
-                    div1.style.cssText = 'padding: 10px; background: #f0f9ff; border-radius: 8px; margin-bottom: 10px;';
-                    div1.innerHTML = `
-                        <strong>1️⃣ Enlace Principal:</strong><br>
-                        <a href="${enlace1}" target="_blank" style="color: var(--primary); word-break: break-all; font-size: 14px;">${enlace1}</a>
-                    `;
-                    videollamadasDiv.appendChild(div1);
-                }
+                // Formatear fecha
+                const [year, month, day] = window.fechaActual.split('-');
+                const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                              'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                const fechaFormateada = `${parseInt(day)} de ${meses[parseInt(month)-1]} de ${year}`;
+                document.getElementById('citacion-fecha-reunion').textContent = fechaFormateada;
+
+                // Llenar orden del día
+                const listaOrdenDia = document.getElementById('citacion-orden-dia');
+                listaOrdenDia.innerHTML = '';
+                window.ordenDia.forEach((punto, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${index + 1}. ${punto}`;
+                    listaOrdenDia.appendChild(li);
+                });
+
+                console.log('✅ Orden del día cargado');
+
+                // Mostrar videollamadas si existen
+                const videollamadasSection = document.getElementById('citacion-videollamadas-section');
+                const videollamadasDiv = document.getElementById('citacion-videollamadas');
                 
-                if (videollamadas.enlace2) {
-                    const div2 = document.createElement('div');
-                    div2.style.cssText = 'padding: 10px; background: #f0fdf4; border-radius: 8px;';
-                    div2.innerHTML = `
-                        <strong>2️⃣ Enlace Alternativo:</strong><br>
-                        <a href="${videollamadas.enlace2}" target="_blank" style="color: var(--success); word-break: break-all; font-size: 14px;">${videollamadas.enlace2}</a>
-                    `;
-                    videollamadasDiv.appendChild(div2);
+                if (videollamadas) {
+                    videollamadasSection.style.display = 'block';
+                    videollamadasDiv.innerHTML = '';
+                    
+                    const enlace1 = videollamadas.enlace1 || videollamadas.enlace;
+                    if (enlace1) {
+                        const div1 = document.createElement('div');
+                        div1.style.cssText = 'padding: 10px; background: #f0f9ff; border-radius: 8px; margin-bottom: 10px;';
+                        div1.innerHTML = `
+                            <strong>1️⃣ Enlace Principal:</strong><br>
+                            <a href="${enlace1}" target="_blank" style="color: var(--primary); word-break: break-all; font-size: 14px;">${enlace1}</a>
+                        `;
+                        videollamadasDiv.appendChild(div1);
+                    }
+                    
+                    if (videollamadas.enlace2) {
+                        const div2 = document.createElement('div');
+                        div2.style.cssText = 'padding: 10px; background: #f0fdf4; border-radius: 8px;';
+                        div2.innerHTML = `
+                            <strong>2️⃣ Enlace Alternativo:</strong><br>
+                            <a href="${videollamadas.enlace2}" target="_blank" style="color: var(--success); word-break: break-all; font-size: 14px;">${videollamadas.enlace2}</a>
+                        `;
+                        videollamadasDiv.appendChild(div2);
+                    }
+                    console.log('✅ Videollamadas cargadas');
+                } else {
+                    videollamadasSection.style.display = 'none';
                 }
-            } else {
-                videollamadasSection.style.display = 'none';
+
+                // Limpiar QR anterior si existe
+                const qrcodeDiv = document.getElementById('qrcode');
+                qrcodeDiv.innerHTML = '';
+
+                console.log('🔄 Generando código QR...');
+                
+                // Verificar que QRCode está disponible
+                if (typeof QRCode === 'undefined') {
+                    throw new Error('La librería QRCode no está cargada. Verifica tu conexión a internet.');
+                }
+
+                // Generar nuevo QR
+                new QRCode(qrcodeDiv, {
+                    text: qrUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#2563eb',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                console.log('✅ QR generado correctamente');
+
+                // Mostrar modal
+                document.getElementById('citacionModal').classList.add('active');
+                
+                console.log('✅ Modal mostrado');
+                
+            } catch (error) {
+                console.error('❌ Error al generar la citación:', error);
+                alert('❌ Error al generar la citación: ' + error.message + '\n\nRevisa la consola del navegador (F12) para más detalles.');
             }
-
-            // Limpiar QR anterior si existe
-            const qrcodeDiv = document.getElementById('qrcode');
-            qrcodeDiv.innerHTML = '';
-
-            // Generar nuevo QR
-            new QRCode(qrcodeDiv, {
-                text: qrUrl,
-                width: 200,
-                height: 200,
-                colorDark: '#2563eb',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-
-            // Mostrar modal
-            document.getElementById('citacionModal').classList.add('active');
         };
 
         // Cerrar modal de citación
