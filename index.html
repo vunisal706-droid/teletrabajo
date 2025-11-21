@@ -21,6 +21,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <title>Teletrabajo Capitulaciones</title>
+    
+    <!-- Librería para generar códigos QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -960,6 +964,153 @@
                 padding: 10px 16px;
             }
         }
+
+        /* Modal de Citación con QR */
+        .citacion-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10002;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .citacion-modal.active {
+            display: flex;
+        }
+
+        .citacion-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .citacion-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .citacion-header h2 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+
+        .citacion-header p {
+            margin: 5px 0;
+            opacity: 0.95;
+            font-size: 16px;
+        }
+
+        .citacion-body {
+            padding: 30px;
+        }
+
+        .citacion-section {
+            margin-bottom: 25px;
+        }
+
+        .citacion-section h3 {
+            color: var(--primary);
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .citacion-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .citacion-section li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .citacion-section li:before {
+            content: "▸";
+            position: absolute;
+            left: 5px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+            background: var(--background);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .qr-container h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        #qrcode {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .qr-instructions {
+            margin-top: 15px;
+            color: var(--text-light);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .citacion-footer {
+            padding: 20px 30px;
+            background: var(--background);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .citacion-footer button {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        @media (max-width: 768px) {
+            .citacion-header {
+                padding: 20px;
+            }
+
+            .citacion-header h2 {
+                font-size: 20px;
+            }
+
+            .citacion-body {
+                padding: 20px;
+            }
+
+            .citacion-footer {
+                padding: 15px 20px;
+            }
+
+            .citacion-footer button {
+                min-width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1006,6 +1157,51 @@
             <button class="btn btn-primary" onclick="cerrarModalIOS()" style="margin-top: 20px;">
                 ✅ Entendido
             </button>
+        </div>
+    </div>
+
+    <!-- Modal de Citación con QR -->
+    <div id="citacionModal" class="citacion-modal">
+        <div class="citacion-content">
+            <div class="citacion-header">
+                <h2>📋 CONVOCATORIA DE REUNIÓN</h2>
+                <p><strong>CEIP Capitulaciones de Santa Fe</strong></p>
+                <p id="citacion-tipo-reunion"></p>
+                <p id="citacion-fecha-reunion"></p>
+            </div>
+            
+            <div class="citacion-body">
+                <div class="citacion-section">
+                    <h3>📌 Orden del Día</h3>
+                    <ul id="citacion-orden-dia"></ul>
+                </div>
+
+                <div class="citacion-section" id="citacion-videollamadas-section" style="display: none;">
+                    <h3>🎥 Enlaces de Videollamada</h3>
+                    <div id="citacion-videollamadas"></div>
+                </div>
+
+                <div class="qr-container">
+                    <h3>📱 Acceso Rápido</h3>
+                    <div id="qrcode"></div>
+                    <div class="qr-instructions">
+                        <strong>Escanea este código QR con tu móvil</strong><br>
+                        para unirte directamente a la reunión
+                    </div>
+                </div>
+            </div>
+
+            <div class="citacion-footer">
+                <button class="btn btn-primary" onclick="descargarQR()">
+                    ⬇️ Descargar QR
+                </button>
+                <button class="btn btn-success" onclick="compartirCitacion()">
+                    📤 Compartir
+                </button>
+                <button class="btn btn-outline" onclick="cerrarCitacion()">
+                    ❌ Cerrar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1108,9 +1304,14 @@
                 </button>
             </div>
 
-            <button class="btn btn-primary" onclick="iniciarReunion()" style="margin-top: 20px;">
-                🚀 Iniciar Reunión
-            </button>
+            <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button class="btn btn-success" onclick="generarCitacion()" style="flex: 1; min-width: 200px;">
+                    📱 Generar Citación con QR
+                </button>
+                <button class="btn btn-primary" onclick="iniciarReunion()" style="flex: 1; min-width: 200px;">
+                    🚀 Iniciar Reunión
+                </button>
+            </div>
         </div>
     </div>
 
@@ -2622,6 +2823,321 @@
                 console.log('✅ PWA correctamente configurada y lista para instalar');
             }
         }, 2000);
+    </script>
+
+    <script>
+        // ===== SISTEMA DE CITACIÓN CON QR =====
+        
+        // Generar citación con QR
+        window.generarCitacion = async function() {
+            // Verificar que hay orden del día
+            if (window.ordenDia.length === 0) {
+                alert('⚠️ Debes añadir al menos un punto al orden del día antes de generar la citación');
+                return;
+            }
+
+            // Obtener videollamadas si existen
+            let videollamadas = null;
+            try {
+                const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+                const snapshot = await get(videollamadaRef);
+                if (snapshot.exists()) {
+                    videollamadas = snapshot.val();
+                }
+            } catch (e) {
+                console.log('No hay videollamadas configuradas');
+            }
+
+            // Construir URL para el QR
+            const baseUrl = window.location.origin + window.location.pathname;
+            const qrUrl = `${baseUrl}?reunion=${encodeURIComponent(window.sesionActual)}&fecha=${window.fechaActual}`;
+            
+            console.log('📱 Generando QR para:', qrUrl);
+
+            // Llenar información del modal
+            document.getElementById('citacion-tipo-reunion').textContent = window.sesionActual;
+            
+            // Formatear fecha
+            const [year, month, day] = window.fechaActual.split('-');
+            const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                          'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+            const fechaFormateada = `${parseInt(day)} de ${meses[parseInt(month)-1]} de ${year}`;
+            document.getElementById('citacion-fecha-reunion').textContent = fechaFormateada;
+
+            // Llenar orden del día
+            const listaOrdenDia = document.getElementById('citacion-orden-dia');
+            listaOrdenDia.innerHTML = '';
+            window.ordenDia.forEach((punto, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${punto}`;
+                listaOrdenDia.appendChild(li);
+            });
+
+            // Mostrar videollamadas si existen
+            const videollamadasSection = document.getElementById('citacion-videollamadas-section');
+            const videollamadasDiv = document.getElementById('citacion-videollamadas');
+            
+            if (videollamadas) {
+                videollamadasSection.style.display = 'block';
+                videollamadasDiv.innerHTML = '';
+                
+                const enlace1 = videollamadas.enlace1 || videollamadas.enlace;
+                if (enlace1) {
+                    const div1 = document.createElement('div');
+                    div1.style.cssText = 'padding: 10px; background: #f0f9ff; border-radius: 8px; margin-bottom: 10px;';
+                    div1.innerHTML = `
+                        <strong>1️⃣ Enlace Principal:</strong><br>
+                        <a href="${enlace1}" target="_blank" style="color: var(--primary); word-break: break-all; font-size: 14px;">${enlace1}</a>
+                    `;
+                    videollamadasDiv.appendChild(div1);
+                }
+                
+                if (videollamadas.enlace2) {
+                    const div2 = document.createElement('div');
+                    div2.style.cssText = 'padding: 10px; background: #f0fdf4; border-radius: 8px;';
+                    div2.innerHTML = `
+                        <strong>2️⃣ Enlace Alternativo:</strong><br>
+                        <a href="${videollamadas.enlace2}" target="_blank" style="color: var(--success); word-break: break-all; font-size: 14px;">${videollamadas.enlace2}</a>
+                    `;
+                    videollamadasDiv.appendChild(div2);
+                }
+            } else {
+                videollamadasSection.style.display = 'none';
+            }
+
+            // Limpiar QR anterior si existe
+            const qrcodeDiv = document.getElementById('qrcode');
+            qrcodeDiv.innerHTML = '';
+
+            // Generar nuevo QR
+            new QRCode(qrcodeDiv, {
+                text: qrUrl,
+                width: 200,
+                height: 200,
+                colorDark: '#2563eb',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // Mostrar modal
+            document.getElementById('citacionModal').classList.add('active');
+        };
+
+        // Cerrar modal de citación
+        window.cerrarCitacion = function() {
+            document.getElementById('citacionModal').classList.remove('active');
+        };
+
+        // Descargar QR como imagen
+        window.descargarQR = function() {
+            const qrcodeDiv = document.getElementById('qrcode');
+            const canvas = qrcodeDiv.querySelector('canvas');
+            
+            if (!canvas) {
+                alert('⚠️ Error al generar el QR');
+                return;
+            }
+
+            // Crear un canvas más grande con información adicional
+            const finalCanvas = document.createElement('canvas');
+            const ctx = finalCanvas.getContext('2d');
+            
+            // Dimensiones del canvas final
+            finalCanvas.width = 400;
+            finalCanvas.height = 550;
+            
+            // Fondo blanco
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+            
+            // Header azul
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(0, 0, finalCanvas.width, 100);
+            
+            // Texto del header
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('📋 CONVOCATORIA', finalCanvas.width / 2, 35);
+            
+            ctx.font = '16px Arial';
+            ctx.fillText('CEIP Capitulaciones', finalCanvas.width / 2, 60);
+            ctx.fillText(window.sesionActual, finalCanvas.width / 2, 85);
+            
+            // Información de la reunión
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            const fecha = document.getElementById('citacion-fecha-reunion').textContent;
+            ctx.fillText(fecha, finalCanvas.width / 2, 130);
+            
+            // Dibujar el QR en el centro
+            ctx.drawImage(canvas, 100, 160, 200, 200);
+            
+            // Texto debajo del QR
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('Escanea para unirte', finalCanvas.width / 2, 390);
+            
+            ctx.font = '14px Arial';
+            ctx.fillText('directamente a la reunión', finalCanvas.width / 2, 415);
+            
+            // Línea decorativa
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(50, 440);
+            ctx.lineTo(350, 440);
+            ctx.stroke();
+            
+            // Footer
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Arial';
+            ctx.fillText('Teletrabajo Capitulaciones', finalCanvas.width / 2, 470);
+            ctx.fillText(`Generado: ${new Date().toLocaleDateString('es-ES')}`, finalCanvas.width / 2, 490);
+            
+            // Descargar
+            finalCanvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Citacion_${window.sesionActual}_${window.fechaActual}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('✅ Imagen descargada. Ahora puedes compartirla por WhatsApp o email');
+            });
+        };
+
+        // Compartir citación
+        window.compartirCitacion = async function() {
+            const baseUrl = window.location.origin + window.location.pathname;
+            const qrUrl = `${baseUrl}?reunion=${encodeURIComponent(window.sesionActual)}&fecha=${window.fechaActual}`;
+            const fecha = document.getElementById('citacion-fecha-reunion').textContent;
+            
+            // Texto para compartir
+            let textoCompleto = `📋 *CONVOCATORIA DE REUNIÓN*\n\n`;
+            textoCompleto += `*CEIP Capitulaciones de Santa Fe*\n`;
+            textoCompleto += `*${window.sesionActual}*\n`;
+            textoCompleto += `📅 ${fecha}\n\n`;
+            textoCompleto += `*📌 ORDEN DEL DÍA:*\n`;
+            
+            window.ordenDia.forEach((punto, index) => {
+                textoCompleto += `${index + 1}. ${punto}\n`;
+            });
+            
+            textoCompleto += `\n*📱 ACCESO RÁPIDO:*\n`;
+            textoCompleto += `${qrUrl}\n\n`;
+            textoCompleto += `👆 Pulsa el enlace o escanea el QR para unirte directamente`;
+
+            // Intentar usar Web Share API si está disponible
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: `Convocatoria: ${window.sesionActual}`,
+                        text: textoCompleto,
+                        url: qrUrl
+                    });
+                    console.log('✅ Compartido correctamente');
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.log('Compartir cancelado o no disponible');
+                        compartirPorWhatsApp(textoCompleto);
+                    }
+                }
+            } else {
+                // Fallback: abrir WhatsApp Web
+                compartirPorWhatsApp(textoCompleto);
+            }
+        };
+
+        function compartirPorWhatsApp(texto) {
+            const textoEncoded = encodeURIComponent(texto);
+            const whatsappUrl = `https://wa.me/?text=${textoEncoded}`;
+            
+            // Copiar también al portapapeles
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(texto).then(() => {
+                    console.log('✅ Texto copiado al portapapeles');
+                });
+            }
+            
+            // Abrir WhatsApp
+            window.open(whatsappUrl, '_blank');
+            
+            alert('📱 Se abrirá WhatsApp con el texto de la convocatoria.\n\n💡 El texto también se ha copiado al portapapeles por si quieres pegarlo en otro sitio.');
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('citacionModal').addEventListener('click', (e) => {
+            if (e.target.id === 'citacionModal') {
+                cerrarCitacion();
+            }
+        });
+
+        // ===== AUTO-UNIRSE A REUNIÓN DESDE QR =====
+        
+        // Detectar parámetros en la URL y auto-unirse
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const reunion = urlParams.get('reunion');
+            const fecha = urlParams.get('fecha');
+            
+            if (reunion && fecha) {
+                console.log('📱 Detectados parámetros de reunión en URL');
+                console.log('  - Reunión:', reunion);
+                console.log('  - Fecha:', fecha);
+                
+                // Esperar un poco para que Firebase se inicialice
+                setTimeout(() => {
+                    autoUnirseDesdeQR(reunion, fecha);
+                }, 1000);
+            }
+        });
+
+        async function autoUnirseDesdeQR(tipoReunion, fecha) {
+            console.log('🚀 Auto-uniéndose a la reunión...');
+            
+            // Pedir nombre al usuario
+            const nombre = prompt(`📱 Vas a unirte a:\n\n${tipoReunion}\nFecha: ${fecha}\n\n¿Cuál es tu nombre?`);
+            
+            if (!nombre || nombre.trim() === '') {
+                console.log('❌ Nombre no proporcionado, cancelando auto-unión');
+                return;
+            }
+
+            // Guardar datos del usuario
+            window.usuarioActual = {
+                nombre: nombre.trim(),
+                rol: 'maestro',
+                timestamp: Date.now()
+            };
+
+            window.sesionActual = tipoReunion;
+            window.fechaActual = fecha;
+
+            // Verificar que la reunión existe
+            const sesionRef = ref(database, `sesiones/${tipoReunion}/${fecha}`);
+            const snapshot = await get(sesionRef);
+
+            if (!snapshot.exists()) {
+                alert('⚠️ Esta reunión aún no ha sido creada por el coordinador.\n\nPor favor, espera a que se inicie la reunión.');
+                return;
+            }
+
+            // Registrar participante
+            const participanteRef = ref(database, `sesiones/${tipoReunion}/${fecha}/participantes/${Date.now()}`);
+            await set(participanteRef, window.usuarioActual);
+
+            // Ir directamente a la pantalla de reunión
+            mostrarScreen('screenReunion');
+            cargarReunion();
+
+            console.log('✅ Auto-unión completada');
+            alert('✅ Te has unido correctamente a la reunión');
+        }
     </script>
 
     <script>

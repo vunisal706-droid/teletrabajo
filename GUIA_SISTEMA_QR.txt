@@ -1,0 +1,327 @@
+# 📱 GUÍA COMPLETA: SISTEMA DE QR Y CITACIONES
+
+## 🎯 ¿QUÉ ES Y PARA QUÉ SIRVE?
+
+El sistema de QR te permite generar convocatorias profesionales con un código QR que lleva directamente a la reunión. Los maestros/as solo tienen que escanear el código y entran automáticamente.
+
+---
+
+## 🚀 CÓMO USAR EL SISTEMA (PARA COORDINADORES)
+
+### PASO 1: Crear la reunión
+1. Abre la app y selecciona "Coordinador/a"
+2. Elige el tipo de reunión (Claustro, ETCP, etc.)
+3. Selecciona la fecha
+4. Pulsa "Crear Reunión"
+
+### PASO 2: Configurar el orden del día
+1. Añade todos los puntos que se tratarán
+2. (Opcional) Configura los enlaces de videollamada
+
+### PASO 3: Generar la citación con QR
+1. Pulsa el botón verde "📱 Generar Citación con QR"
+2. Se abre una ventana con:
+   - Encabezado del colegio
+   - Tipo de reunión y fecha
+   - Orden del día completo
+   - Enlaces de videollamada (si los hay)
+   - **CÓDIGO QR GRANDE** en el centro
+
+### PASO 4: Compartir la citación
+
+Tienes 3 opciones:
+
+#### OPCIÓN A: Descargar el QR
+- Pulsa "⬇️ Descargar QR"
+- Se descarga una imagen PNG profesional con:
+  - Logo y nombre del colegio
+  - Fecha y tipo de reunión
+  - Código QR grande
+  - Instrucciones de uso
+- Esta imagen puedes:
+  - Enviarla por WhatsApp al grupo de profes
+  - Enviarla por email
+  - Imprimirla y pegarla en sala de profesores
+  - Proyectarla en pantalla durante la reunión
+
+#### OPCIÓN B: Compartir directamente
+- Pulsa "📤 Compartir"
+- Si tu móvil/ordenador lo permite, se abre el diálogo de compartir nativo
+- Si no, se abre WhatsApp Web automáticamente con el texto completo:
+  - Título de la reunión
+  - Fecha
+  - Orden del día
+  - Enlace directo
+- El texto también se copia al portapapeles
+- Puedes pegar ese texto en cualquier lugar (email, Telegram, etc.)
+
+#### OPCIÓN C: Proyectar en pantalla
+- Si es una reunión presencial o híbrida
+- Deja la citación abierta en tu ordenador
+- Proyéctala en la pizarra digital
+- Los maestros escanean el QR desde sus asientos
+- Entran todos en 1 minuto
+
+---
+
+## 📱 CÓMO FUNCIONA PARA LOS MAESTROS/AS
+
+### MÉTODO 1: Escanear el QR
+
+1. **Ven el QR** (proyectado, en WhatsApp, impreso, etc.)
+2. **Abren la cámara** del móvil (la cámara normal, no hace falta app especial)
+3. **Apuntan al QR**
+4. **Sale un enlace**, lo tocan
+5. **Se abre la app** directamente en esa reunión
+6. **Popup**: "¿Cuál es tu nombre?"
+7. **Escriben su nombre** y pulsan "Entrar"
+8. **✅ YA ESTÁN DENTRO** - Ven el orden del día y pueden participar
+
+**Tiempo total: 10 segundos**
+
+### MÉTODO 2: Pulsar el enlace
+
+Si reciben la citación por WhatsApp/email con el enlace:
+
+1. **Pulsan el enlace**
+2. **Se abre la app** en la reunión correcta
+3. **Escriben su nombre**
+4. **✅ Ya están dentro**
+
+**Tiempo total: 5 segundos**
+
+---
+
+## 🎨 EJEMPLO VISUAL DE LA CITACIÓN
+
+```
+┌────────────────────────────────────────────┐
+│  📋 CONVOCATORIA DE REUNIÓN                │
+│  CEIP Capitulaciones de Santa Fe           │
+│  Claustro                                  │
+│  22 de noviembre de 2024                   │
+├────────────────────────────────────────────┤
+│                                            │
+│  📌 Orden del Día:                         │
+│  ▸ 1. Lectura del acta anterior           │
+│  ▸ 2. Plan de formación del profesorado   │
+│  ▸ 3. Salidas extraescolares              │
+│  ▸ 4. Ruegos y preguntas                  │
+│                                            │
+│  🎥 Enlaces de Videollamada:               │
+│  1️⃣ meet.google.com/abc-defg-hij          │
+│  2️⃣ zoom.us/j/123456789                   │
+│                                            │
+│        📱 Acceso Rápido                    │
+│     ┌─────────────────────┐                │
+│     │  ████  ██  ██ ████  │                │
+│     │  ██  ████████  ██   │                │
+│     │  ██  ████  ██████   │ ← CÓDIGO QR   │
+│     │  ████  ████  ██  ██ │                │
+│     │  ████  ██  ████████ │                │
+│     └─────────────────────┘                │
+│                                            │
+│  Escanea este código QR con tu móvil      │
+│  para unirte directamente a la reunión    │
+│                                            │
+│  [⬇️ Descargar QR] [📤 Compartir] [❌]    │
+└────────────────────────────────────────────┘
+```
+
+---
+
+## 💡 CASOS DE USO REALES
+
+### CASO 1: Claustro presencial urgente
+```
+9:00 - Director convoca claustro urgente
+9:02 - Coordinador crea la reunión en la app
+9:03 - Genera citación con QR
+9:04 - Envía QR por WhatsApp al grupo del claustro
+9:05 - Todos escanean y entran
+9:06 - Claustro digital funcionando en paralelo al presencial
+```
+
+### CASO 2: ETCP semanal online
+```
+Lunes 15:00 - Reunión ETCP
+Viernes anterior - Coordinador genera citación
+Viernes - Envía por WhatsApp con orden del día
+Lunes 14:55 - Profes pulsan el enlace desde WhatsApp
+Lunes 15:00 - Todos conectados puntualmente
+```
+
+### CASO 3: Reunión de ciclo híbrida
+```
+- 3 maestros en el cole (sala de profes)
+- 2 maestros en casa por reducción horaria
+- Coordinador proyecta QR en TV de sala de profes
+- Los 3 presenciales escanean desde sus sitios
+- Envía QR por WhatsApp a los 2 de casa
+- Todos en la misma reunión en 30 segundos
+```
+
+---
+
+## ✨ VENTAJAS DEL SISTEMA
+
+### Para el coordinador:
+✅ Generas la citación en 10 segundos
+✅ Se ve super profesional
+✅ Incluye automáticamente todo (orden del día, enlaces, etc.)
+✅ Se comparte con 1 clic por WhatsApp
+✅ No hay que explicar cómo entrar
+
+### Para los maestros/as:
+✅ Escanean y listo (no hay que buscar nada)
+✅ Imposible equivocarse de reunión
+✅ No hay que recordar fechas ni tipos
+✅ Funciona desde cualquier dispositivo
+✅ Súper rápido
+
+### Para el colegio:
+✅ Imagen moderna y profesional
+✅ Ahorro de tiempo significativo
+✅ Menos errores y confusiones
+✅ Mayor puntualidad en reuniones
+✅ Mejor organización general
+
+---
+
+## 🔧 DETALLES TÉCNICOS
+
+### ¿Qué información contiene el QR?
+
+El QR contiene una URL como esta:
+```
+https://tu-colegio.github.io/app/?reunion=claustro&fecha=2024-11-22
+```
+
+Esta URL tiene dos parámetros:
+- `reunion`: El tipo (claustro, etcp, ciclo, etc.)
+- `fecha`: La fecha en formato YYYY-MM-DD
+
+Cuando alguien escanea el QR:
+1. Se abre esa URL en el navegador
+2. La app detecta los parámetros automáticamente
+3. Pide solo el nombre del usuario
+4. Lo une directamente a esa reunión específica
+
+### ¿Es seguro?
+
+**SÍ**, por varias razones:
+- Solo funciona si el coordinador ha creado esa reunión
+- Si intentas entrar a una reunión que no existe, sale un error
+- El coordinador ve en tiempo real quién se une
+- Los datos se guardan en Firebase (Google Cloud) con seguridad
+
+### ¿Funciona offline?
+
+El QR necesita internet para:
+- Abrir la app
+- Conectarse a la base de datos
+- Sincronizarse con otros participantes
+
+Pero una vez dentro, muchas funciones funcionan offline gracias al service worker.
+
+---
+
+## 📋 FORMATO DE LA IMAGEN DESCARGABLE
+
+Cuando descargas el QR, obtienes una imagen PNG de 400x550 píxeles con:
+
+**Sección superior (azul):**
+- Logo "📋 CONVOCATORIA"
+- "CEIP Capitulaciones"
+- Tipo de reunión
+
+**Sección central:**
+- Fecha formateada
+- Código QR (200x200 px)
+- Instrucciones claras
+
+**Sección inferior:**
+- Nombre de la app
+- Fecha de generación
+
+Esta imagen está diseñada para:
+- Verse bien en WhatsApp
+- Imprimirse en A4 (se ve grande y claro)
+- Proyectarse en pantalla
+- Compartirse en redes sociales
+
+---
+
+## 🎯 CONSEJOS PRO
+
+### Para coordinadores:
+
+1. **Genera la citación ANTES de la reunión**
+   - No esperes al último minuto
+   - Envíala 1-2 días antes por WhatsApp
+
+2. **Guarda las imágenes QR**
+   - Crea una carpeta en Google Drive
+   - Guarda todos los QR de las reuniones
+   - Útil para registros y archivos
+
+3. **Para reuniones presenciales**
+   - Proyecta el QR cuando entren los profes
+   - Déjalo visible los primeros 5 minutos
+   - Así llegan y se conectan sin preguntar
+
+4. **Combina métodos**
+   - Proyecta QR en el cole
+   - Y envía por WhatsApp para los que llegan tarde
+   - Doble cobertura
+
+### Para maestros/as:
+
+1. **Guarda el enlace en favoritos**
+   - Si es una reunión semanal
+   - No necesitas escanear cada vez
+
+2. **Practica con la cámara**
+   - Algunos móviles necesitan que mantengas el QR unos segundos
+   - En iPhone a veces hay que pulsar la notificación que aparece
+
+3. **Si no funciona el QR**
+   - Siempre puedes entrar por el método tradicional
+   - El QR es una ayuda, no es obligatorio
+
+---
+
+## ❓ PREGUNTAS FRECUENTES
+
+**P: ¿Tengo que instalar alguna app especial para escanear QR?**
+R: No, la cámara normal del móvil lee códigos QR desde hace años.
+
+**P: ¿Qué pasa si escaneo un QR de una reunión antigua?**
+R: Entraría a esa reunión si todavía existe en el sistema. Los datos no se borran.
+
+**P: ¿Puedo generar varios QR para la misma reunión?**
+R: Sí, puedes generar el QR las veces que quieras. Siempre lleva a la misma reunión.
+
+**P: ¿El QR caduca?**
+R: No, el QR funciona siempre mientras la reunión exista en la base de datos.
+
+**P: ¿Puedo usar el QR en un ordenador?**
+R: El QR está pensado para móviles, pero puedes copiar el enlace y abrirlo en el ordenador.
+
+**P: ¿Qué pasa si borro el mensaje con el QR?**
+R: Puedes generar la citación de nuevo, o los maestros pueden entrar manualmente.
+
+---
+
+## 🎉 ¡YA ESTÁ TODO LISTO!
+
+El sistema de QR está completamente implementado y listo para usar.
+
+**Próximos pasos:**
+1. Sube los archivos a GitHub
+2. Crea una reunión de prueba
+3. Genera la citación con QR
+4. Pruébalo escaneando desde tu móvil
+5. Compártelo con tu equipo
+
+¡Disfruta de reuniones más rápidas y profesionales! 🚀

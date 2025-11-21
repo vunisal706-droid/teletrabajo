@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación PWA - Teletrabajo Capitulaciones</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            margin-bottom: 20px;
+        }
+        .check-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        .check-item.success {
+            background: #f0fdf4;
+            border-color: #10b981;
+        }
+        .check-item.error {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+        .check-item.warning {
+            background: #fffbeb;
+            border-color: #f59e0b;
+        }
+        .status {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .success .status { color: #10b981; }
+        .error .status { color: #ef4444; }
+        .warning .status { color: #f59e0b; }
+        .info {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Verificación de PWA</h1>
+        <p style="margin-bottom: 20px; color: #64748b;">
+            Esta página verifica que tu aplicación esté correctamente configurada como PWA.
+        </p>
+        
+        <div id="results"></div>
+        
+        <button onclick="verificar()">🔄 Verificar de nuevo</button>
+        <button onclick="window.location.href='./'" style="background: #10b981;">✅ Ir a la App</button>
+    </div>
+
+    <script>
+        async function verificar() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            const checks = [];
+            
+            // 1. Verificar HTTPS
+            const isHTTPS = window.location.protocol === 'https:';
+            checks.push({
+                name: 'Conexión HTTPS',
+                status: isHTTPS ? 'success' : 'error',
+                message: isHTTPS ? 'La página se sirve por HTTPS ✓' : 'La página NO se sirve por HTTPS (requerido para PWA)',
+                info: isHTTPS ? 'Las PWA requieren HTTPS excepto en localhost' : 'GitHub Pages automáticamente proporciona HTTPS'
+            });
+            
+            // 2. Verificar Service Worker
+            const hasSW = 'serviceWorker' in navigator;
+            checks.push({
+                name: 'Service Worker',
+                status: hasSW ? 'success' : 'error',
+                message: hasSW ? 'Service Worker soportado ✓' : 'Service Worker NO soportado',
+                info: hasSW ? 'El navegador soporta Service Workers' : 'Tu navegador no soporta Service Workers'
+            });
+            
+            // 3. Verificar Manifest
+            try {
+                const manifestLink = document.querySelector('link[rel="manifest"]');
+                if (manifestLink) {
+                    const manifestResponse = await fetch(manifestLink.href);
+                    const manifest = await manifestResponse.json();
+                    checks.push({
+                        name: 'Manifest',
+                        status: 'success',
+                        message: `Manifest cargado: "${manifest.name}" ✓`,
+                        info: `Display: ${manifest.display}, Iconos: ${manifest.icons.length}`
+                    });
+                } else {
+                    checks.push({
+                        name: 'Manifest',
+                        status: 'error',
+                        message: 'No se encontró el manifest',
+                        info: 'El archivo manifest.json es requerido'
+                    });
+                }
+            } catch (e) {
+                checks.push({
+                    name: 'Manifest',
+                    status: 'error',
+                    message: 'Error cargando manifest',
+                    info: e.message
+                });
+            }
+            
+            // 4. Verificar iconos
+            try {
+                const icon192 = await fetch('icon-192.png');
+                const icon512 = await fetch('icon-512.png');
+                if (icon192.ok && icon512.ok) {
+                    checks.push({
+                        name: 'Iconos',
+                        status: 'success',
+                        message: 'Iconos encontrados (192px y 512px) ✓',
+                        info: 'Los iconos están correctamente ubicados'
+                    });
+                } else {
+                    checks.push({
+                        name: 'Iconos',
+                        status: 'error',
+                        message: 'No se encontraron todos los iconos',
+                        info: 'Verifica que icon-192.png y icon-512.png existan'
+                    });
+                }
+            } catch (e) {
+                checks.push({
+                    name: 'Iconos',
+                    status: 'error',
+                    message: 'Error verificando iconos',
+                    info: 'Asegúrate de haber subido los archivos PNG'
+                });
+            }
+            
+            // 5. Verificar Service Worker registrado
+            if (hasSW) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        checks.push({
+                            name: 'Service Worker Activo',
+                            status: 'success',
+                            message: 'Service Worker registrado y activo ✓',
+                            info: `Scope: ${registration.scope}`
+                        });
+                    } else {
+                        checks.push({
+                            name: 'Service Worker Activo',
+                            status: 'warning',
+                            message: 'Service Worker no registrado aún',
+                            info: 'Recarga la página principal para registrarlo'
+                        });
+                    }
+                } catch (e) {
+                    checks.push({
+                        name: 'Service Worker Activo',
+                        status: 'warning',
+                        message: 'No se pudo verificar el registro',
+                        info: e.message
+                    });
+                }
+            }
+            
+            // 6. Verificar display mode
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            checks.push({
+                name: 'Modo de visualización',
+                status: isStandalone ? 'success' : 'warning',
+                message: isStandalone ? 'Ejecutándose como app standalone ✓' : 'Ejecutándose en navegador',
+                info: isStandalone ? 'La PWA está instalada' : 'Instala la app para usarla en modo standalone'
+            });
+            
+            // Renderizar resultados
+            checks.forEach(check => {
+                const div = document.createElement('div');
+                div.className = `check-item ${check.status}`;
+                div.innerHTML = `
+                    <div class="status">${check.name}</div>
+                    <div>${check.message}</div>
+                    <div class="info">${check.info}</div>
+                `;
+                results.appendChild(div);
+            });
+        }
+        
+        // Ejecutar verificación al cargar
+        verificar();
+    </script>
+</body>
+</html>
