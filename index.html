@@ -2506,36 +2506,81 @@
             installButton.classList.remove('hidden');
         }
 
+        // Variable para rastrear si el evento se disparó
+        let promptEventFired = false;
+
         // Para Android/Chrome - capturar el evento beforeinstallprompt
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('✅ beforeinstallprompt disparado - PWA instalable');
             e.preventDefault();
             deferredPrompt = e;
+            promptEventFired = true;
             installButton.classList.remove('hidden');
         });
 
         // Función para instalar la app
         window.instalarApp = async function() {
+            console.log('🔘 Botón de instalación pulsado');
+            console.log('📱 iOS:', isIOS);
+            console.log('💾 deferredPrompt:', deferredPrompt ? 'Disponible' : 'No disponible');
+            console.log('🎯 promptEventFired:', promptEventFired);
+            
             if (isIOS) {
                 // Mostrar instrucciones para iOS
+                console.log('📱 Mostrando instrucciones iOS');
                 iosInstallModal.classList.add('active');
             } else if (deferredPrompt) {
                 // Android/Chrome - usar el prompt nativo
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                
-                if (outcome === 'accepted') {
-                    console.log('App instalada');
-                    installButton.classList.add('hidden');
+                console.log('🚀 Mostrando prompt de instalación nativo');
+                try {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('📊 Resultado:', outcome);
+                    
+                    if (outcome === 'accepted') {
+                        console.log('✅ Usuario aceptó la instalación');
+                        installButton.classList.add('hidden');
+                    } else {
+                        console.log('❌ Usuario rechazó la instalación');
+                    }
+                    deferredPrompt = null;
+                } catch (error) {
+                    console.error('❌ Error al mostrar prompt:', error);
+                    mostrarInstruccionesManual();
                 }
-                deferredPrompt = null;
             } else {
-                // Fallback - mostrar instrucciones genéricas
-                alert('Para instalar la app:\n\n' +
-                      '• Chrome/Edge: Busca el icono ⊕ en la barra de direcciones\n' +
-                      '• Safari iOS: Pulsa compartir y "Añadir a pantalla de inicio"\n' +
-                      '• Firefox: Menú → "Instalar"');
+                // Fallback mejorado
+                console.log('⚠️ Prompt no disponible, mostrando instrucciones');
+                mostrarInstruccionesManual();
             }
         };
+
+        // Función para mostrar instrucciones manuales
+        function mostrarInstruccionesManual() {
+            const esChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+            const esEdge = /Edg/.test(navigator.userAgent);
+            
+            let mensaje = '📱 CÓMO INSTALAR LA APP:\n\n';
+            
+            if (esChrome || esEdge) {
+                mensaje += '✅ Estás usando Chrome/Edge\n\n';
+                mensaje += '1️⃣ Pulsa el menú (⋮) arriba a la derecha\n';
+                mensaje += '2️⃣ Busca la opción "Instalar aplicación" o "Añadir a pantalla de inicio"\n';
+                mensaje += '3️⃣ Pulsa "Instalar"\n\n';
+                mensaje += '❓ ¿No aparece la opción?\n';
+                mensaje += '• Asegúrate de estar usando HTTPS\n';
+                mensaje += '• Recarga la página (F5)\n';
+                mensaje += '• Limpia la caché del navegador';
+            } else {
+                mensaje += '⚠️ Para instalar la PWA, usa:\n\n';
+                mensaje += '• Chrome para Android\n';
+                mensaje += '• Microsoft Edge\n';
+                mensaje += '• Safari para iOS\n\n';
+                mensaje += 'Luego busca la opción de instalación en el menú del navegador.';
+            }
+            
+            alert(mensaje);
+        }
 
         // Cerrar modal de iOS
         window.cerrarModalIOS = function() {
@@ -2555,8 +2600,28 @@
         // Ocultar botón después de instalar
         window.addEventListener('appinstalled', () => {
             installButton.classList.add('hidden');
-            console.log('PWA instalada correctamente');
+            console.log('✅ PWA instalada correctamente');
+            alert('✅ ¡Aplicación instalada correctamente!\n\nYa puedes encontrarla en tu menú de aplicaciones.');
         });
+
+        // Debug: Verificar después de 2 segundos si el evento se disparó
+        setTimeout(() => {
+            if (!promptEventFired && !isIOS && !isStandalone) {
+                console.warn('⚠️ El evento beforeinstallprompt NO se ha disparado');
+                console.warn('Posibles causas:');
+                console.warn('1. El manifest.json no está correctamente configurado');
+                console.warn('2. El service worker no se registró correctamente');
+                console.warn('3. Los iconos no se encuentran');
+                console.warn('4. La app ya fue instalada anteriormente');
+                console.warn('5. Chrome decidió no mostrar el prompt');
+                
+                // Cambiar el texto del botón para que sea más claro
+                installButton.innerHTML = '📱 Instalar (Ver menú)';
+                installButton.title = 'Si no funciona automáticamente, busca "Instalar" en el menú del navegador (⋮)';
+            } else if (promptEventFired) {
+                console.log('✅ PWA correctamente configurada y lista para instalar');
+            }
+        }, 2000);
     </script>
 
     <script>
