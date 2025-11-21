@@ -1820,19 +1820,23 @@
 
         // Gestión de videollamada
         window.gestionarVideollamada = function() {
-            const enlace = prompt('Introduce el enlace de la videollamada (Google Meet, Zoom, etc.):\n\nDeja vacío para eliminar el enlace actual.');
+            const enlace1 = prompt('🎥 ENLACE 1 (Principal)\nIntroduce el primer enlace de videollamada (Google Meet, Zoom, etc.):\n\nDeja vacío para eliminar todos los enlaces.');
             
-            if (enlace === null) return; // Cancelado
+            if (enlace1 === null) return; // Cancelado
             
             const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             
-            if (enlace.trim() === '') {
-                // Eliminar enlace
+            if (enlace1.trim() === '') {
+                // Eliminar enlaces
                 remove(videollamadaRef);
             } else {
-                // Guardar enlace
+                // Pedir segundo enlace
+                const enlace2 = prompt('🎥 ENLACE 2 (Alternativo)\nIntroduce el segundo enlace de videollamada (opcional):\n\nDeja vacío si solo quieres un enlace.');
+                
+                // Guardar enlace(s)
                 set(videollamadaRef, {
-                    enlace: enlace.trim(),
+                    enlace1: enlace1.trim(),
+                    enlace2: enlace2 && enlace2.trim() !== '' ? enlace2.trim() : null,
                     timestamp: Date.now()
                 });
             }
@@ -1850,7 +1854,7 @@
             if (window.usuarioActual.rol === 'coordinador') {
                 gestionContainer.innerHTML = `
                     <button class="btn btn-outline btn-small" onclick="gestionarVideollamada()" style="margin-bottom: 20px;">
-                        🎥 ${snapshot.exists() ? 'Editar' : 'Añadir'} Enlace de Videollamada
+                        🎥 ${snapshot.exists() ? 'Editar' : 'Añadir'} Enlaces de Videollamada
                     </button>
                 `;
             } else {
@@ -1860,19 +1864,29 @@
             // Banner de videollamada
             if (snapshot.exists()) {
                 const videollamada = snapshot.val();
+                
+                // Compatibilidad con versión antigua (un solo enlace)
+                const enlace1 = videollamada.enlace1 || videollamada.enlace;
+                const enlace2 = videollamada.enlace2;
+                
                 bannerContainer.innerHTML = `
                     <div class="videollamada-banner">
                         <div class="videollamada-banner-content">
                             <div class="videollamada-icon">🎥</div>
                             <div class="videollamada-texto">
-                                <strong>Videollamada Activa</strong>
+                                <strong>Videollamada${enlace2 ? 's Activas' : ' Activa'}</strong>
                                 <small>Haz clic para unirte a la reunión virtual</small>
                             </div>
                         </div>
                         <div class="videollamada-actions">
-                            <a href="${videollamada.enlace}" target="_blank" class="btn-videollamada">
-                                🚀 Unirse
+                            <a href="${enlace1}" target="_blank" class="btn-videollamada">
+                                1️⃣ Enlace Principal
                             </a>
+                            ${enlace2 ? `
+                                <a href="${enlace2}" target="_blank" class="btn-videollamada">
+                                    2️⃣ Enlace Alternativo
+                                </a>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -1941,6 +1955,53 @@
             }
             
             y += 5;
+            
+            // Enlaces de videollamada
+            if (sesionData.videollamada) {
+                checkPage();
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text('Enlaces de Videollamada:', 20, y);
+                y += lineHeight;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                
+                // Compatibilidad con versión antigua
+                const enlace1 = sesionData.videollamada.enlace1 || sesionData.videollamada.enlace;
+                const enlace2 = sesionData.videollamada.enlace2;
+                
+                if (enlace1) {
+                    checkPage();
+                    doc.setTextColor(0, 0, 255);
+                    doc.text('1. Enlace Principal:', 25, y);
+                    y += lineHeight;
+                    const lineas1 = doc.splitTextToSize(`   ${enlace1}`, 160);
+                    lineas1.forEach(linea => {
+                        checkPage();
+                        doc.text(linea, 25, y);
+                        y += lineHeight - 1;
+                    });
+                    doc.setTextColor(0, 0, 0);
+                }
+                
+                if (enlace2) {
+                    y += 2;
+                    checkPage();
+                    doc.setTextColor(0, 0, 255);
+                    doc.text('2. Enlace Alternativo:', 25, y);
+                    y += lineHeight;
+                    const lineas2 = doc.splitTextToSize(`   ${enlace2}`, 160);
+                    lineas2.forEach(linea => {
+                        checkPage();
+                        doc.text(linea, 25, y);
+                        y += lineHeight - 1;
+                    });
+                    doc.setTextColor(0, 0, 0);
+                }
+                
+                y += 5;
+            }
             
             // Orden del día
             doc.setFontSize(12);
