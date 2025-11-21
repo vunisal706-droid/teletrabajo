@@ -2879,10 +2879,22 @@
             }
 
             // Construir URL para el QR
-            const baseUrl = window.location.origin + window.location.pathname;
+            // Obtener la URL base correctamente para GitHub Pages
+            let baseUrl = window.location.origin + window.location.pathname;
+            
+            // Si el pathname termina en .html, usarlo tal cual
+            // Si termina en /, es un directorio (como github.io/repo/)
+            // Asegurarse de que la URL sea correcta
+            if (!baseUrl.endsWith('.html') && !baseUrl.endsWith('/')) {
+                baseUrl += '/';
+            }
+            
             const qrUrl = `${baseUrl}?reunion=${encodeURIComponent(window.sesionActual)}&fecha=${window.fechaActual}`;
             
-            console.log('📱 URL del QR:', qrUrl);
+            console.log('📱 Generando QR con URL:', qrUrl);
+            console.log('   - origin:', window.location.origin);
+            console.log('   - pathname:', window.location.pathname);
+            console.log('   - baseUrl:', baseUrl);
 
             try {
                 // Llenar información del modal
@@ -3063,7 +3075,11 @@
 
         // Compartir citación
         window.compartirCitacion = async function() {
-            const baseUrl = window.location.origin + window.location.pathname;
+            // Construir URL correctamente para GitHub Pages
+            let baseUrl = window.location.origin + window.location.pathname;
+            if (!baseUrl.endsWith('.html') && !baseUrl.endsWith('/')) {
+                baseUrl += '/';
+            }
             const qrUrl = `${baseUrl}?reunion=${encodeURIComponent(window.sesionActual)}&fecha=${window.fechaActual}`;
             const fecha = document.getElementById('citacion-fecha-reunion').textContent;
             
@@ -3131,62 +3147,160 @@
         
         // Detectar parámetros en la URL y auto-unirse
         window.addEventListener('load', () => {
+            console.log('🔍 Verificando parámetros en URL...');
+            console.log('   URL completa:', window.location.href);
+            console.log('   Search params:', window.location.search);
+            
             const urlParams = new URLSearchParams(window.location.search);
             const reunion = urlParams.get('reunion');
             const fecha = urlParams.get('fecha');
             
+            console.log('   Parámetros detectados:');
+            console.log('   - reunion:', reunion);
+            console.log('   - fecha:', fecha);
+            
             if (reunion && fecha) {
-                console.log('📱 Detectados parámetros de reunión en URL');
-                console.log('  - Reunión:', reunion);
-                console.log('  - Fecha:', fecha);
+                console.log('✅ Parámetros válidos detectados, iniciando auto-unión...');
                 
-                // Esperar un poco para que Firebase se inicialice
+                // Mostrar un indicador visual inmediato
+                document.body.innerHTML += `
+                    <div style="
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: white;
+                        padding: 30px;
+                        border-radius: 12px;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                        z-index: 99999;
+                        text-align: center;
+                    " id="loadingAutoJoin">
+                        <h2 style="color: #2563eb; margin: 0 0 15px 0;">📱 Cargando reunión...</h2>
+                        <p style="margin: 0; color: #64748b;">${reunion}<br>${fecha}</p>
+                        <div style="margin-top: 20px;">
+                            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes spin { to { transform: rotate(360deg); } }
+                    </style>
+                `;
+                
+                // Esperar a que Firebase esté listo
+                const esperarFirebase = setInterval(() => {
+                    if (typeof database !== 'undefined' && database) {
+                        clearInterval(esperarFirebase);
+                        console.log('✅ Firebase listo, procediendo con auto-unión');
+                        setTimeout(() => {
+                            autoUnirseDesdeQR(reunion, fecha);
+                        }, 500);
+                    } else {
+                        console.log('⏳ Esperando a que Firebase se inicialice...');
+                    }
+                }, 200);
+                
+                // Timeout de seguridad
                 setTimeout(() => {
-                    autoUnirseDesdeQR(reunion, fecha);
-                }, 1000);
+                    clearInterval(esperarFirebase);
+                    if (typeof database === 'undefined') {
+                        console.error('❌ Firebase no se inicializó a tiempo');
+                        alert('Error: No se pudo conectar a la base de datos. Recarga la página.');
+                        document.getElementById('loadingAutoJoin')?.remove();
+                    }
+                }, 10000);
+            } else {
+                console.log('ℹ️ No hay parámetros de auto-unión en la URL');
             }
         });
 
         async function autoUnirseDesdeQR(tipoReunion, fecha) {
-            console.log('🚀 Auto-uniéndose a la reunión...');
+            console.log('🚀 Ejecutando autoUnirseDesdeQR...');
+            console.log('   - Tipo reunión:', tipoReunion);
+            console.log('   - Fecha:', fecha);
             
-            // Pedir nombre al usuario
-            const nombre = prompt(`📱 Vas a unirte a:\n\n${tipoReunion}\nFecha: ${fecha}\n\n¿Cuál es tu nombre?`);
-            
-            if (!nombre || nombre.trim() === '') {
-                console.log('❌ Nombre no proporcionado, cancelando auto-unión');
-                return;
+            try {
+                // Ocultar el loading
+                document.getElementById('loadingAutoJoin')?.remove();
+                
+                // Pedir nombre al usuario
+                const nombre = prompt(`📱 Vas a unirte a:\n\n${tipoReunion}\nFecha: ${fecha}\n\n¿Cuál es tu nombre?`);
+                
+                if (!nombre || nombre.trim() === '') {
+                    console.log('❌ Nombre no proporcionado, cancelando auto-unión');
+                    // Limpiar parámetros de la URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return;
+                }
+
+                console.log('✅ Nombre proporcionado:', nombre.trim());
+
+                // Guardar datos del usuario
+                window.usuarioActual = {
+                    nombre: nombre.trim(),
+                    rol: 'maestro',
+                    timestamp: Date.now()
+                };
+
+                window.sesionActual = tipoReunion;
+                window.fechaActual = fecha;
+
+                console.log('📊 Datos del usuario guardados');
+                console.log('🔍 Verificando si la reunión existe...');
+
+                // Verificar que la reunión existe
+                const sesionRef = ref(database, `sesiones/${tipoReunion}/${fecha}`);
+                const snapshot = await get(sesionRef);
+
+                if (!snapshot.exists()) {
+                    console.error('❌ La reunión no existe en la base de datos');
+                    alert('⚠️ Esta reunión aún no ha sido creada por el coordinador.\n\nPor favor, espera a que se inicie la reunión.');
+                    // Limpiar parámetros de la URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return;
+                }
+
+                console.log('✅ La reunión existe');
+                const sesionData = snapshot.val();
+                console.log('📋 Datos de la reunión:', sesionData);
+
+                // Registrar participante
+                console.log('👤 Registrando participante...');
+                const participanteRef = ref(database, `sesiones/${tipoReunion}/${fecha}/participantes/${Date.now()}`);
+                await set(participanteRef, window.usuarioActual);
+                console.log('✅ Participante registrado');
+
+                // Verificar que las funciones necesarias existen
+                if (typeof mostrarScreen === 'undefined') {
+                    throw new Error('La función mostrarScreen no está definida');
+                }
+                if (typeof cargarReunion === 'undefined') {
+                    throw new Error('La función cargarReunion no está definida');
+                }
+
+                console.log('📺 Cambiando a pantalla de reunión...');
+                
+                // Ir directamente a la pantalla de reunión
+                mostrarScreen('screenReunion');
+                
+                console.log('📥 Cargando contenido de la reunión...');
+                cargarReunion();
+
+                console.log('✅ Auto-unión completada exitosamente');
+                
+                // Limpiar parámetros de la URL sin recargar la página
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                setTimeout(() => {
+                    alert('✅ Te has unido correctamente a la reunión');
+                }, 500);
+                
+            } catch (error) {
+                console.error('❌ Error en autoUnirseDesdeQR:', error);
+                alert(`❌ Error al unirse a la reunión:\n\n${error.message}\n\nContacta con el coordinador.`);
+                // Limpiar parámetros de la URL
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
-
-            // Guardar datos del usuario
-            window.usuarioActual = {
-                nombre: nombre.trim(),
-                rol: 'maestro',
-                timestamp: Date.now()
-            };
-
-            window.sesionActual = tipoReunion;
-            window.fechaActual = fecha;
-
-            // Verificar que la reunión existe
-            const sesionRef = ref(database, `sesiones/${tipoReunion}/${fecha}`);
-            const snapshot = await get(sesionRef);
-
-            if (!snapshot.exists()) {
-                alert('⚠️ Esta reunión aún no ha sido creada por el coordinador.\n\nPor favor, espera a que se inicie la reunión.');
-                return;
-            }
-
-            // Registrar participante
-            const participanteRef = ref(database, `sesiones/${tipoReunion}/${fecha}/participantes/${Date.now()}`);
-            await set(participanteRef, window.usuarioActual);
-
-            // Ir directamente a la pantalla de reunión
-            mostrarScreen('screenReunion');
-            cargarReunion();
-
-            console.log('✅ Auto-unión completada');
-            alert('✅ Te has unido correctamente a la reunión');
         }
     </script>
 
