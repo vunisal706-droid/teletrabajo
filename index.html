@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="icon-180.png">
     
     <!-- Manifest y favicons -->
-    <link rel="manifest" href="manifest-teletrabajo.json">
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <title>Teletrabajo Capitulaciones</title>
@@ -2339,6 +2339,10 @@
                 const enlace1 = videollamada.enlace1 || videollamada.enlace;
                 const enlace2 = videollamada.enlace2;
                 
+                // Obtener datos de la reunión para compartir
+                const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
+                const fechaFormateada = formatearFecha(window.fechaActual);
+                
                 bannerContainer.innerHTML = `
                     <div class="videollamada-banner">
                         <div class="videollamada-banner-content">
@@ -2349,17 +2353,32 @@
                             </div>
                         </div>
                         <div class="videollamada-actions">
-                            <a href="${enlace1}" target="_blank" class="btn-videollamada">
+                            <a href="${enlace1}" target="_blank" class="btn-videollamada" id="link-video-1">
                                 1️⃣ Enlace Principal
                             </a>
                             ${enlace2 ? `
-                                <a href="${enlace2}" target="_blank" class="btn-videollamada">
+                                <a href="${enlace2}" target="_blank" class="btn-videollamada" id="link-video-2">
                                     2️⃣ Enlace Alternativo
                                 </a>
                             ` : ''}
                         </div>
                     </div>
                 `;
+                
+                // Añadir botones de compartir después de que el DOM esté actualizado
+                setTimeout(() => {
+                    const link1 = document.getElementById('link-video-1');
+                    if (link1 && typeof addShareButton === 'function') {
+                        addShareButton(link1, nombreReunion, fechaFormateada, '');
+                    }
+                    
+                    if (enlace2) {
+                        const link2 = document.getElementById('link-video-2');
+                        if (link2 && typeof addShareButton === 'function') {
+                            addShareButton(link2, nombreReunion + ' (Alternativo)', fechaFormateada, '');
+                        }
+                    }
+                }, 100);
             } else {
                 bannerContainer.innerHTML = '';
             }
@@ -3266,7 +3285,7 @@
 
                 // Registrar participante
                 console.log('👤 Registrando participante...');
-                const participanteRef = ref(database, `sesiones/${tipoReunion}/${fecha}/participantes/${Date.now()}`);
+                const participanteRef = ref(database, `sesiones/${tipoReunion}/${fecha}/participantes/${window.usuarioActual.nombre}`);
                 await set(participanteRef, window.usuarioActual);
                 console.log('✅ Participante registrado');
 
@@ -3300,7 +3319,7 @@
         // Service Worker - Registro mejorado
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw-teletrabajo.js', { scope: '/' })
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
                     .then(registration => {
                         console.log('✅ Service Worker registrado:', registration.scope);
                         
@@ -3319,6 +3338,452 @@
                     });
             });
         }
+    </script>
+
+    <!-- ============================================ -->
+    <!-- MÓDULO DE COMPARTIR ENLACES DE VIDEOLLAMADAS -->
+    <!-- ============================================ -->
+    <script>
+        class ShareLinksManager {
+            constructor() {
+                this.initializeStyles();
+            }
+
+            async shareLink(url, meetingTitle = 'Reunión', meetingDate = '', meetingTime = '') {
+                const message = this.buildShareMessage(url, meetingTitle, meetingDate, meetingTime);
+                this.showShareMenu(url, message, meetingTitle);
+            }
+
+            buildShareMessage(url, title, date, time) {
+                let message = `📹 *${title}*\n\n`;
+                if (date) message += `📅 Fecha: ${date}\n`;
+                if (time) message += `🕒 Hora: ${time}\n`;
+                message += `\n🔗 Enlace de videollamada:\n${url}`;
+                return message;
+            }
+
+            showShareMenu(url, message, title) {
+                const overlay = document.createElement('div');
+                overlay.className = 'share-overlay';
+                overlay.onclick = () => overlay.remove();
+
+                const menu = document.createElement('div');
+                menu.className = 'share-menu';
+                menu.onclick = (e) => e.stopPropagation();
+
+                menu.innerHTML = `
+                    <div class="share-menu-header">
+                        <h3>Compartir enlace</h3>
+                        <button class="share-close-btn" onclick="this.closest('.share-overlay').remove()">×</button>
+                    </div>
+                    <div class="share-menu-content">
+                        <div class="share-link-preview">
+                            <div class="share-link-text">${url}</div>
+                        </div>
+                        <div class="share-options">
+                            <button class="share-option whatsapp" data-action="whatsapp">
+                                <svg viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                                </svg>
+                                <span>WhatsApp</span>
+                            </button>
+                            
+                            <button class="share-option email" data-action="email">
+                                <svg viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                                </svg>
+                                <span>Email</span>
+                            </button>
+
+                            <button class="share-option copy" data-action="copy">
+                                <svg viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                </svg>
+                                <span>Copiar enlace</span>
+                            </button>
+
+                            ${this.canUseNativeShare() ? `
+                                <button class="share-option native" data-action="native">
+                                    <svg viewBox="0 0 24 24" width="24" height="24">
+                                        <path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                                    </svg>
+                                    <span>Compartir...</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                overlay.appendChild(menu);
+                document.body.appendChild(overlay);
+
+                menu.querySelectorAll('.share-option').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const action = btn.dataset.action;
+                        this.handleShareAction(action, url, message, title);
+                    });
+                });
+            }
+
+            async handleShareAction(action, url, message, title) {
+                switch(action) {
+                    case 'whatsapp':
+                        this.shareViaWhatsApp(url, message);
+                        break;
+                    case 'email':
+                        this.shareViaEmail(url, message, title);
+                        break;
+                    case 'copy':
+                        await this.copyToClipboard(url);
+                        break;
+                    case 'native':
+                        await this.shareNative(url, message, title);
+                        break;
+                }
+                document.querySelector('.share-overlay')?.remove();
+            }
+
+            shareViaWhatsApp(url, message) {
+                const encodedMessage = encodeURIComponent(message);
+                const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+                window.open(whatsappUrl, '_blank');
+                this.showToast('Abriendo WhatsApp...', 'success');
+            }
+
+            shareViaEmail(url, message, title) {
+                const subject = encodeURIComponent(`Invitación: ${title}`);
+                const body = encodeURIComponent(message);
+                const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+                window.location.href = mailtoUrl;
+                this.showToast('Abriendo cliente de correo...', 'success');
+            }
+
+            async copyToClipboard(url) {
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(url);
+                        this.showToast('¡Enlace copiado al portapapeles!', 'success');
+                    } else {
+                        const textArea = document.createElement('textarea');
+                        textArea.value = url;
+                        textArea.style.position = 'fixed';
+                        textArea.style.left = '-999999px';
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        this.showToast('¡Enlace copiado!', 'success');
+                    }
+                } catch (err) {
+                    console.error('Error al copiar:', err);
+                    this.showToast('Error al copiar el enlace', 'error');
+                }
+            }
+
+            async shareNative(url, message, title) {
+                try {
+                    await navigator.share({
+                        title: title,
+                        text: message,
+                        url: url
+                    });
+                    this.showToast('Compartido correctamente', 'success');
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Error al compartir:', err);
+                        this.showToast('Error al compartir', 'error');
+                    }
+                }
+            }
+
+            canUseNativeShare() {
+                return navigator.share !== undefined;
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `share-toast share-toast-${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.classList.add('show'), 10);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            initializeStyles() {
+                if (document.getElementById('share-links-styles')) return;
+
+                const style = document.createElement('style');
+                style.id = 'share-links-styles';
+                style.textContent = `
+                    .share-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.5);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 10000;
+                        animation: fadeIn 0.2s ease;
+                    }
+
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+
+                    .share-menu {
+                        background: white;
+                        border-radius: 12px;
+                        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+                        max-width: 400px;
+                        width: 90%;
+                        animation: slideUp 0.3s ease;
+                    }
+
+                    @keyframes slideUp {
+                        from { 
+                            transform: translateY(20px);
+                            opacity: 0;
+                        }
+                        to { 
+                            transform: translateY(0);
+                            opacity: 1;
+                        }
+                    }
+
+                    .share-menu-header {
+                        padding: 20px;
+                        border-bottom: 1px solid #e0e0e0;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+
+                    .share-menu-header h3 {
+                        margin: 0;
+                        font-size: 20px;
+                        color: #333;
+                    }
+
+                    .share-close-btn {
+                        background: none;
+                        border: none;
+                        font-size: 28px;
+                        color: #666;
+                        cursor: pointer;
+                        padding: 0;
+                        width: 30px;
+                        height: 30px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                        transition: all 0.2s;
+                    }
+
+                    .share-close-btn:hover {
+                        background: #f0f0f0;
+                        color: #333;
+                    }
+
+                    .share-menu-content {
+                        padding: 20px;
+                    }
+
+                    .share-link-preview {
+                        background: #f5f5f5;
+                        padding: 12px;
+                        border-radius: 8px;
+                        margin-bottom: 20px;
+                    }
+
+                    .share-link-text {
+                        font-size: 13px;
+                        color: #666;
+                        word-break: break-all;
+                        line-height: 1.4;
+                    }
+
+                    .share-options {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 10px;
+                    }
+
+                    .share-option {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 16px;
+                        border: 2px solid #e0e0e0;
+                        border-radius: 10px;
+                        background: white;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-size: 14px;
+                        color: #333;
+                    }
+
+                    .share-option:hover {
+                        border-color: #4CAF50;
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .share-option:active {
+                        transform: translateY(0);
+                    }
+
+                    .share-option svg {
+                        width: 32px;
+                        height: 32px;
+                    }
+
+                    .share-option.whatsapp {
+                        color: #25D366;
+                    }
+
+                    .share-option.whatsapp:hover {
+                        border-color: #25D366;
+                        background: #f0fdf4;
+                    }
+
+                    .share-option.email {
+                        color: #EA4335;
+                    }
+
+                    .share-option.email:hover {
+                        border-color: #EA4335;
+                        background: #fef2f2;
+                    }
+
+                    .share-option.copy {
+                        color: #1976D2;
+                    }
+
+                    .share-option.copy:hover {
+                        border-color: #1976D2;
+                        background: #eff6ff;
+                    }
+
+                    .share-option.native {
+                        color: #666;
+                    }
+
+                    .share-option.native:hover {
+                        border-color: #666;
+                        background: #f9fafb;
+                    }
+
+                    .share-toast {
+                        position: fixed;
+                        bottom: 20px;
+                        left: 50%;
+                        transform: translateX(-50%) translateY(100px);
+                        background: #323232;
+                        color: white;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                        z-index: 10001;
+                        transition: transform 0.3s ease;
+                        font-size: 14px;
+                    }
+
+                    .share-toast.show {
+                        transform: translateX(-50%) translateY(0);
+                    }
+
+                    .share-toast-success {
+                        background: #4CAF50;
+                    }
+
+                    .share-toast-error {
+                        background: #f44336;
+                    }
+
+                    .share-link-btn {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                        padding: 8px 12px;
+                        background: #4CAF50;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 13px;
+                        transition: all 0.2s;
+                        margin-left: 10px;
+                        text-decoration: none;
+                    }
+
+                    .share-link-btn:hover {
+                        background: #45a049;
+                        transform: translateY(-1px);
+                        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+                    }
+
+                    .share-link-btn:active {
+                        transform: translateY(0);
+                    }
+
+                    .share-link-btn svg {
+                        width: 16px;
+                        height: 16px;
+                    }
+
+                    @media (max-width: 480px) {
+                        .share-options {
+                            grid-template-columns: 1fr;
+                        }
+                        
+                        .share-menu {
+                            width: 95%;
+                        }
+                    }
+                `;
+                
+                document.head.appendChild(style);
+            }
+        }
+
+        // Crear instancia global
+        const shareLinksManager = new ShareLinksManager();
+
+        // Función helper para añadir botón de compartir a un enlace existente
+        function addShareButton(linkElement, meetingTitle, meetingDate, meetingTime) {
+            const url = linkElement.href || linkElement.textContent;
+            
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'share-link-btn';
+            shareBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                </svg>
+                Compartir
+            `;
+            
+            shareBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                shareLinksManager.shareLink(url, meetingTitle, meetingDate, meetingTime);
+            };
+            
+            linkElement.parentNode.insertBefore(shareBtn, linkElement.nextSibling);
+            return shareBtn;
+        }
+
+        // Exponer funciones globalmente
+        window.shareLinksManager = shareLinksManager;
+        window.addShareButton = addShareButton;
     </script>
 </body>
 </html>
