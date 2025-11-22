@@ -1,39 +1,69 @@
-const CACHE_NAME = 'teletrabajo-capitulaciones-v3';
+const CACHE_NAME = 'teletrabajo-capitulaciones-v5';
+
+// Obtener la ruta base de la app
+const getBaseUrl = () => {
+  const url = new URL(self.location.href);
+  const path = url.pathname;
+  // Si termina en sw.js, obtener el directorio padre
+  return path.substring(0, path.lastIndexOf('/') + 1);
+};
+
+const baseUrl = getBaseUrl();
+
 const urlsToCache = [
-  '/',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-180.png'
+  baseUrl,
+  baseUrl + 'index.html',
+  baseUrl + 'manifest.json',
+  baseUrl + 'icon-192.png',
+  baseUrl + 'icon-512.png',
+  baseUrl + 'icon-180.png'
 ];
 
 // Instalar service worker y cachear archivos
 self.addEventListener('install', event => {
-  console.log('Service Worker: Installing...');
+  console.log('Service Worker v5: Installing...');
+  console.log('Base URL:', baseUrl);
+  console.log('URLs to cache:', urlsToCache);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker: Caching files');
-        return cache.addAll(urlsToCache);
+        console.log('Service Worker v5: Caching files');
+        return cache.addAll(urlsToCache).catch(err => {
+          console.error('Error caching files:', err);
+          // Intentar cachear uno por uno
+          return Promise.all(
+            urlsToCache.map(url => {
+              return cache.add(url).catch(err => {
+                console.error('Failed to cache:', url, err);
+              });
+            })
+          );
+        });
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log('Service Worker v5: Skip waiting');
+        return self.skipWaiting();
+      })
   );
 });
 
 // Activar service worker y limpiar cachés antiguas
 self.addEventListener('activate', event => {
-  console.log('Service Worker: Activating...');
+  console.log('Service Worker v5: Activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker: Deleting old cache:', cacheName);
+            console.log('Service Worker v5: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('Service Worker v5: Claiming clients');
+      return self.clients.claim();
+    })
   );
 });
 
