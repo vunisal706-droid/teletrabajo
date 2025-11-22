@@ -1,7 +1,7 @@
 const CACHE_NAME = 'teletrabajo-capitulaciones-v3';
 const urlsToCache = [
   '/',
-  '/manifest-teletrabajo.json',
+  '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
   '/icon-180.png'
