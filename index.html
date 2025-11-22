@@ -3270,21 +3270,13 @@
                 await set(participanteRef, window.usuarioActual);
                 console.log('✅ Participante registrado');
 
-                // Verificar que las funciones necesarias existen
-                if (typeof mostrarScreen === 'undefined') {
-                    throw new Error('La función mostrarScreen no está definida');
-                }
-                if (typeof cargarReunion === 'undefined') {
-                    throw new Error('La función cargarReunion no está definida');
-                }
-
                 console.log('📺 Cambiando a pantalla de reunión...');
                 
-                // Ir directamente a la pantalla de reunión
-                mostrarScreen('screenReunion');
+                // Ir directamente a la pantalla de reunión usando window para asegurar acceso
+                window.cambiarPantalla('screenReunion');
                 
                 console.log('📥 Cargando contenido de la reunión...');
-                cargarReunion();
+                window.cargarReunion();
 
                 console.log('✅ Auto-unión completada exitosamente');
                 
