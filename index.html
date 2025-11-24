@@ -352,6 +352,7 @@
             line-height: 1.5;
             color: var(--text);
             word-wrap: break-word;
+            white-space: pre-wrap; /* Respeta saltos de línea y espacios */
         }
 
         .votacion-card {
@@ -2029,6 +2030,8 @@
                     div.setAttribute('data-aport-id', Object.keys(aportaciones)[index]);
                     
                     const esAutor = aport.autor === window.usuarioActual.nombre;
+                    const esCoordinador = window.usuarioActual.rol === 'coordinador';
+                    const puedeEditar = esAutor || esCoordinador;
                     
                     div.innerHTML = `
                         <div class="aportacion-header">
@@ -2043,7 +2046,7 @@
                             })}</span>
                         </div>
                         <div class="aportacion-texto">${aport.texto}</div>
-                        ${esAutor ? `
+                        ${puedeEditar ? `
                             <div style="margin-top: 8px; display: flex; gap: 8px;">
                                 <button onclick="editarAportacion('${puntoId}', '${Object.keys(aportaciones)[index]}')" 
                                         style="padding: 4px 10px; background: var(--warning); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
@@ -2068,7 +2071,7 @@
             }
         };
 
-        // Editar aportación (solo el autor)
+        // Editar aportación (autor o coordinador)
         window.editarAportacion = async function(puntoId, aportacionId) {
             const aportacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones/${aportacionId}`);
             const snapshot = await get(aportacionRef);
@@ -2080,22 +2083,64 @@
             
             const aportacion = snapshot.val();
             
-            // Verificar que el usuario actual es el autor
-            if (aportacion.autor !== window.usuarioActual.nombre) {
+            // Verificar que el usuario actual es el autor O es coordinador
+            const esAutor = aportacion.autor === window.usuarioActual.nombre;
+            const esCoordinador = window.usuarioActual.rol === 'coordinador';
+            
+            if (!esAutor && !esCoordinador) {
                 alert('Solo puedes editar tus propias aportaciones');
                 return;
             }
             
-            const nuevoTexto = prompt('Editar aportación:', aportacion.texto);
+            // Crear modal para editar con textarea grande
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
             
-            if (nuevoTexto && nuevoTexto.trim() !== '') {
-                await update(aportacionRef, {
-                    texto: nuevoTexto.trim()
-                });
-            }
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 25px; max-width: 600px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">✏️ Editar aportación</h3>
+                    <textarea id="textareaEditarAportacion" style="width: 100%; min-height: 150px; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical;">${aportacion.texto}</textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="this.closest('div').parentElement.parentElement.remove()" style="flex: 1; padding: 12px; background: transparent; border: 2px solid var(--primary); color: var(--primary); border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            Cancelar
+                        </button>
+                        <button id="btnGuardarEdicion" style="flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Focus en el textarea
+            const textarea = document.getElementById('textareaEditarAportacion');
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            
+            // Evento para guardar
+            document.getElementById('btnGuardarEdicion').onclick = async function() {
+                const nuevoTexto = textarea.value.trim();
+                
+                if (nuevoTexto !== '') {
+                    await update(aportacionRef, {
+                        texto: nuevoTexto
+                    });
+                    modal.remove();
+                } else {
+                    alert('El texto no puede estar vacío');
+                }
+            };
+            
+            // Cerrar modal al hacer clic fuera
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
         };
 
-        // Borrar aportación (solo el autor)
+        // Borrar aportación (autor o coordinador)
         window.borrarAportacion = async function(puntoId, aportacionId) {
             const aportacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones/${aportacionId}`);
             const snapshot = await get(aportacionRef);
@@ -2107,8 +2152,11 @@
             
             const aportacion = snapshot.val();
             
-            // Verificar que el usuario actual es el autor
-            if (aportacion.autor !== window.usuarioActual.nombre) {
+            // Verificar que el usuario actual es el autor O es coordinador
+            const esAutor = aportacion.autor === window.usuarioActual.nombre;
+            const esCoordinador = window.usuarioActual.rol === 'coordinador';
+            
+            if (!esAutor && !esCoordinador) {
                 alert('Solo puedes borrar tus propias aportaciones');
                 return;
             }
@@ -2154,6 +2202,21 @@
             linkInput.value = '';
         };
 
+        // Eliminar documento (solo coordinador)
+        window.eliminarDocumento = async function(puntoId, documentoId) {
+            if (window.usuarioActual.rol !== 'coordinador') {
+                alert('Solo el coordinador puede eliminar documentos');
+                return;
+            }
+            
+            if (!confirm('¿Estás seguro de que quieres eliminar este documento?')) {
+                return;
+            }
+            
+            const documentoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/documentos/${documentoId}`);
+            await remove(documentoRef);
+        };
+
         // Cargar documentos
         window.cargarDocumentos = async function(puntoId) {
             const contenedor = document.getElementById('documentos_' + puntoId);
@@ -2170,7 +2233,7 @@
                 }
 
                 const documentos = snapshot.val();
-                const documentosArray = Object.values(documentos);
+                const documentosArray = Object.entries(documentos).map(([id, data]) => ({id, ...data}));
                 documentosArray.sort((a, b) => a.timestamp - b.timestamp);
 
                 contenedor.innerHTML = '<strong style="display: block; margin-bottom: 10px;">📎 Documentos adjuntos:</strong>';
@@ -2192,10 +2255,22 @@
                                     })}
                                 </div>
                             </div>
-                            <button onclick="shareLinksManager.shareLink('${doc.link}', '${doc.nombre.replace(/'/g, "\\'")}', '', '')" 
-                                    style="background: #4CAF50; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 13px; white-space: nowrap;">
-                                📤 Compartir
-                            </button>
+                            <div style="display: flex; gap: 5px; flex-shrink: 0;">
+                                <button onclick="shareLinksManager.shareLink('${doc.link}', '${doc.nombre.replace(/'/g, "\\'")}', '', '')" 
+                                        style="background: #4CAF50; color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 8px;" 
+                                        title="Compartir documento">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                                    </svg>
+                                </button>
+                                ${window.usuarioActual.rol === 'coordinador' ? `
+                                    <button onclick="eliminarDocumento('${puntoId}', '${doc.id}')" 
+                                            style="background: var(--danger); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;" 
+                                            title="Eliminar documento">
+                                        🗑️
+                                    </button>
+                                ` : ''}
+                            </div>
                         </div>
                     `;
                     contenedor.appendChild(div);
