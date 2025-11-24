@@ -77,6 +77,17 @@
             opacity: 0.9;
         }
 
+        /* Banner título de reunión */
+        .meeting-title-banner {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 20px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+        }
+
         .container {
             max-width: 900px;
             margin: 0 auto;
@@ -135,6 +146,18 @@
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Mejorar visibilidad del input de nombre en móviles */
+        #inputNombre {
+            border: 3px solid var(--primary);
+            background: white;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+        }
+
+        #inputNombre::placeholder {
+            color: #94a3b8;
+            font-weight: 500;
         }
 
         textarea {
@@ -1117,6 +1140,8 @@
     <div class="header">
         <h1>📋 Teletrabajo Capitulaciones</h1>
         <div class="subtitle">CEIP Capitulaciones de Santa Fe</div>
+        <!-- Título de la reunión (se mostrará dinámicamente) -->
+        <div id="meetingTitleBanner" class="meeting-title-banner" style="display: none;"></div>
     </div>
 
     <div class="status-indicator" id="statusIndicator" style="display: none;">
@@ -1188,6 +1213,9 @@
                         <strong>Escanea este código QR con tu móvil</strong><br>
                         para unirte directamente a la reunión
                     </div>
+                    <button class="btn btn-secondary btn-small" onclick="generarEnlaceReunion()" style="margin-top: 15px; width: auto;">
+                        🔗 Generar Enlace de Reunión
+                    </button>
                 </div>
             </div>
 
@@ -1358,7 +1386,7 @@
             <div class="chat-lateral-mensajes" id="mensajesGenerales"></div>
             <div class="chat-lateral-input">
                 <div class="chat-lateral-input-group">
-                    <input type="text" id="inputChatGeneral" placeholder="Escribe un mensaje..." onkeydown="if(event.key === 'Enter') { enviarMensajeGeneral(); }">
+                    <input type="text" id="inputChatGeneral" placeholder="Escribe un mensaje...">
                     <button onclick="enviarMensajeGeneral()">📤</button>
                 </div>
             </div>
@@ -1578,14 +1606,18 @@
 
             // Si la reunión aún está en configuración y eres coordinador, ir a configuración
             if (sesionData.estado === 'configurando' && rol === 'coordinador') {
-                document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
+                const nombreReunion = getNombreReunion(idReunion, fecha);
+                document.getElementById('nombreReunion').textContent = nombreReunion;
+                mostrarTituloReunion(nombreReunion);
                 setupPuntosListener();
                 cambiarPantalla('screenConfig');
                 return;
             }
 
             // En cualquier otro caso, llevar a la pantalla de reunión
-            document.getElementById('nombreActual').textContent = getNombreReunion(idReunion, fecha);
+            const nombreReunion = getNombreReunion(idReunion, fecha);
+            document.getElementById('nombreActual').textContent = nombreReunion;
+            mostrarTituloReunion(nombreReunion);
             cargarReunion();
             cambiarPantalla('screenReunion');
         };
@@ -1628,7 +1660,9 @@
                 timestamp: Date.now()
             });
 
-            document.getElementById('nombreActual').textContent = getNombreReunion(window.sesionActual, window.fechaActual);
+            const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
+            document.getElementById('nombreActual').textContent = nombreReunion;
+            mostrarTituloReunion(nombreReunion);
             cargarReunion();
             cambiarPantalla('screenReunion');
         };
@@ -1793,16 +1827,49 @@
             }
 
             const participantes = snapshot.val();
-            const participantesArray = Object.values(participantes);
+            const participantesArray = Object.entries(participantes).map(([id, data]) => ({id, ...data}));
 
             participantesArray.forEach(p => {
+                const container = document.createElement('div');
+                container.style.cssText = 'display: inline-flex; align-items: center; gap: 8px; margin: 5px 5px 5px 0;';
+                
                 const badge = document.createElement('span');
                 badge.className = `user-badge ${p.rol}`;
                 badge.innerHTML = `${p.rol === 'coordinador' ? '👑' : '👤'} ${p.nombre}`;
-                lista.appendChild(badge);
+                container.appendChild(badge);
+                
+                // Botón de eliminar solo para coordinador y solo si el participante no es coordinador
+                if (window.usuarioActual.rol === 'coordinador' && p.rol !== 'coordinador') {
+                    const btnEliminar = document.createElement('button');
+                    btnEliminar.innerHTML = '🗑️';
+                    btnEliminar.style.cssText = 'background: var(--danger); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;';
+                    btnEliminar.title = 'Eliminar participante';
+                    btnEliminar.onclick = () => eliminarParticipante(p.id);
+                    container.appendChild(btnEliminar);
+                }
+                
+                lista.appendChild(container);
             });
 
             document.getElementById('numParticipantes').textContent = `(${participantesArray.length})`;
+        };
+
+        // Eliminar participante (solo coordinador)
+        window.eliminarParticipante = async function(participanteId) {
+            if (window.usuarioActual.rol !== 'coordinador') {
+                alert('Solo el coordinador puede eliminar participantes');
+                return;
+            }
+            
+            if (!confirm('¿Estás seguro de que quieres eliminar este participante?')) {
+                return;
+            }
+            
+            const participanteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes/${participanteId}`);
+            await remove(participanteRef);
+            
+            // Recargar lista de participantes
+            cargarParticipantes();
         };
 
         // Cargar puntos del orden del día - Solo carga inicial
@@ -1956,9 +2023,13 @@
 
                 contenedor.innerHTML = '';
                 
-                aportacionesArray.forEach(aport => {
+                aportacionesArray.forEach((aport, index) => {
                     const div = document.createElement('div');
                     div.className = 'aportacion';
+                    div.setAttribute('data-aport-id', Object.keys(aportaciones)[index]);
+                    
+                    const esAutor = aport.autor === window.usuarioActual.nombre;
+                    
                     div.innerHTML = `
                         <div class="aportacion-header">
                             <span class="aportacion-autor">
@@ -1972,6 +2043,18 @@
                             })}</span>
                         </div>
                         <div class="aportacion-texto">${aport.texto}</div>
+                        ${esAutor ? `
+                            <div style="margin-top: 8px; display: flex; gap: 8px;">
+                                <button onclick="editarAportacion('${puntoId}', '${Object.keys(aportaciones)[index]}')" 
+                                        style="padding: 4px 10px; background: var(--warning); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    ✏️ Editar
+                                </button>
+                                <button onclick="borrarAportacion('${puntoId}', '${Object.keys(aportaciones)[index]}')" 
+                                        style="padding: 4px 10px; background: var(--danger); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    🗑️ Borrar
+                                </button>
+                            </div>
+                        ` : ''}
                     `;
                     contenedor.appendChild(div);
                 });
@@ -1982,6 +2065,56 @@
             } catch (error) {
                 console.error('Error cargando aportaciones:', error);
                 contenedor.innerHTML = '<div class="empty-state"><div class="emoji">⚠️</div><p>Error cargando comentarios</p></div>';
+            }
+        };
+
+        // Editar aportación (solo el autor)
+        window.editarAportacion = async function(puntoId, aportacionId) {
+            const aportacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones/${aportacionId}`);
+            const snapshot = await get(aportacionRef);
+            
+            if (!snapshot.exists()) {
+                alert('Aportación no encontrada');
+                return;
+            }
+            
+            const aportacion = snapshot.val();
+            
+            // Verificar que el usuario actual es el autor
+            if (aportacion.autor !== window.usuarioActual.nombre) {
+                alert('Solo puedes editar tus propias aportaciones');
+                return;
+            }
+            
+            const nuevoTexto = prompt('Editar aportación:', aportacion.texto);
+            
+            if (nuevoTexto && nuevoTexto.trim() !== '') {
+                await update(aportacionRef, {
+                    texto: nuevoTexto.trim()
+                });
+            }
+        };
+
+        // Borrar aportación (solo el autor)
+        window.borrarAportacion = async function(puntoId, aportacionId) {
+            const aportacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones/${aportacionId}`);
+            const snapshot = await get(aportacionRef);
+            
+            if (!snapshot.exists()) {
+                alert('Aportación no encontrada');
+                return;
+            }
+            
+            const aportacion = snapshot.val();
+            
+            // Verificar que el usuario actual es el autor
+            if (aportacion.autor !== window.usuarioActual.nombre) {
+                alert('Solo puedes borrar tus propias aportaciones');
+                return;
+            }
+            
+            if (confirm('¿Estás seguro de que quieres borrar esta aportación?')) {
+                await remove(aportacionRef);
             }
         };
 
@@ -2059,6 +2192,10 @@
                                     })}
                                 </div>
                             </div>
+                            <button onclick="shareLinksManager.shareLink('${doc.link}', '${doc.nombre.replace(/'/g, "\\'")}', '', '')" 
+                                    style="background: #4CAF50; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 13px; white-space: nowrap;">
+                                📤 Compartir
+                            </button>
                         </div>
                     `;
                     contenedor.appendChild(div);
@@ -2674,6 +2811,7 @@
         // Salir de reunión
         window.salirDeReunion = function() {
             if (confirm('¿Seguro que quieres salir de la reunión?')) {
+                ocultarTituloReunion();
                 location.reload();
             }
         };
@@ -3800,6 +3938,29 @@
                 document.head.appendChild(style);
             }
         }
+
+        // Funciones auxiliares para el título de la reunión
+        window.mostrarTituloReunion = function(titulo) {
+            const banner = document.getElementById('meetingTitleBanner');
+            if (banner) {
+                banner.textContent = titulo;
+                banner.style.display = 'block';
+            }
+        };
+
+        window.ocultarTituloReunion = function() {
+            const banner = document.getElementById('meetingTitleBanner');
+            if (banner) {
+                banner.style.display = 'none';
+            }
+        };
+
+        // Función para generar enlace de reunión (además del QR)
+        window.generarEnlaceReunion = function() {
+            const url = window.location.origin + window.location.pathname + '?fecha=' + window.fechaActual + '&reunion=' + window.sesionActual;
+            const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
+            shareLinksManager.shareLink(url, nombreReunion, formatearFecha(window.fechaActual), '');
+        };
 
         // Crear instancia global
         const shareLinksManager = new ShareLinksManager();
