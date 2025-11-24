@@ -1135,6 +1135,261 @@
                 min-width: 100%;
             }
         }
+
+        /* Botón de ayuda en página principal */
+        .help-btn-inline {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 0;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .help-btn-inline:hover {
+            transform: scale(1.1);
+        }
+
+        .help-btn-inline .icon {
+            width: 40px;
+            height: 40px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .help-btn-inline .label {
+            font-size: 12px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .help-btn-inline[data-tooltip-help]:hover::before {
+            content: attr(data-tooltip-help);
+            position: absolute;
+            top: 60px;
+            right: -50px;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .help-modal.active {
+            display: flex;
+        }
+
+        .help-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .help-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .help-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .help-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .help-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .help-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            background: var(--background);
+        }
+
+        .help-tab {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-light);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .help-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: white;
+        }
+
+        .help-tab:hover {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .help-tab-content {
+            display: none;
+            padding: 25px;
+        }
+
+        .help-tab-content.active {
+            display: block;
+        }
+
+        .help-section {
+            margin-bottom: 25px;
+        }
+
+        .help-section h3 {
+            color: var(--primary);
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .help-step {
+            background: var(--background);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .help-step strong {
+            color: var(--primary);
+        }
+
+        .help-important {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .help-important strong {
+            color: var(--warning);
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 5px;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            white-space: nowrap;
+            z-index: 1000;
+            font-weight: normal;
+        }
+
+        .tooltip:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .help-content {
+                max-height: 85vh;
+            }
+
+            .help-tabs {
+                flex-direction: column;
+            }
+
+            .help-tab {
+                border-bottom: 1px solid var(--border);
+            }
+
+            .tooltip:hover::after {
+                white-space: normal;
+                max-width: 200px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1153,6 +1408,119 @@
     <button id="installButton" class="install-button hidden">
         📱 Instalar App
     </button>
+
+    <!-- Modal de ayuda -->
+    <div id="helpModal" class="help-modal">
+        <div class="help-content">
+            <div class="help-header">
+                <h2>❓ Cómo usar la aplicación</h2>
+                <button class="help-close" onclick="toggleHelpModal()">×</button>
+            </div>
+            
+            <div class="help-tabs">
+                <button class="help-tab active" onclick="switchHelpTab('coordinador')">
+                    👔 Coordinador
+                </button>
+                <button class="help-tab" onclick="switchHelpTab('maestro')">
+                    👨‍🏫 Maestro
+                </button>
+            </div>
+            
+            <div id="helpCoordinador" class="help-tab-content active">
+                <div class="help-section">
+                    <h3>1️⃣ Crear la Reunión</h3>
+                    <div class="help-step">
+                        <strong>Paso 1:</strong> Introduce tu nombre y selecciona "Coordinador" como rol
+                    </div>
+                    <div class="help-step">
+                        <strong>Paso 2:</strong> Elige el tipo de reunión y la fecha
+                    </div>
+                    <div class="help-step">
+                        <strong>Paso 3:</strong> Clic en "Crear Reunión"
+                    </div>
+                    <div class="help-important">
+                        <strong>⚠️ IMPORTANTE:</strong> Antes de iniciar la reunión, crea todos los puntos del orden del día. Después haz clic en "Iniciar Reunión".
+                    </div>
+                </div>
+                
+                <div class="help-section">
+                    <h3>2️⃣ Compartir el Acceso</h3>
+                    <div class="help-step">
+                        <strong>Botón "🔗 Generar Enlace de Reunión":</strong> Genera un enlace web que puedes copiar y compartir por WhatsApp, Email, etc. Los maestros hacen clic y entran directamente.
+                    </div>
+                    <div class="help-step">
+                        <strong>Código QR:</strong> Los maestros escanean el código QR para entrar directamente.
+                    </div>
+                    <div class="help-important">
+                        <strong>💡 CONSEJO:</strong> El enlace web es más práctico que el QR. Está en el modal de citación junto al QR.
+                    </div>
+                </div>
+                
+                <div class="help-section">
+                    <h3>3️⃣ Durante la Reunión</h3>
+                    <div class="help-step">
+                        <strong>📎 Documentos:</strong> Adjunta documentos con enlace de Google Drive. Botón de compartir (icono ⚪⚪⚪) y botón de eliminar (🗑️)
+                    </div>
+                    <div class="help-step">
+                        <strong>💬 Aportaciones:</strong> Puedes editar y borrar TODAS las aportaciones (tuyas y de los maestros)
+                    </div>
+                    <div class="help-step">
+                        <strong>👥 Participantes:</strong> Elimina participantes duplicados con el botón 🗑️
+                    </div>
+                    <div class="help-step">
+                        <strong>🗳️ Votaciones:</strong> Crea votaciones y ve resultados en tiempo real
+                    </div>
+                </div>
+                
+                <div class="help-section">
+                    <h3>4️⃣ Exportar el Acta</h3>
+                    <div class="help-step">
+                        <strong>📄 PDF:</strong> Descarga el acta en PDF
+                    </div>
+                    <div class="help-step">
+                        <strong>📧 Email:</strong> Abre tu correo con el acta lista para enviar
+                    </div>
+                    <div class="help-step">
+                        <strong>📋 Copiar:</strong> Copia el acta al portapapeles para pegarla donde quieras
+                    </div>
+                </div>
+            </div>
+            
+            <div id="helpMaestro" class="help-tab-content">
+                <div class="help-section">
+                    <h3>1️⃣ Unirse a la Reunión</h3>
+                    <div class="help-step">
+                        <strong>Opción 1 - Enlace web (RECOMENDADO):</strong> El coordinador te envía un enlace. Haces clic, introduces tu nombre y entras.
+                    </div>
+                    <div class="help-step">
+                        <strong>Opción 2 - Código QR:</strong> Escanea el QR con la cámara del móvil, introduces tu nombre y entras.
+                    </div>
+                    <div class="help-step">
+                        <strong>Opción 3 - Manual:</strong> Introduce tu nombre, selecciona "Maestro", elige la reunión y fecha, clic en "Unirse a Reunión"
+                    </div>
+                </div>
+                
+                <div class="help-section">
+                    <h3>2️⃣ Durante la Reunión</h3>
+                    <div class="help-step">
+                        <strong>💬 Conversación:</strong> Escribe comentarios en cada punto. Puedes editar y borrar solo TUS comentarios.
+                    </div>
+                    <div class="help-step">
+                        <strong>🗳️ Votar:</strong> Vota A favor / En contra / Abstención. Puedes cambiar tu voto mientras esté activa.
+                    </div>
+                    <div class="help-step">
+                        <strong>📎 Documentos:</strong> Ve y comparte los documentos que suba el coordinador (botón ⚪⚪⚪)
+                    </div>
+                    <div class="help-step">
+                        <strong>🎥 Videollamada:</strong> Si hay enlace de videollamada, verás un banner azul arriba. Haz clic para entrar.
+                    </div>
+                    <div class="help-important">
+                        <strong>⚠️ IMPORTANTE:</strong> Para enviar mensajes, escribe y haz clic en el botón "Enviar". La tecla Enter NO envía el mensaje.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal de instrucciones para iOS -->
     <div id="iosInstallModal" class="ios-install-modal">
@@ -1238,13 +1606,25 @@
     <div id="screenInicio" class="screen active">
         <div class="container">
             <div class="card">
-                <h2>Bienvenido</h2>
+                <div class="card-header-row">
+                    <h2 style="margin: 0;">Bienvenido</h2>
+                    <button class="help-btn-inline" onclick="toggleHelpModal()" data-tooltip-help="Pasos para quien no tenga ni idea de cómo funciona esto">
+                        <div class="icon">?</div>
+                        <div class="label">Ayuda</div>
+                    </button>
+                </div>
                 <div class="form-group">
-                    <label>Tu nombre:</label>
+                    <label>
+                        Tu nombre:
+                        <span class="tooltip" data-tooltip="Este nombre aparecerá en todas tus aportaciones">?</span>
+                    </label>
                     <input type="text" id="inputNombre" placeholder="Ej: María García">
                 </div>
                 <div class="form-group">
-                    <label>Tu rol:</label>
+                    <label>
+                        Tu rol:
+                        <span class="tooltip" data-tooltip="Coordinador: crea y gestiona la reunión. Maestro: participa en la reunión">?</span>
+                    </label>
                     <select id="selectRol">
                         <option value="maestro">Maestro/a</option>
                         <option value="coordinador">Coordinador/a</option>
@@ -1295,7 +1675,7 @@
                 <div class="info-box">
                     ℹ️ <strong>Coordinador:</strong> Crea una nueva reunión con la fecha indicada<br>
                     ℹ️ <strong>Maestro:</strong> Únete a la reunión existente (debe estar creada por el coordinador)<br>
-                    ℹ️ Las reuniones quedan guardadas permanentemente por fecha
+                    ℹ️ Las actas se borrarán al crear otra reunión de ese equipo en fecha diferente
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="crearSesion()">
@@ -1353,7 +1733,13 @@
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-secondary btn-small" onclick="exportarPDF()">
-                        📄 Exportar PDF
+                        📄 PDF
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="enviarPorEmail()">
+                        📧 Email
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="copiarActa()">
+                        📋 Copiar
                     </button>
                     <button class="btn btn-danger btn-small" onclick="salirDeReunion()">
                         🚪 Salir
@@ -2741,8 +3127,7 @@
                         
                         aportacionesArray.forEach(aport => {
                             checkPage();
-                            const hora = new Date(aport.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                            doc.text(`   [${hora}] ${aport.autor}:`, 25, y);
+                            doc.text(`   ${aport.autor}:`, 25, y);
                             y += lineHeight;
                             
                             // Dividir texto largo en líneas
@@ -2824,9 +3209,8 @@
                             });
                             doc.setTextColor(0, 0, 0);
                             
-                            // Info del autor
-                            const hora = new Date(docum.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                            doc.text(`        (Subido por ${docum.autor} a las ${hora})`, 25, y);
+                            // Info del autor (sin hora)
+                            doc.text(`        (Subido por ${docum.autor})`, 25, y);
                             y += lineHeight + 1;
                         });
                     }
@@ -2857,8 +3241,7 @@
                 
                 mensajesArray.forEach(msg => {
                     checkPage();
-                    const hora = new Date(msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                    doc.text(`   [${hora}] ${msg.autor}:`, 25, y);
+                    doc.text(`   ${msg.autor}:`, 25, y);
                     y += lineHeight;
                     
                     // Dividir texto largo en líneas
@@ -2881,6 +3264,181 @@
             // Guardar PDF
             const nombreArchivo = `Reunion_${window.sesionActual}_${window.fechaActual}.pdf`;
             doc.save(nombreArchivo);
+        };
+
+        // Generar texto del acta
+        window.generarTextoActa = async function() {
+            const sesionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}`);
+            const snapshot = await get(sesionRef);
+            
+            if (!snapshot.exists()) {
+                alert('No se pueden cargar los datos de la reunión');
+                return null;
+            }
+            
+            const sesionData = snapshot.val();
+            const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
+            
+            let texto = '═══════════════════════════════════════════\n';
+            texto += 'CEIP CAPITULACIONES DE SANTA FE\n';
+            texto += 'ACTA DE REUNIÓN\n';
+            texto += '═══════════════════════════════════════════\n\n';
+            texto += `📋 ${nombreReunion}\n\n`;
+            
+            // Participantes
+            texto += '👥 PARTICIPANTES:\n';
+            texto += '─────────────────────────────────────────\n';
+            if (sesionData.participantes) {
+                Object.values(sesionData.participantes).forEach(p => {
+                    const emoji = p.rol === 'coordinador' ? '👑' : '👤';
+                    texto += `${emoji} ${p.nombre} (${p.rol})\n`;
+                });
+            }
+            texto += '\n';
+            
+            // Enlaces de videollamada
+            if (sesionData.videollamada) {
+                texto += '🎥 ENLACES DE VIDEOLLAMADA:\n';
+                texto += '─────────────────────────────────────────\n';
+                const enlace1 = sesionData.videollamada.enlace1 || sesionData.videollamada.enlace;
+                const enlace2 = sesionData.videollamada.enlace2;
+                
+                if (enlace1) {
+                    texto += `1. Enlace Principal:\n   ${enlace1}\n\n`;
+                }
+                if (enlace2) {
+                    texto += `2. Enlace Alternativo:\n   ${enlace2}\n\n`;
+                }
+            }
+            
+            // Orden del día
+            texto += '📌 ORDEN DEL DÍA:\n';
+            texto += '═══════════════════════════════════════════\n\n';
+            
+            if (sesionData.puntos) {
+                const puntosArray = Object.entries(sesionData.puntos).map(([id, data]) => ({ id, ...data }));
+                puntosArray.sort((a, b) => a.orden - b.orden);
+                
+                puntosArray.forEach((punto, index) => {
+                    texto += `${index + 1}. ${punto.texto}\n`;
+                    texto += '─────────────────────────────────────────\n';
+                    
+                    // Aportaciones
+                    if (punto.aportaciones) {
+                        texto += '\n💬 Conversación:\n';
+                        const aportacionesArray = Object.values(punto.aportaciones);
+                        aportacionesArray.sort((a, b) => a.timestamp - b.timestamp);
+                        
+                        aportacionesArray.forEach(aport => {
+                            texto += `\n   ${aport.autor}:\n   ${aport.texto}\n`;
+                        });
+                        texto += '\n';
+                    }
+                    
+                    // Votación
+                    if (punto.votacion && punto.votacion.activa) {
+                        const tipoVotacion = punto.votacion.conNombres ? 'VOTACIÓN PÚBLICA' : 'VOTACIÓN ANÓNIMA';
+                        texto += `\n🗳️ ${tipoVotacion}:\n`;
+                        
+                        const votos = { si: [], no: [], abstencion: [] };
+                        let total = 0;
+                        
+                        if (punto.votacion.votos) {
+                            Object.values(punto.votacion.votos).forEach(v => {
+                                total++;
+                                votos[v.voto].push(v.nombre);
+                            });
+                        }
+                        
+                        ['si', 'no', 'abstencion'].forEach(tipo => {
+                            const count = votos[tipo].length;
+                            const porcentaje = total > 0 ? Math.round((count / total) * 100) : 0;
+                            const label = tipo === 'si' ? 'A favor' : tipo === 'no' ? 'En contra' : 'Abstención';
+                            texto += `   ${label}: ${count} (${porcentaje}%)\n`;
+                            
+                            if (punto.votacion.conNombres && count > 0) {
+                                texto += `      ${votos[tipo].join(', ')}\n`;
+                            }
+                        });
+                        texto += '\n';
+                    }
+                    
+                    // Documentos adjuntos
+                    if (punto.documentos) {
+                        texto += '\n📎 Documentos adjuntos:\n';
+                        const documentosArray = Object.values(punto.documentos);
+                        documentosArray.sort((a, b) => a.timestamp - b.timestamp);
+                        
+                        documentosArray.forEach(docum => {
+                            texto += `   - ${docum.nombre}\n`;
+                            texto += `     ${docum.link}\n`;
+                            texto += `     (Subido por ${docum.autor})\n\n`;
+                        });
+                    }
+                    
+                    texto += '\n';
+                });
+            }
+            
+            // Chat General
+            texto += '💬 CHAT GENERAL:\n';
+            texto += '═══════════════════════════════════════════\n\n';
+            
+            if (sesionData.chatGeneral) {
+                const mensajesArray = Object.values(sesionData.chatGeneral);
+                mensajesArray.sort((a, b) => a.timestamp - b.timestamp);
+                
+                mensajesArray.forEach(msg => {
+                    texto += `${msg.autor}:\n${msg.texto}\n\n`;
+                });
+            } else {
+                texto += 'No hay mensajes en el chat general\n\n';
+            }
+            
+            texto += '═══════════════════════════════════════════\n';
+            texto += 'Fin del acta\n';
+            
+            return texto;
+        };
+
+        // Enviar por email
+        window.enviarPorEmail = async function() {
+            const textoActa = await generarTextoActa();
+            
+            if (!textoActa) return;
+            
+            const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
+            const asunto = `Acta: ${nombreReunion}`;
+            
+            // Codificar para URL
+            const asuntoEncoded = encodeURIComponent(asunto);
+            const cuerpoEncoded = encodeURIComponent(textoActa);
+            
+            // Abrir cliente de correo
+            window.location.href = `mailto:?subject=${asuntoEncoded}&body=${cuerpoEncoded}`;
+        };
+
+        // Copiar al portapapeles
+        window.copiarActa = async function() {
+            const textoActa = await generarTextoActa();
+            
+            if (!textoActa) return;
+            
+            try {
+                await navigator.clipboard.writeText(textoActa);
+                
+                // Mostrar mensaje de confirmación
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
+                toast.textContent = '✅ Acta copiada al portapapeles';
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            } catch (err) {
+                alert('Error al copiar. Por favor, intenta de nuevo.');
+            }
         };
 
         // Salir de reunión
@@ -4066,6 +4624,33 @@
         // Exponer funciones globalmente
         window.shareLinksManager = shareLinksManager;
         window.addShareButton = addShareButton;
+
+        // Funciones del modal de ayuda
+        window.toggleHelpModal = function() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('active');
+        };
+
+        window.switchHelpTab = function(tab) {
+            // Cambiar pestañas activas
+            document.querySelectorAll('.help-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.help-tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'coordinador') {
+                document.querySelectorAll('.help-tab')[0].classList.add('active');
+                document.getElementById('helpCoordinador').classList.add('active');
+            } else {
+                document.querySelectorAll('.help-tab')[1].classList.add('active');
+                document.getElementById('helpMaestro').classList.add('active');
+            }
+        };
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('helpModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                toggleHelpModal();
+            }
+        });
     </script>
 </body>
 </html>
