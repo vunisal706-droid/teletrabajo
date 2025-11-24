@@ -1194,6 +1194,79 @@
             margin-bottom: 20px;
         }
 
+        /* Dropdown para descargar acta */
+        .acta-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .acta-dropdown-content {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: white;
+            min-width: 200px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            z-index: 1000;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .acta-dropdown.active .acta-dropdown-content {
+            display: block;
+        }
+
+        .acta-dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border: none;
+            background: white;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .acta-dropdown-item:hover {
+            background: var(--background);
+        }
+
+        .acta-dropdown-item:not(:last-child) {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .acta-dropdown-item[data-acta-tooltip]:hover::after {
+            content: attr(data-acta-tooltip);
+            position: absolute;
+            left: -220px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 2000;
+        }
+
+        .acta-dropdown-item[data-acta-tooltip]:hover::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-left-color: #333;
+            z-index: 2000;
+        }
+
         .help-modal {
             display: none;
             position: fixed;
@@ -1424,6 +1497,9 @@
                 <button class="help-tab" onclick="switchHelpTab('maestro')">
                     👨‍🏫 Maestro
                 </button>
+                <button class="help-tab" onclick="switchHelpTab('infografia')">
+                    📊 Infografía
+                </button>
             </div>
             
             <div id="helpCoordinador" class="help-tab-content active">
@@ -1516,6 +1592,19 @@
                     </div>
                     <div class="help-important">
                         <strong>⚠️ IMPORTANTE:</strong> Para enviar mensajes, escribe y haz clic en el botón "Enviar". La tecla Enter NO envía el mensaje.
+                    </div>
+                </div>
+            </div>
+            
+            <div id="helpInfografia" class="help-tab-content">
+                <div class="help-section">
+                    <h3>📊 Guía Visual Completa</h3>
+                    <p style="margin-bottom: 15px;">Haz clic en la imagen para verla en tamaño completo:</p>
+                    <div style="text-align: center;">
+                        <img src="infografia-reunion.jpg" 
+                             alt="Guía Rápida de Reuniones" 
+                             style="max-width: 100%; height: auto; cursor: pointer; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
+                             onclick="abrirInfografiaVentana()">
                     </div>
                 </div>
             </div>
@@ -1732,15 +1821,22 @@
                     <strong>Reunión:</strong> <span class="session-code" id="nombreActual" style="font-size: 16px;"></span>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-secondary btn-small" onclick="exportarPDF()">
-                        📄 PDF
-                    </button>
-                    <button class="btn btn-secondary btn-small" onclick="enviarPorEmail()">
-                        📧 Email
-                    </button>
-                    <button class="btn btn-secondary btn-small" onclick="copiarActa()">
-                        📋 Copiar
-                    </button>
+                    <div class="acta-dropdown" id="actaDropdown">
+                        <button class="btn btn-secondary btn-small" onclick="toggleActaDropdown()">
+                            📄 Descargar el Acta
+                        </button>
+                        <div class="acta-dropdown-content">
+                            <button class="acta-dropdown-item" onclick="exportarPDF(); closeActaDropdown();" data-acta-tooltip="Descarga el acta en formato PDF">
+                                📄 Exportar PDF
+                            </button>
+                            <button class="acta-dropdown-item" onclick="enviarPorEmail(); closeActaDropdown();" data-acta-tooltip="Abre tu correo con el acta lista">
+                                📧 Enviar por Email
+                            </button>
+                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta al portapapeles">
+                                📋 Copiar al Portapapeles
+                            </button>
+                        </div>
+                    </div>
                     <button class="btn btn-danger btn-small" onclick="salirDeReunion()">
                         🚪 Salir
                     </button>
@@ -3111,10 +3207,19 @@
                 puntosArray.forEach((punto, index) => {
                     checkPage();
                     
-                    // Número y título del punto
+                    // Número y título del punto (en negrita y subrayado)
                     doc.setFontSize(11);
                     doc.setFont(undefined, 'bold');
-                    doc.text(`${index + 1}. ${punto.texto}`, 20, y);
+                    
+                    // Texto del punto con subrayado
+                    const textoPunto = `${index + 1}. ${punto.texto}`;
+                    doc.text(textoPunto, 20, y);
+                    
+                    // Añadir subrayado manualmente
+                    const textWidth = doc.getTextWidth(textoPunto);
+                    doc.setLineWidth(0.3);
+                    doc.line(20, y + 0.5, 20 + textWidth, y + 0.5);
+                    
                     y += lineHeight;
                     
                     // Aportaciones
@@ -3320,7 +3425,7 @@
                 puntosArray.sort((a, b) => a.orden - b.orden);
                 
                 puntosArray.forEach((punto, index) => {
-                    texto += `${index + 1}. ${punto.texto}\n`;
+                    texto += `**${index + 1}. ${punto.texto}**\n`;
                     texto += '─────────────────────────────────────────\n';
                     
                     // Aportaciones
@@ -4625,6 +4730,25 @@
         window.shareLinksManager = shareLinksManager;
         window.addShareButton = addShareButton;
 
+        // Funciones del dropdown de acta
+        window.toggleActaDropdown = function() {
+            const dropdown = document.getElementById('actaDropdown');
+            dropdown.classList.toggle('active');
+        };
+
+        window.closeActaDropdown = function() {
+            const dropdown = document.getElementById('actaDropdown');
+            dropdown.classList.remove('active');
+        };
+
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('actaDropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+
         // Funciones del modal de ayuda
         window.toggleHelpModal = function() {
             const modal = document.getElementById('helpModal');
@@ -4639,10 +4763,18 @@
             if (tab === 'coordinador') {
                 document.querySelectorAll('.help-tab')[0].classList.add('active');
                 document.getElementById('helpCoordinador').classList.add('active');
-            } else {
+            } else if (tab === 'maestro') {
                 document.querySelectorAll('.help-tab')[1].classList.add('active');
                 document.getElementById('helpMaestro').classList.add('active');
+            } else if (tab === 'infografia') {
+                document.querySelectorAll('.help-tab')[2].classList.add('active');
+                document.getElementById('helpInfografia').classList.add('active');
             }
+        };
+
+        // Abrir infografía en ventana nueva
+        window.abrirInfografiaVentana = function() {
+            window.open('infografia-reunion.jpg', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
         };
 
         // Cerrar modal al hacer clic fuera
