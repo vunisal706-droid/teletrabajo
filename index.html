@@ -1808,7 +1808,8 @@
             <div class="card">
                 <h2>Orden del Día</h2>
                 <div class="info-box">
-                    ℹ️ Define los puntos que se tratarán en la reunión
+                    ℹ️ Los puntos se cargan automáticamente según el tipo de reunión y la fecha seleccionada.<br>
+                    Puedes eliminar puntos o añadir otros nuevos según tus necesidades.
                 </div>
                 <div id="listaPuntos"></div>
                 <div class="form-group">
@@ -1939,6 +1940,87 @@
         window.fechaActual = null;
         window.ordenDia = []; // Array con los textos de los puntos del orden del día
 
+        // ÓRDENES DEL DÍA PREDEFINIDOS POR ÓRGANO Y MES
+        const ordenDelDiaPredefinido = {
+            "EQUIPOS DOCENTES": {
+                "09": ["Lectura y aprobación del acta anterior", "Constitución del equipo docente", "Coordinación vertical con miembros de otros equipos docentes si fuera necesario", "Elaboración de la información para familias (normas del centro, objetivos, criterios de evaluación)", "Evaluación inicial", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "10": ["Lectura y aprobación del acta anterior", "Detección de dificultades de aprendizaje", "Propuesta de alumnado para refuerzo educativo", "Análisis del clima inicial de convivencia", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "11": ["Lectura y aprobación del acta anterior", "Seguimiento del alumnado y de los planes de refuerzo", "Tratamiento de conflictos y estrategias de resolución", "Evaluación global del proceso de enseñanza-aprendizaje", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "12": ["Lectura y aprobación del acta anterior", "Evaluación del alumnado en todas las áreas", "Evaluación de programas de refuerzo aplicados", "Evaluación del clima de convivencia", "Análisis del grado de adecuación curricular", "Evaluación del funcionamiento del equipo docente", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "01": ["Lectura y aprobación del acta anterior", "Revisión de propuestas de alumnado con refuerzo según 1ª evaluación", "Seguimiento global del grupo", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "02": ["Lectura y aprobación del acta anterior", "Seguimiento global del grupo", "Revisión de alumnado en refuerzo", "Revisión del clima de convivencia", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "03": ["Lectura y aprobación del acta anterior", "Evaluación de alumnado en todas las áreas", "Evaluación de programas de refuerzo y medidas pertinentes", "Evaluación del clima de convivencia", "Previsión de repetidores para comunicar a familias", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "04": ["Lectura y aprobación del acta anterior", "Evaluación del grupo aula", "Seguimiento de planes de refuerzo según segunda evaluación", "Remisión de nuevas propuestas al equipo de orientación", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "05": ["Lectura y aprobación del acta anterior", "Revisión del rendimiento del alumnado en refuerzo", "Revisión del clima de convivencia", "Propuesta de alumnado que no promociona al finalizar ciclo", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
+                "06": ["Lectura y aprobación del acta anterior", "Evaluación final del alumnado y competencias clave", "Análisis de adecuación curricular", "Propuestas de mejora de los distintos aspectos evaluados", "Coordinación vertical con otros equipos docentes", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"]
+            },
+            "EQUIPOS DE CICLO": {
+                "09": ["Lectura y aprobación del acta anterior", "Revisión y actualización de criterios de evaluación y promoción", "Unificación de criterios en lectoescritura y coordinación con ETCP", "Organización de actividades complementarias con criterios pedagógicos", "Planificación de reuniones con familias", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "10": ["Lectura y aprobación del acta anterior", "Colaborar con el equipo directivo en la actualización del Proyecto Educativo", "Elaborar programaciones didácticas o propuestas pedagógicas", "Organizar actividades complementarias y extraescolares", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "11": ["Lectura y aprobación del acta anterior", "Revisión metodológica y mejora de la acción tutorial", "Planificación de actividades del Día de los Derechos de la Infancia y Día contra la Violencia Machista", "Planificación del Día de la Constitución y Navidad", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "12": ["Lectura y aprobación del acta anterior", "Evaluación de la práctica docente y ajuste metodológico", "Evaluación del rendimiento del alumnado", "Evaluación de las medidas de atención a la diversidad", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "01": ["Lectura y aprobación del acta anterior", "Revisión de actividades complementarias del segundo trimestre", "Planificación del Día de la Paz y la No Violencia", "Valoración del clima de aula por ciclo", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "02": ["Lectura y aprobación del acta anterior", "Planificación de actividades del Día de Andalucía y Carnaval", "Actividades del Día de la Mujer Trabajadora", "Seguimiento del alumnado con dificultades", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "03": ["Lectura y aprobación del acta anterior", "Evaluación del rendimiento en el segundo trimestre", "Revisión de medidas de atención a la diversidad", "Planificación del Día del Libro", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "04": ["Lectura y aprobación del acta anterior", "Análisis de resultados de la segunda evaluación", "Propuestas de mejora del rendimiento académico", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "05": ["Lectura y aprobación del acta anterior", "Seguimiento de posibles repetidores", "Planificación de actividades de fin de curso", "Seguimiento de las programaciones", "Ruegos y preguntas"],
+                "06": ["Lectura y aprobación del acta anterior", "Evaluación final y propuestas de mejora para el siguiente curso", "Seguimiento de las programaciones", "Ruegos y preguntas"]
+            },
+            "ETCP": {
+                "09": ["Lectura y aprobación del acta anterior", "Información sobre calendario de reuniones", "Establecer criterios para revisión de programaciones y propuestas pedagógicas", "Informar sobre medidas y programas de atención a la diversidad (Protocolo NEAE)", "Ruegos y preguntas"],
+                "10": ["Lectura y aprobación del acta anterior", "Organizar el Plan de Formación en Centros (CEP)", "Elaboración del Plan de Mejora", "Propuesta de actividades para Halloween y Día contra la Violencia Machista", "Informar sobre criterios de evaluación y promoción", "Ruegos y preguntas"],
+                "11": ["Lectura y aprobación del acta anterior", "Seguimiento del Plan de Refuerzo con el Equipo de Orientación", "Coordinación con el Plan de Formación en Centros", "Planificación de actividades del Día de la Constitución", "Elaboración del calendario de sesiones de evaluación", "Ruegos y preguntas"],
+                "12": ["Lectura y aprobación del acta anterior", "Supervisión de la aplicación del Plan de Convivencia", "Revisión de medidas de atención a la diversidad y refuerzo educativo", "Evaluación del trimestre", "Ruegos y preguntas"],
+                "01": ["Lectura y aprobación del acta anterior", "Planificación del Día de la Paz y la No Violencia", "Planificación de actividades de febrero (Carnaval, Día de Andalucía)", "Análisis de resultados de la primera evaluación", "Seguimiento del Plan de Mejora", "Ruegos y preguntas"],
+                "02": ["Lectura y aprobación del acta anterior", "Planificación del Día de la Mujer Trabajadora", "Coordinación de actividades del Día de Andalucía", "Seguimiento del alumnado con dificultades de aprendizaje", "Ruegos y preguntas"],
+                "03": ["Lectura y aprobación del acta anterior", "Elaborar calendario de sesiones de evaluación", "Revisión del Plan de Convivencia y propuestas de mejora", "Planificación del Día del Libro con la biblioteca", "Ruegos y preguntas"],
+                "04": ["Lectura y aprobación del acta anterior", "Seguimiento del plan de lectoescritura", "Coordinación de actividades del Día del Libro", "Análisis de la segunda evaluación y protocolo de repetidores", "Ruegos y preguntas"],
+                "05": ["Lectura y aprobación del acta anterior", "Propuesta de alumnado que no promociona", "Planificación de calendario final de curso", "Gestión del proceso de libros de texto", "Ruegos y preguntas"],
+                "06": ["Lectura y aprobación del acta anterior", "Análisis de la evaluación final", "Evaluación final del Plan de Mejora", "Elaboración de la memoria final", "Ruegos y preguntas"]
+            },
+            "CLAUSTRO": {
+                "09": ["Lectura y aprobación del acta anterior", "Información general inicio curso", "Constitución equipos de ciclo", "Aprobación criterios programaciones", "Presentación planes y programas educativos", "Propuesta actividades complementarias", "Proceso evaluación inicial", "Ruegos y preguntas"],
+                "10": ["Lectura y aprobación del acta anterior", "Evaluación inicial: conclusiones", "Análisis medidas atención diversidad", "Propuesta Bienestar Emocional", "Formación profesorado", "Ruegos y preguntas"],
+                "11": ["Lectura y aprobación del acta anterior", "Aprobación Plan de Centro", "Seguimiento programaciones", "Información tutorías y convivencia", "Revisión prevención violencia y acoso", "Ruegos y preguntas"],
+                "01": ["Lectura y aprobación del acta anterior", "Valoración 1ª evaluación", "Ajustes metodológicos", "Seguimiento planes y programas institucionales", "Ruegos y preguntas"],
+                "03": ["Lectura y aprobación del acta anterior", "Valoración 2ª evaluación", "Análisis progreso alumnado", "Evaluación intermedia PGA", "Ruegos y preguntas"],
+                "05": ["Lectura y aprobación del acta anterior", "Preparación evaluación final", "Criterios promoción LOMLOE", "Organización curso siguiente", "Ruegos y preguntas"],
+                "06": ["Lectura y aprobación del acta anterior", "Evaluación final del curso", "Aprobación memoria final", "Valoración planes y programas", "Propuestas mejora próximo curso", "Ruegos y preguntas"]
+            },
+            "CONSEJO ESCOLAR": {
+                "09": ["Lectura y aprobación del acta anterior", "Constitución Consejo Escolar", "Información inicio curso", "Aprobación calendario escolar", "Constitución comisiones", "Ruegos y preguntas"],
+                "10": ["Lectura y aprobación del acta anterior", "Información desarrollo inicial", "Presentación borrador PGA", "Aprobación Plan Convivencia", "Ruegos y preguntas"],
+                "11": ["Lectura y aprobación del acta anterior", "Aprobación PGA y presupuesto", "Informe organización docente", "Seguimiento Bienestar Emocional", "Ruegos y preguntas"],
+                "01": ["Lectura y aprobación del acta anterior", "Información económica trimestre", "Evaluación convivencia", "Informe actividad lectiva", "Ruegos y preguntas"],
+                "03": ["Lectura y aprobación del acta anterior", "Modificaciones presupuestarias", "Seguimiento PGA y resultados", "Informe comisiones", "Ruegos y preguntas"],
+                "05": ["Lectura y aprobación del acta anterior", "Información escolarización", "Previsión plantilla", "Planificación fin curso", "Ruegos y preguntas"],
+                "06": ["Lectura y aprobación del acta anterior", "Aprobación memoria final", "Valoración general del curso", "Propuestas mejora próximo curso", "Ruegos y preguntas"]
+            },
+            "EQUIPO DE ORIENTACIÓN": {
+                "09": ["Lectura y aprobación del acta anterior", "Constitución del equipo de orientación", "Valoración inicial del alumnado NEAE. Revisión de informes previos, nuevas detecciones y planificación de intervenciones", "Plan de acogida y adaptación: estrategias para facilitar la integración del alumnado, especialmente el de TEA", "Ruegos y preguntas"],
+                "10": ["Lectura y aprobación del acta anterior", "Seguimiento de la adaptación del alumnado: evaluación de dificultades iniciales y ajuste de medidas de apoyo", "Coordinación con los tutores y especialistas: trabajo conjunto para garantizar coherencia en la intervención educativa", "Estrategias para fomentar la inclusión: metodología y recursos para mejorar la participación del alumnado NEAE en el aula", "Propuestas de mejora", "Ruegos y preguntas"],
+                "11": ["Lectura y aprobación del acta anterior", "Revisión de la evolución del alumnado: análisis de avances y detección de posibles ajustes en la intervención", "Estrategias de apoyo emocional y convivencia: actuaciones para prevenir conflictos y promover el bienestar del alumnado", "Preparación de las evaluaciones adaptadas: revisión de medidas para garantizar la accesibilidad en la primera evaluación", "Ruegos y preguntas"],
+                "12": ["Lectura y aprobación del acta anterior", "Balance del trimestre y ajustes en la intervención: reflexión sobre las medidas aplicadas y propuestas de mejora", "Coordinación con familias: preparación de las reuniones para informar sobre los avances y necesidades", "Actividades inclusivas de Navidad: organización de eventos en los que todo el alumnado pueda participar", "Ruegos y preguntas"],
+                "01": ["Lectura y aprobación del acta anterior", "Análisis del primer trimestre: revisión de logros y dificultades detectadas en las evaluaciones", "Refuerzo educativo y adaptación de estrategias: planificación de nuevas medidas de apoyo en el aula TEA y alumnado NEAE", "Atención a la diversidad en el aula: estrategias para potenciar la autonomía y el aprendizaje significativo", "Ruegos y preguntas"],
+                "02": ["Lectura y aprobación del acta anterior", "Seguimiento de casos y ajuste de medidas – Evaluación de la evolución del alumnado con NEAE y propuestas de intervención", "Estrategias para la inclusión en actividades escolares – Adaptación de proyectos, salidas y celebraciones", "Apoyo emocional y conducta – Intervención en casos de ansiedad, dificultades sociales o problemas de conducta", "Ruegos y preguntas"],
+                "03": ["Lectura y aprobación del acta anterior", "Revisión de la evolución del alumnado – Análisis de avances antes de la segunda evaluación", "Pruebas de diagnóstico (alumnado con NEE)", "Planificación de medidas para la recta final del curso – Ajuste de apoyos y preparación para la transición de etapa", "Ruegos y preguntas"],
+                "04": ["Lectura y aprobación del acta anterior", "Seguimiento del alumnado en riesgo de repetición o con dificultades – Evaluación de medidas y alternativas de refuerzo", "Transición entre etapas – Plan de actuación para alumnado que pasará a secundaria o a un nuevo ciclo", "Actividades de concienciación y sensibilización – Proyectos inclusivos para fomentar la convivencia", "Ruegos y preguntas"],
+                "05": ["Lectura y aprobación del acta anterior", "Evaluación de la respuesta del alumnado a las medidas implantadas – Valoración del impacto de las estrategias aplicadas", "Preparación del cierre de curso – Revisión de informes y orientaciones para el próximo año", "Inclusión en actividades de fin de curso – Adaptación de celebraciones para garantizar la participación de todos", "Ruegos y preguntas"],
+                "06": ["Lectura y aprobación del acta anterior", "Balance del curso y propuestas de mejora – Reflexión sobre los puntos fuertes y débiles del trabajo del equipo", "Elaboración de informes finales – Registro de orientaciones para el próximo curso y recomendaciones a tutores y familias", "Planificación del inicio del próximo curso – Estrategias para la acogida de nuevo alumnado y puesta en marcha de protocolos", "Ruegos y preguntas"]
+            }
+        };
+
+        // Mapeo de tipos de reunión a órganos
+        const mapeoReunionOrgano = {
+            "infantil-3": "EQUIPOS DOCENTES", "infantil-4": "EQUIPOS DOCENTES", "infantil-5": "EQUIPOS DOCENTES",
+            "primero": "EQUIPOS DOCENTES", "segundo": "EQUIPOS DOCENTES", "tercero": "EQUIPOS DOCENTES",
+            "cuarto": "EQUIPOS DOCENTES", "quinto": "EQUIPOS DOCENTES", "sexto": "EQUIPOS DOCENTES",
+            "ciclo-infantil": "EQUIPOS DE CICLO", "primer-ciclo": "EQUIPOS DE CICLO",
+            "segundo-ciclo": "EQUIPOS DE CICLO", "tercer-ciclo": "EQUIPOS DE CICLO",
+            "orientacion": "EQUIPO DE ORIENTACIÓN", "aula-tea": "EQUIPO DE ORIENTACIÓN",
+            "claustro": "CLAUSTRO", "etcp": "ETCP", "consejo-escolar": "CONSEJO ESCOLAR"
+        };
+
         // Mostrar indicador de conexión
         document.getElementById('statusIndicator').style.display = 'flex';
 
@@ -2046,10 +2128,48 @@
                     nombre: getNombreReunion(idReunion, fecha)
                 });
                 
+                // Cargar puntos predefinidos automáticamente
+                await cargarPuntosPredefinidos(idReunion, fecha);
+                
                 document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
                 setupPuntosListener();
                 cambiarPantalla('screenConfig');
             }
+        };
+
+        // Función para cargar puntos predefinidos
+        window.cargarPuntosPredefinidos = async function(tipoReunion, fecha) {
+            // Obtener mes de la fecha (formato MM)
+            const mes = fecha.split('-')[1]; // fecha está en formato YYYY-MM-DD
+            
+            // Mapear tipo de reunión a órgano
+            const organo = mapeoReunionOrgano[tipoReunion];
+            
+            if (!organo) {
+                console.log('No hay mapeo para este tipo de reunión');
+                return;
+            }
+            
+            // Obtener puntos predefinidos para este órgano y mes
+            const puntosPredefinidos = ordenDelDiaPredefinido[organo]?.[mes];
+            
+            if (!puntosPredefinidos || puntosPredefinidos.length === 0) {
+                console.log(`No hay puntos predefinidos para ${organo} en el mes ${mes}`);
+                return;
+            }
+            
+            // Añadir cada punto predefinido a Firebase
+            const puntosRef = ref(database, `sesiones/${tipoReunion}/${fecha}/puntos`);
+            
+            for (let i = 0; i < puntosPredefinidos.length; i++) {
+                const nuevoPuntoRef = push(puntosRef);
+                await set(nuevoPuntoRef, {
+                    texto: puntosPredefinidos[i],
+                    orden: Date.now() + i // Asegurar orden correcto
+                });
+            }
+            
+            console.log(`✅ Cargados ${puntosPredefinidos.length} puntos predefinidos para ${organo}`);
         };
 
         // Unirse a sesión
@@ -2144,6 +2264,9 @@
 
         // Eliminar punto
         window.eliminarPunto = function(puntoId) {
+            if (!confirm('¿Seguro que quieres eliminar este punto del orden del día?')) {
+                return;
+            }
             const puntoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}`);
             remove(puntoRef);
         };
