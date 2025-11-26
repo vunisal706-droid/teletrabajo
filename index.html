@@ -1873,6 +1873,37 @@
                 <div id="listaParticipantes"></div>
             </div>
 
+            <!-- ASISTENTES -->
+            <div class="card">
+                <h2>✅ Asistentes <span id="numAsistentes">(0)</span></h2>
+                <div id="listaAsistentes"></div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                    <div style="display: grid; gap: 8px; margin-bottom: 10px;">
+                        <input type="text" id="inputNombreAsistente" placeholder="Nombre" style="margin: 0;">
+                        <input type="text" id="inputApellidoAsistente" placeholder="Primer Apellido" style="margin: 0;">
+                    </div>
+                    <button class="btn btn-secondary btn-small" onclick="agregarAsistente()" style="width: 100%;">
+                        ➕ Añadir Asistente
+                    </button>
+                </div>
+            </div>
+
+            <!-- NO ASISTENTES (Solo coordinador) -->
+            <div class="card" id="cardNoAsistentes" style="display: none;">
+                <h2>❌ No Asistentes <span id="numNoAsistentes">(0)</span></h2>
+                <div id="listaNoAsistentes"></div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                    <div style="display: grid; gap: 8px; margin-bottom: 10px;">
+                        <input type="text" id="inputNombreNoAsistente" placeholder="Nombre" style="margin: 0;">
+                        <input type="text" id="inputApellidoNoAsistente" placeholder="Primer Apellido" style="margin: 0;">
+                        <input type="text" id="inputMotivoNoAsistente" placeholder="Motivo (ej: Baja médica)" style="margin: 0;">
+                    </div>
+                    <button class="btn btn-secondary btn-small" onclick="agregarNoAsistente()" style="width: 100%;">
+                        ➕ Añadir No Asistente
+                    </button>
+                </div>
+            </div>
+
             <div id="contenidoPuntos"></div>
         </div>
 
@@ -2296,6 +2327,15 @@
             cargarParticipantes();
             cargarVideollamada();
             inicializarChatGeneral();
+            cargarAsistentes();
+            cargarNoAsistentes();
+
+            // Mostrar/ocultar card de no asistentes según rol
+            if (window.usuarioActual.rol === 'coordinador') {
+                document.getElementById('cardNoAsistentes').style.display = 'block';
+            } else {
+                document.getElementById('cardNoAsistentes').style.display = 'none';
+            }
 
             // Ajustar margen del contenedor
             document.getElementById('containerReunion').classList.add('con-chat');
@@ -2310,6 +2350,18 @@
             const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             onValue(videollamadaRef, () => {
                 cargarVideollamada();
+            });
+
+            // Escuchar cambios en asistentes
+            const asistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes`);
+            onValue(asistentesRef, () => {
+                cargarAsistentes();
+            });
+
+            // Escuchar cambios en no asistentes
+            const noAsistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes`);
+            onValue(noAsistentesRef, () => {
+                cargarNoAsistentes();
             });
 
             // Listener ÚNICO para puntos - solo se activa una vez
@@ -2494,6 +2546,223 @@
             
             // Recargar lista de participantes
             cargarParticipantes();
+        };
+
+        // ===== FUNCIONES DE ASISTENTES =====
+        
+        // Agregar asistente (Coordinador o Maestro)
+        window.agregarAsistente = async function() {
+            const nombre = document.getElementById('inputNombreAsistente').value.trim();
+            const apellido = document.getElementById('inputApellidoAsistente').value.trim();
+            
+            if (!nombre || !apellido) {
+                alert('Por favor, completa nombre y apellido');
+                return;
+            }
+            
+            const asistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes`);
+            const nuevoAsistenteRef = push(asistentesRef);
+            
+            await set(nuevoAsistenteRef, {
+                nombre: nombre,
+                apellido: apellido,
+                timestamp: Date.now()
+            });
+            
+            document.getElementById('inputNombreAsistente').value = '';
+            document.getElementById('inputApellidoAsistente').value = '';
+        };
+
+        // Cargar asistentes
+        window.cargarAsistentes = async function() {
+            const lista = document.getElementById('listaAsistentes');
+            lista.innerHTML = '';
+            
+            const asistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes`);
+            const snapshot = await get(asistentesRef);
+            
+            if (!snapshot.exists()) {
+                document.getElementById('numAsistentes').textContent = '(0)';
+                lista.innerHTML = '<div style="color: var(--text-secondary); font-size: 14px; padding: 10px;">No hay asistentes registrados</div>';
+                return;
+            }
+            
+            const asistentes = snapshot.val();
+            const asistentesArray = Object.entries(asistentes).map(([id, data]) => ({id, ...data}));
+            asistentesArray.sort((a, b) => a.timestamp - b.timestamp);
+            
+            asistentesArray.forEach(a => {
+                const div = document.createElement('div');
+                div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(37, 99, 235, 0.05); border-radius: 6px; margin-bottom: 5px;';
+                
+                div.innerHTML = `
+                    <span style="font-weight: 500;">${a.nombre} ${a.apellido}</span>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="editarAsistente('${a.id}', '${a.nombre}', '${a.apellido}')" 
+                                style="background: var(--warning); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
+                            ✏️
+                        </button>
+                        <button onclick="eliminarAsistente('${a.id}')" 
+                                style="background: var(--danger); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                
+                lista.appendChild(div);
+            });
+            
+            document.getElementById('numAsistentes').textContent = `(${asistentesArray.length})`;
+        };
+
+        // Editar asistente
+        window.editarAsistente = function(id, nombreActual, apellidoActual) {
+            const nuevoNombre = prompt('Nombre:', nombreActual);
+            if (nuevoNombre === null) return;
+            
+            const nuevoApellido = prompt('Primer Apellido:', apellidoActual);
+            if (nuevoApellido === null) return;
+            
+            if (!nuevoNombre.trim() || !nuevoApellido.trim()) {
+                alert('Nombre y apellido no pueden estar vacíos');
+                return;
+            }
+            
+            const asistenteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes/${id}`);
+            update(asistenteRef, {
+                nombre: nuevoNombre.trim(),
+                apellido: nuevoApellido.trim()
+            });
+        };
+
+        // Eliminar asistente
+        window.eliminarAsistente = function(id) {
+            if (!confirm('¿Eliminar este asistente?')) return;
+            
+            const asistenteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes/${id}`);
+            remove(asistenteRef);
+        };
+
+        // ===== FUNCIONES DE NO ASISTENTES (Solo Coordinador) =====
+        
+        // Agregar no asistente (Solo coordinador)
+        window.agregarNoAsistente = async function() {
+            if (window.usuarioActual.rol !== 'coordinador') {
+                alert('Solo el coordinador puede gestionar no asistentes');
+                return;
+            }
+            
+            const nombre = document.getElementById('inputNombreNoAsistente').value.trim();
+            const apellido = document.getElementById('inputApellidoNoAsistente').value.trim();
+            const motivo = document.getElementById('inputMotivoNoAsistente').value.trim();
+            
+            if (!nombre || !apellido || !motivo) {
+                alert('Por favor, completa todos los campos');
+                return;
+            }
+            
+            const noAsistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes`);
+            const nuevoNoAsistenteRef = push(noAsistentesRef);
+            
+            await set(nuevoNoAsistenteRef, {
+                nombre: nombre,
+                apellido: apellido,
+                motivo: motivo,
+                timestamp: Date.now()
+            });
+            
+            document.getElementById('inputNombreNoAsistente').value = '';
+            document.getElementById('inputApellidoNoAsistente').value = '';
+            document.getElementById('inputMotivoNoAsistente').value = '';
+        };
+
+        // Cargar no asistentes
+        window.cargarNoAsistentes = async function() {
+            const lista = document.getElementById('listaNoAsistentes');
+            lista.innerHTML = '';
+            
+            const noAsistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes`);
+            const snapshot = await get(noAsistentesRef);
+            
+            if (!snapshot.exists()) {
+                document.getElementById('numNoAsistentes').textContent = '(0)';
+                lista.innerHTML = '<div style="color: var(--text-secondary); font-size: 14px; padding: 10px;">No hay no asistentes registrados</div>';
+                return;
+            }
+            
+            const noAsistentes = snapshot.val();
+            const noAsistentesArray = Object.entries(noAsistentes).map(([id, data]) => ({id, ...data}));
+            noAsistentesArray.sort((a, b) => a.timestamp - b.timestamp);
+            
+            noAsistentesArray.forEach(na => {
+                const div = document.createElement('div');
+                div.style.cssText = 'padding: 10px; background: rgba(239, 68, 68, 0.05); border-radius: 6px; margin-bottom: 8px;';
+                
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+                        <span style="font-weight: 500;">${na.nombre} ${na.apellido}</span>
+                        <div style="display: flex; gap: 5px;">
+                            <button onclick="editarNoAsistente('${na.id}', '${na.nombre}', '${na.apellido}', '${na.motivo}')" 
+                                    style="background: var(--warning); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
+                                ✏️
+                            </button>
+                            <button onclick="eliminarNoAsistente('${na.id}')" 
+                                    style="background: var(--danger); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">
+                        <strong>Motivo:</strong> ${na.motivo}
+                    </div>
+                `;
+                
+                lista.appendChild(div);
+            });
+            
+            document.getElementById('numNoAsistentes').textContent = `(${noAsistentesArray.length})`;
+        };
+
+        // Editar no asistente
+        window.editarNoAsistente = function(id, nombreActual, apellidoActual, motivoActual) {
+            if (window.usuarioActual.rol !== 'coordinador') {
+                alert('Solo el coordinador puede editar no asistentes');
+                return;
+            }
+            
+            const nuevoNombre = prompt('Nombre:', nombreActual);
+            if (nuevoNombre === null) return;
+            
+            const nuevoApellido = prompt('Primer Apellido:', apellidoActual);
+            if (nuevoApellido === null) return;
+            
+            const nuevoMotivo = prompt('Motivo:', motivoActual);
+            if (nuevoMotivo === null) return;
+            
+            if (!nuevoNombre.trim() || !nuevoApellido.trim() || !nuevoMotivo.trim()) {
+                alert('Todos los campos son obligatorios');
+                return;
+            }
+            
+            const noAsistenteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes/${id}`);
+            update(noAsistenteRef, {
+                nombre: nuevoNombre.trim(),
+                apellido: nuevoApellido.trim(),
+                motivo: nuevoMotivo.trim()
+            });
+        };
+
+        // Eliminar no asistente
+        window.eliminarNoAsistente = function(id) {
+            if (window.usuarioActual.rol !== 'coordinador') {
+                alert('Solo el coordinador puede eliminar no asistentes');
+                return;
+            }
+            
+            if (!confirm('¿Eliminar este no asistente?')) return;
+            
+            const noAsistenteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes/${id}`);
+            remove(noAsistenteRef);
         };
 
         // Cargar puntos del orden del día - Solo carga inicial
@@ -3267,6 +3536,52 @@
             
             const sesionData = snapshot.val();
             
+            // Asistentes
+            if (sesionData.asistentes) {
+                checkPage();
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text('Asistentes:', 20, y);
+                y += lineHeight;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                
+                const asistentesArray = Object.values(sesionData.asistentes);
+                asistentesArray.sort((a, b) => a.timestamp - b.timestamp);
+                
+                asistentesArray.forEach(a => {
+                    checkPage();
+                    doc.text(`- ${a.nombre} ${a.apellido}`, 25, y);
+                    y += lineHeight;
+                });
+                
+                y += 5;
+            }
+            
+            // No Asistentes
+            if (sesionData.noAsistentes) {
+                checkPage();
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text('No Asistentes:', 20, y);
+                y += lineHeight;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                
+                const noAsistentesArray = Object.values(sesionData.noAsistentes);
+                noAsistentesArray.sort((a, b) => a.timestamp - b.timestamp);
+                
+                noAsistentesArray.forEach(na => {
+                    checkPage();
+                    doc.text(`- ${na.nombre} ${na.apellido} (${na.motivo})`, 25, y);
+                    y += lineHeight;
+                });
+                
+                y += 5;
+            }
+            
             // Participantes
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
@@ -3533,6 +3848,30 @@
             texto += 'ACTA DE REUNIÓN\n';
             texto += '═══════════════════════════════════════════\n\n';
             texto += `📋 ${nombreReunion}\n\n`;
+            
+            // Asistentes
+            if (sesionData.asistentes) {
+                texto += '✅ ASISTENTES:\n';
+                texto += '─────────────────────────────────────────\n';
+                const asistentesArray = Object.values(sesionData.asistentes);
+                asistentesArray.sort((a, b) => a.timestamp - b.timestamp);
+                asistentesArray.forEach(a => {
+                    texto += `• ${a.nombre} ${a.apellido}\n`;
+                });
+                texto += '\n';
+            }
+            
+            // No Asistentes
+            if (sesionData.noAsistentes) {
+                texto += '❌ NO ASISTENTES:\n';
+                texto += '─────────────────────────────────────────\n';
+                const noAsistentesArray = Object.values(sesionData.noAsistentes);
+                noAsistentesArray.sort((a, b) => a.timestamp - b.timestamp);
+                noAsistentesArray.forEach(na => {
+                    texto += `• ${na.nombre} ${na.apellido} (${na.motivo})\n`;
+                });
+                texto += '\n';
+            }
             
             // Participantes
             texto += '👥 PARTICIPANTES:\n';
@@ -4612,7 +4951,7 @@
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        z-index: 10000;
+                        z-index: 10010;
                         animation: fadeIn 0.2s ease;
                     }
 
