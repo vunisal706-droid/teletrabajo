@@ -1469,6 +1469,121 @@
                 max-width: 200px;
             }
         }
+
+        /* Calendario Modal */
+        .calendario-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .calendario-modal.active {
+            display: flex;
+        }
+
+        .calendario-content {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 350px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .calendario-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .calendario-header h3 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .calendario-nav {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .calendario-nav:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+        }
+
+        .calendario-dias-semana {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-light);
+            font-size: 13px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .calendario-dias {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendario-dia {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border-radius: 50%;
+            cursor: default;
+            color: var(--text);
+        }
+
+        .calendario-dia.otro-mes {
+            color: #ccc;
+        }
+
+        .calendario-dia.hoy {
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+        }
+
+        .calendario-dia.domingo {
+            color: var(--danger);
+        }
+
+        .calendario-dia.domingo.otro-mes {
+            color: #f5a5a5;
+        }
+
+        .calendario-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -1737,6 +1852,25 @@
         </div>
     </div>
 
+    <!-- Modal del Calendario -->
+    <div id="calendarioModal" class="calendario-modal">
+        <div class="calendario-content">
+            <div class="calendario-header">
+                <button class="calendario-nav" onclick="cambiarMesCalendario(-1)">◀</button>
+                <h3 id="calendarioTitulo"></h3>
+                <button class="calendario-nav" onclick="cambiarMesCalendario(1)">▶</button>
+            </div>
+            <div class="calendario-dias-semana">
+                <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+            </div>
+            <div class="calendario-dias" id="calendarioDias"></div>
+            <div class="calendario-footer">
+                <button class="btn btn-primary btn-small" onclick="irAHoyCalendario()">📍 Hoy</button>
+                <button class="btn btn-outline btn-small" onclick="cerrarCalendario()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Pantalla de inicio -->
     <div id="screenInicio" class="screen active">
         <div class="container">
@@ -1884,6 +2018,9 @@
                             </button>
                         </div>
                     </div>
+                    <button class="btn btn-outline btn-small" onclick="toggleCalendario()" title="Consultar calendario">
+                        📅 Calendario
+                    </button>
                     <button class="btn btn-danger btn-small" onclick="salirDeReunion()">
                         🚪 Salir
                     </button>
@@ -5254,6 +5391,123 @@
         document.getElementById('helpModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 toggleHelpModal();
+            }
+        });
+
+        // ===== CALENDARIO DE CONSULTA =====
+        let calendarioMesActual = new Date().getMonth();
+        let calendarioAnoActual = new Date().getFullYear();
+
+        const mesesNombres = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ];
+
+        window.toggleCalendario = function() {
+            const modal = document.getElementById('calendarioModal');
+            if (modal.classList.contains('active')) {
+                cerrarCalendario();
+            } else {
+                // Siempre abrir en el mes actual
+                calendarioMesActual = new Date().getMonth();
+                calendarioAnoActual = new Date().getFullYear();
+                renderizarCalendario();
+                modal.classList.add('active');
+            }
+        };
+
+        window.cerrarCalendario = function() {
+            document.getElementById('calendarioModal').classList.remove('active');
+        };
+
+        window.cambiarMesCalendario = function(delta) {
+            calendarioMesActual += delta;
+            
+            if (calendarioMesActual > 11) {
+                calendarioMesActual = 0;
+                calendarioAnoActual++;
+            } else if (calendarioMesActual < 0) {
+                calendarioMesActual = 11;
+                calendarioAnoActual--;
+            }
+            
+            renderizarCalendario();
+        };
+
+        window.irAHoyCalendario = function() {
+            calendarioMesActual = new Date().getMonth();
+            calendarioAnoActual = new Date().getFullYear();
+            renderizarCalendario();
+        };
+
+        function renderizarCalendario() {
+            const titulo = document.getElementById('calendarioTitulo');
+            const contenedor = document.getElementById('calendarioDias');
+            
+            titulo.textContent = `${mesesNombres[calendarioMesActual]} ${calendarioAnoActual}`;
+            
+            const hoy = new Date();
+            const primerDia = new Date(calendarioAnoActual, calendarioMesActual, 1);
+            const ultimoDia = new Date(calendarioAnoActual, calendarioMesActual + 1, 0);
+            
+            // Ajustar para que la semana empiece en lunes (0 = lunes, 6 = domingo)
+            let diaInicio = primerDia.getDay() - 1;
+            if (diaInicio < 0) diaInicio = 6; // Si es domingo, poner al final
+            
+            contenedor.innerHTML = '';
+            
+            // Días del mes anterior
+            const diasMesAnterior = new Date(calendarioAnoActual, calendarioMesActual, 0).getDate();
+            for (let i = diaInicio - 1; i >= 0; i--) {
+                const dia = document.createElement('div');
+                dia.className = 'calendario-dia otro-mes';
+                dia.textContent = diasMesAnterior - i;
+                contenedor.appendChild(dia);
+            }
+            
+            // Días del mes actual
+            for (let d = 1; d <= ultimoDia.getDate(); d++) {
+                const dia = document.createElement('div');
+                dia.className = 'calendario-dia';
+                dia.textContent = d;
+                
+                // Marcar el día de hoy
+                if (d === hoy.getDate() && 
+                    calendarioMesActual === hoy.getMonth() && 
+                    calendarioAnoActual === hoy.getFullYear()) {
+                    dia.classList.add('hoy');
+                }
+                
+                // Marcar domingos (calcular qué día de la semana es)
+                const fechaDia = new Date(calendarioAnoActual, calendarioMesActual, d);
+                if (fechaDia.getDay() === 0) {
+                    dia.classList.add('domingo');
+                }
+                
+                contenedor.appendChild(dia);
+            }
+            
+            // Días del mes siguiente para completar la cuadrícula
+            const totalCeldas = contenedor.children.length;
+            const celdasRestantes = totalCeldas % 7 === 0 ? 0 : 7 - (totalCeldas % 7);
+            
+            for (let i = 1; i <= celdasRestantes; i++) {
+                const dia = document.createElement('div');
+                dia.className = 'calendario-dia otro-mes';
+                // Calcular si es domingo
+                const fechaDia = new Date(calendarioAnoActual, calendarioMesActual + 1, i);
+                if (fechaDia.getDay() === 0) {
+                    dia.classList.add('domingo');
+                }
+                dia.textContent = i;
+                contenedor.appendChild(dia);
+            }
+        }
+
+        // Cerrar calendario al hacer clic fuera
+        document.getElementById('calendarioModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarCalendario();
             }
         });
     </script>
