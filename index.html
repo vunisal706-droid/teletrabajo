@@ -273,6 +273,12 @@
             border: 2px solid var(--maestro);
         }
 
+        .user-badge.familia {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 2px solid #22c55e;
+        }
+
         .punto-item {
             background: var(--background);
             border: 2px solid var(--border);
@@ -1692,6 +1698,28 @@
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- Enlace para familias (solo Consejo Escolar) -->
+                    <div id="enlaceFamiliasSection" style="display: none; margin-top: 15px; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; border: 2px solid rgba(139, 92, 246, 0.3);">
+                        <strong style="display: block; margin-bottom: 8px; color: #8b5cf6;">👨‍👩‍👧 Enlace para FAMILIAS:</strong>
+                        <p style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">Este enlace especial es para invitar a representantes de familias. Solo podrán ver esta reunión.</p>
+                        <input type="text" id="enlaceFamiliasMostrado" readonly 
+                               style="width: 100%; padding: 10px; border: 1px solid #8b5cf6; border-radius: 6px; font-size: 13px; background: white; font-family: monospace; margin-bottom: 10px;">
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="copiarEnlaceFamilias()" 
+                                    style="flex: 1; background: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 10px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;" 
+                                    title="Copiar enlace para familias">
+                                📋 Copiar Enlace Familias
+                            </button>
+                            <button onclick="compartirEnlaceFamilias()" 
+                                    style="background: #8b5cf6; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 8px; flex-shrink: 0;" 
+                                    title="Compartir enlace para familias">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1871,37 +1899,6 @@
             <div class="card">
                 <h2>Participantes <span id="numParticipantes"></span></h2>
                 <div id="listaParticipantes"></div>
-            </div>
-
-            <!-- ASISTENTES -->
-            <div class="card">
-                <h2>✅ Asistentes <span id="numAsistentes">(0)</span></h2>
-                <div id="listaAsistentes"></div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
-                    <div style="display: grid; gap: 8px; margin-bottom: 10px;">
-                        <input type="text" id="inputNombreAsistente" placeholder="Nombre" style="margin: 0;">
-                        <input type="text" id="inputApellidoAsistente" placeholder="Primer Apellido" style="margin: 0;">
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="agregarAsistente()" style="width: 100%;">
-                        ➕ Añadir Asistente
-                    </button>
-                </div>
-            </div>
-
-            <!-- NO ASISTENTES (Solo coordinador) -->
-            <div class="card" id="cardNoAsistentes" style="display: none;">
-                <h2>❌ No Asistentes <span id="numNoAsistentes">(0)</span></h2>
-                <div id="listaNoAsistentes"></div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
-                    <div style="display: grid; gap: 8px; margin-bottom: 10px;">
-                        <input type="text" id="inputNombreNoAsistente" placeholder="Nombre" style="margin: 0;">
-                        <input type="text" id="inputApellidoNoAsistente" placeholder="Primer Apellido" style="margin: 0;">
-                        <input type="text" id="inputMotivoNoAsistente" placeholder="Motivo (ej: Baja médica)" style="margin: 0;">
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="agregarNoAsistente()" style="width: 100%;">
-                        ➕ Añadir No Asistente
-                    </button>
-                </div>
             </div>
 
             <div id="contenidoPuntos"></div>
@@ -2327,15 +2324,6 @@
             cargarParticipantes();
             cargarVideollamada();
             inicializarChatGeneral();
-            cargarAsistentes();
-            cargarNoAsistentes();
-
-            // Mostrar/ocultar card de no asistentes según rol
-            if (window.usuarioActual.rol === 'coordinador') {
-                document.getElementById('cardNoAsistentes').style.display = 'block';
-            } else {
-                document.getElementById('cardNoAsistentes').style.display = 'none';
-            }
 
             // Ajustar margen del contenedor
             document.getElementById('containerReunion').classList.add('con-chat');
@@ -2350,18 +2338,6 @@
             const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             onValue(videollamadaRef, () => {
                 cargarVideollamada();
-            });
-
-            // Escuchar cambios en asistentes
-            const asistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes`);
-            onValue(asistentesRef, () => {
-                cargarAsistentes();
-            });
-
-            // Escuchar cambios en no asistentes
-            const noAsistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes`);
-            onValue(noAsistentesRef, () => {
-                cargarNoAsistentes();
             });
 
             // Listener ÚNICO para puntos - solo se activa una vez
@@ -2419,7 +2395,7 @@
                 }
 
                 const mensajes = snapshot.val();
-                const mensajesArray = Object.values(mensajes);
+                const mensajesArray = Object.entries(mensajes).map(([id, data]) => ({ id, ...data }));
                 mensajesArray.sort((a, b) => a.timestamp - b.timestamp);
 
                 contenedor.innerHTML = '';
@@ -2427,10 +2403,15 @@
                 mensajesArray.forEach(msg => {
                     const div = document.createElement('div');
                     div.className = 'mensaje-general';
+                    
+                    const esAutor = msg.autor === window.usuarioActual.nombre;
+                    const esCoordinador = window.usuarioActual.rol === 'coordinador';
+                    const puedeEditar = esAutor || esCoordinador;
+                    
                     div.innerHTML = `
                         <div class="mensaje-general-header">
                             <span class="mensaje-general-autor">
-                                ${msg.rol === 'coordinador' ? '👑' : '👤'} ${msg.autor}
+                                ${msg.rol === 'coordinador' ? '👑' : msg.rol === 'familia' ? '👨‍👩‍👧' : '👤'} ${msg.autor}
                             </span>
                             <span class="mensaje-general-hora">${new Date(msg.timestamp).toLocaleTimeString('es-ES', { 
                                 hour: '2-digit', 
@@ -2438,6 +2419,18 @@
                             })}</span>
                         </div>
                         <div class="mensaje-general-texto">${msg.texto}</div>
+                        ${puedeEditar ? `
+                            <div style="margin-top: 6px; display: flex; gap: 6px;">
+                                <button onclick="editarMensajeChat('${msg.id}')" 
+                                        style="padding: 3px 8px; background: var(--warning); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                                    ✏️ Editar
+                                </button>
+                                <button onclick="borrarMensajeChat('${msg.id}')" 
+                                        style="padding: 3px 8px; background: var(--danger); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                                    🗑️ Borrar
+                                </button>
+                            </div>
+                        ` : ''}
                     `;
                     contenedor.appendChild(div);
                 });
@@ -2447,6 +2440,99 @@
                 
             } catch (error) {
                 console.error('Error cargando chat general:', error);
+            }
+        };
+
+        // Editar mensaje del chat general (autor o coordinador)
+        window.editarMensajeChat = async function(mensajeId) {
+            const mensajeRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral/${mensajeId}`);
+            const snapshot = await get(mensajeRef);
+            
+            if (!snapshot.exists()) {
+                alert('Mensaje no encontrado');
+                return;
+            }
+            
+            const mensaje = snapshot.val();
+            
+            // Verificar permisos
+            const esAutor = mensaje.autor === window.usuarioActual.nombre;
+            const esCoordinador = window.usuarioActual.rol === 'coordinador';
+            
+            if (!esAutor && !esCoordinador) {
+                alert('Solo puedes editar tus propios mensajes');
+                return;
+            }
+            
+            // Crear modal para editar
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 25px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">✏️ Editar mensaje</h3>
+                    <textarea id="textareaEditarMensajeChat" style="width: 100%; min-height: 100px; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical;">${mensaje.texto}</textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="this.closest('div').parentElement.parentElement.remove()" style="flex: 1; padding: 12px; background: transparent; border: 2px solid var(--primary); color: var(--primary); border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            Cancelar
+                        </button>
+                        <button id="btnGuardarEdicionChat" style="flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Focus en el textarea
+            const textarea = document.getElementById('textareaEditarMensajeChat');
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            
+            // Evento para guardar
+            document.getElementById('btnGuardarEdicionChat').onclick = async function() {
+                const nuevoTexto = textarea.value.trim();
+                
+                if (nuevoTexto !== '') {
+                    await update(mensajeRef, { texto: nuevoTexto });
+                    modal.remove();
+                } else {
+                    alert('El texto no puede estar vacío');
+                }
+            };
+            
+            // Cerrar modal al hacer clic fuera
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+        };
+
+        // Borrar mensaje del chat general (autor o coordinador)
+        window.borrarMensajeChat = async function(mensajeId) {
+            const mensajeRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral/${mensajeId}`);
+            const snapshot = await get(mensajeRef);
+            
+            if (!snapshot.exists()) {
+                alert('Mensaje no encontrado');
+                return;
+            }
+            
+            const mensaje = snapshot.val();
+            
+            // Verificar permisos
+            const esAutor = mensaje.autor === window.usuarioActual.nombre;
+            const esCoordinador = window.usuarioActual.rol === 'coordinador';
+            
+            if (!esAutor && !esCoordinador) {
+                alert('Solo puedes borrar tus propios mensajes');
+                return;
+            }
+            
+            if (confirm('¿Estás seguro de que quieres borrar este mensaje?')) {
+                await remove(mensajeRef);
             }
         };
 
@@ -2511,7 +2597,13 @@
                 
                 const badge = document.createElement('span');
                 badge.className = `user-badge ${p.rol}`;
-                badge.innerHTML = `${p.rol === 'coordinador' ? '👑' : '👤'} ${p.nombre}`;
+                
+                // Determinar el icono según el rol
+                let icono = '👤'; // Maestro por defecto
+                if (p.rol === 'coordinador') icono = '👑';
+                else if (p.rol === 'familia') icono = '👨‍👩‍👧';
+                
+                badge.innerHTML = `${icono} ${p.nombre}`;
                 container.appendChild(badge);
                 
                 // Botón de eliminar solo para coordinador y solo si el participante no es coordinador
@@ -2546,223 +2638,6 @@
             
             // Recargar lista de participantes
             cargarParticipantes();
-        };
-
-        // ===== FUNCIONES DE ASISTENTES =====
-        
-        // Agregar asistente (Coordinador o Maestro)
-        window.agregarAsistente = async function() {
-            const nombre = document.getElementById('inputNombreAsistente').value.trim();
-            const apellido = document.getElementById('inputApellidoAsistente').value.trim();
-            
-            if (!nombre || !apellido) {
-                alert('Por favor, completa nombre y apellido');
-                return;
-            }
-            
-            const asistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes`);
-            const nuevoAsistenteRef = push(asistentesRef);
-            
-            await set(nuevoAsistenteRef, {
-                nombre: nombre,
-                apellido: apellido,
-                timestamp: Date.now()
-            });
-            
-            document.getElementById('inputNombreAsistente').value = '';
-            document.getElementById('inputApellidoAsistente').value = '';
-        };
-
-        // Cargar asistentes
-        window.cargarAsistentes = async function() {
-            const lista = document.getElementById('listaAsistentes');
-            lista.innerHTML = '';
-            
-            const asistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes`);
-            const snapshot = await get(asistentesRef);
-            
-            if (!snapshot.exists()) {
-                document.getElementById('numAsistentes').textContent = '(0)';
-                lista.innerHTML = '<div style="color: var(--text-secondary); font-size: 14px; padding: 10px;">No hay asistentes registrados</div>';
-                return;
-            }
-            
-            const asistentes = snapshot.val();
-            const asistentesArray = Object.entries(asistentes).map(([id, data]) => ({id, ...data}));
-            asistentesArray.sort((a, b) => a.timestamp - b.timestamp);
-            
-            asistentesArray.forEach(a => {
-                const div = document.createElement('div');
-                div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(37, 99, 235, 0.05); border-radius: 6px; margin-bottom: 5px;';
-                
-                div.innerHTML = `
-                    <span style="font-weight: 500;">${a.nombre} ${a.apellido}</span>
-                    <div style="display: flex; gap: 5px;">
-                        <button onclick="editarAsistente('${a.id}', '${a.nombre}', '${a.apellido}')" 
-                                style="background: var(--warning); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
-                            ✏️
-                        </button>
-                        <button onclick="eliminarAsistente('${a.id}')" 
-                                style="background: var(--danger); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
-                            🗑️
-                        </button>
-                    </div>
-                `;
-                
-                lista.appendChild(div);
-            });
-            
-            document.getElementById('numAsistentes').textContent = `(${asistentesArray.length})`;
-        };
-
-        // Editar asistente
-        window.editarAsistente = function(id, nombreActual, apellidoActual) {
-            const nuevoNombre = prompt('Nombre:', nombreActual);
-            if (nuevoNombre === null) return;
-            
-            const nuevoApellido = prompt('Primer Apellido:', apellidoActual);
-            if (nuevoApellido === null) return;
-            
-            if (!nuevoNombre.trim() || !nuevoApellido.trim()) {
-                alert('Nombre y apellido no pueden estar vacíos');
-                return;
-            }
-            
-            const asistenteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes/${id}`);
-            update(asistenteRef, {
-                nombre: nuevoNombre.trim(),
-                apellido: nuevoApellido.trim()
-            });
-        };
-
-        // Eliminar asistente
-        window.eliminarAsistente = function(id) {
-            if (!confirm('¿Eliminar este asistente?')) return;
-            
-            const asistenteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistentes/${id}`);
-            remove(asistenteRef);
-        };
-
-        // ===== FUNCIONES DE NO ASISTENTES (Solo Coordinador) =====
-        
-        // Agregar no asistente (Solo coordinador)
-        window.agregarNoAsistente = async function() {
-            if (window.usuarioActual.rol !== 'coordinador') {
-                alert('Solo el coordinador puede gestionar no asistentes');
-                return;
-            }
-            
-            const nombre = document.getElementById('inputNombreNoAsistente').value.trim();
-            const apellido = document.getElementById('inputApellidoNoAsistente').value.trim();
-            const motivo = document.getElementById('inputMotivoNoAsistente').value.trim();
-            
-            if (!nombre || !apellido || !motivo) {
-                alert('Por favor, completa todos los campos');
-                return;
-            }
-            
-            const noAsistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes`);
-            const nuevoNoAsistenteRef = push(noAsistentesRef);
-            
-            await set(nuevoNoAsistenteRef, {
-                nombre: nombre,
-                apellido: apellido,
-                motivo: motivo,
-                timestamp: Date.now()
-            });
-            
-            document.getElementById('inputNombreNoAsistente').value = '';
-            document.getElementById('inputApellidoNoAsistente').value = '';
-            document.getElementById('inputMotivoNoAsistente').value = '';
-        };
-
-        // Cargar no asistentes
-        window.cargarNoAsistentes = async function() {
-            const lista = document.getElementById('listaNoAsistentes');
-            lista.innerHTML = '';
-            
-            const noAsistentesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes`);
-            const snapshot = await get(noAsistentesRef);
-            
-            if (!snapshot.exists()) {
-                document.getElementById('numNoAsistentes').textContent = '(0)';
-                lista.innerHTML = '<div style="color: var(--text-secondary); font-size: 14px; padding: 10px;">No hay no asistentes registrados</div>';
-                return;
-            }
-            
-            const noAsistentes = snapshot.val();
-            const noAsistentesArray = Object.entries(noAsistentes).map(([id, data]) => ({id, ...data}));
-            noAsistentesArray.sort((a, b) => a.timestamp - b.timestamp);
-            
-            noAsistentesArray.forEach(na => {
-                const div = document.createElement('div');
-                div.style.cssText = 'padding: 10px; background: rgba(239, 68, 68, 0.05); border-radius: 6px; margin-bottom: 8px;';
-                
-                div.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
-                        <span style="font-weight: 500;">${na.nombre} ${na.apellido}</span>
-                        <div style="display: flex; gap: 5px;">
-                            <button onclick="editarNoAsistente('${na.id}', '${na.nombre}', '${na.apellido}', '${na.motivo}')" 
-                                    style="background: var(--warning); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
-                                ✏️
-                            </button>
-                            <button onclick="eliminarNoAsistente('${na.id}')" 
-                                    style="background: var(--danger); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
-                                🗑️
-                            </button>
-                        </div>
-                    </div>
-                    <div style="font-size: 13px; color: var(--text-secondary);">
-                        <strong>Motivo:</strong> ${na.motivo}
-                    </div>
-                `;
-                
-                lista.appendChild(div);
-            });
-            
-            document.getElementById('numNoAsistentes').textContent = `(${noAsistentesArray.length})`;
-        };
-
-        // Editar no asistente
-        window.editarNoAsistente = function(id, nombreActual, apellidoActual, motivoActual) {
-            if (window.usuarioActual.rol !== 'coordinador') {
-                alert('Solo el coordinador puede editar no asistentes');
-                return;
-            }
-            
-            const nuevoNombre = prompt('Nombre:', nombreActual);
-            if (nuevoNombre === null) return;
-            
-            const nuevoApellido = prompt('Primer Apellido:', apellidoActual);
-            if (nuevoApellido === null) return;
-            
-            const nuevoMotivo = prompt('Motivo:', motivoActual);
-            if (nuevoMotivo === null) return;
-            
-            if (!nuevoNombre.trim() || !nuevoApellido.trim() || !nuevoMotivo.trim()) {
-                alert('Todos los campos son obligatorios');
-                return;
-            }
-            
-            const noAsistenteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes/${id}`);
-            update(noAsistenteRef, {
-                nombre: nuevoNombre.trim(),
-                apellido: nuevoApellido.trim(),
-                motivo: nuevoMotivo.trim()
-            });
-        };
-
-        // Eliminar no asistente
-        window.eliminarNoAsistente = function(id) {
-            if (window.usuarioActual.rol !== 'coordinador') {
-                alert('Solo el coordinador puede eliminar no asistentes');
-                return;
-            }
-            
-            if (!confirm('¿Eliminar este no asistente?')) return;
-            
-            const noAsistenteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/noAsistentes/${id}`);
-            remove(noAsistenteRef);
         };
 
         // Cargar puntos del orden del día - Solo carga inicial
@@ -3536,52 +3411,6 @@
             
             const sesionData = snapshot.val();
             
-            // Asistentes
-            if (sesionData.asistentes) {
-                checkPage();
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text('Asistentes:', 20, y);
-                y += lineHeight;
-                
-                doc.setFont(undefined, 'normal');
-                doc.setFontSize(10);
-                
-                const asistentesArray = Object.values(sesionData.asistentes);
-                asistentesArray.sort((a, b) => a.timestamp - b.timestamp);
-                
-                asistentesArray.forEach(a => {
-                    checkPage();
-                    doc.text(`- ${a.nombre} ${a.apellido}`, 25, y);
-                    y += lineHeight;
-                });
-                
-                y += 5;
-            }
-            
-            // No Asistentes
-            if (sesionData.noAsistentes) {
-                checkPage();
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text('No Asistentes:', 20, y);
-                y += lineHeight;
-                
-                doc.setFont(undefined, 'normal');
-                doc.setFontSize(10);
-                
-                const noAsistentesArray = Object.values(sesionData.noAsistentes);
-                noAsistentesArray.sort((a, b) => a.timestamp - b.timestamp);
-                
-                noAsistentesArray.forEach(na => {
-                    checkPage();
-                    doc.text(`- ${na.nombre} ${na.apellido} (${na.motivo})`, 25, y);
-                    y += lineHeight;
-                });
-                
-                y += 5;
-            }
-            
             // Participantes
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
@@ -3849,30 +3678,6 @@
             texto += '═══════════════════════════════════════════\n\n';
             texto += `📋 ${nombreReunion}\n\n`;
             
-            // Asistentes
-            if (sesionData.asistentes) {
-                texto += '✅ ASISTENTES:\n';
-                texto += '─────────────────────────────────────────\n';
-                const asistentesArray = Object.values(sesionData.asistentes);
-                asistentesArray.sort((a, b) => a.timestamp - b.timestamp);
-                asistentesArray.forEach(a => {
-                    texto += `• ${a.nombre} ${a.apellido}\n`;
-                });
-                texto += '\n';
-            }
-            
-            // No Asistentes
-            if (sesionData.noAsistentes) {
-                texto += '❌ NO ASISTENTES:\n';
-                texto += '─────────────────────────────────────────\n';
-                const noAsistentesArray = Object.values(sesionData.noAsistentes);
-                noAsistentesArray.sort((a, b) => a.timestamp - b.timestamp);
-                noAsistentesArray.forEach(na => {
-                    texto += `• ${na.nombre} ${na.apellido} (${na.motivo})\n`;
-                });
-                texto += '\n';
-            }
-            
             // Participantes
             texto += '👥 PARTICIPANTES:\n';
             texto += '─────────────────────────────────────────\n';
@@ -4073,6 +3878,12 @@
 
         // Salir de reunión
         window.salirDeReunion = function() {
+            // Si es familia invitada, no puede volver al menú principal
+            if (window.esInvitadoFamilia) {
+                alert('👨‍👩‍👧 Como invitado de familias, solo tienes acceso a esta reunión.\n\nPara salir, simplemente cierra esta pestaña del navegador.');
+                return;
+            }
+            
             if (confirm('¿Seguro que quieres salir de la reunión?')) {
                 ocultarTituloReunion();
                 location.reload();
@@ -4408,6 +4219,21 @@
                     window.enlaceReunionActual = qrUrl; // Guardar para compartir
                 }
 
+                // Mostrar/ocultar sección de enlace para familias (solo CONSEJO ESCOLAR)
+                const enlaceFamiliasSection = document.getElementById('enlaceFamiliasSection');
+                const enlaceFamiliasInput = document.getElementById('enlaceFamiliasMostrado');
+                
+                if (window.sesionActual === 'consejo-escolar' || window.sesionActual === 'CONSEJO ESCOLAR') {
+                    // Generar enlace especial para familias
+                    const qrUrlFamilias = qrUrl + '&invitado=familia';
+                    enlaceFamiliasInput.value = qrUrlFamilias;
+                    window.enlaceFamiliasActual = qrUrlFamilias;
+                    enlaceFamiliasSection.style.display = 'block';
+                    console.log('✅ Enlace para familias generado:', qrUrlFamilias);
+                } else {
+                    enlaceFamiliasSection.style.display = 'none';
+                }
+
                 // Mostrar modal
                 document.getElementById('citacionModal').classList.add('active');
                 
@@ -4588,13 +4414,20 @@
             const urlParams = new URLSearchParams(window.location.search);
             const reunion = urlParams.get('reunion');
             const fecha = urlParams.get('fecha');
+            const invitado = urlParams.get('invitado'); // Detectar si es familia
             
             console.log('   Parámetros detectados:');
             console.log('   - reunion:', reunion);
             console.log('   - fecha:', fecha);
+            console.log('   - invitado:', invitado);
             
             if (reunion && fecha) {
                 console.log('✅ Parámetros válidos detectados, iniciando auto-unión...');
+                
+                // Determinar tipo de invitado
+                const esFamilia = invitado === 'familia';
+                const textoTipo = esFamilia ? '👨‍👩‍👧 Acceso para Familias' : '📱 Cargando reunión...';
+                const colorTipo = esFamilia ? '#8b5cf6' : '#2563eb';
                 
                 // Mostrar un indicador visual inmediato
                 document.body.innerHTML += `
@@ -4610,10 +4443,10 @@
                         z-index: 99999;
                         text-align: center;
                     " id="loadingAutoJoin">
-                        <h2 style="color: #2563eb; margin: 0 0 15px 0;">📱 Cargando reunión...</h2>
+                        <h2 style="color: ${colorTipo}; margin: 0 0 15px 0;">${textoTipo}</h2>
                         <p style="margin: 0; color: #64748b;">${reunion}<br>${fecha}</p>
                         <div style="margin-top: 20px;">
-                            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: ${colorTipo}; border-radius: 50%; animation: spin 1s linear infinite;"></div>
                         </div>
                     </div>
                     <style>
@@ -4627,7 +4460,7 @@
                         clearInterval(esperarFirebase);
                         console.log('✅ Firebase listo, procediendo con auto-unión');
                         setTimeout(() => {
-                            autoUnirseDesdeQR(reunion, fecha);
+                            autoUnirseDesdeQR(reunion, fecha, esFamilia);
                         }, 500);
                     } else {
                         console.log('⏳ Esperando a que Firebase se inicialice...');
@@ -4648,17 +4481,23 @@
             }
         });
 
-        async function autoUnirseDesdeQR(tipoReunion, fecha) {
+        async function autoUnirseDesdeQR(tipoReunion, fecha, esFamilia = false) {
             console.log('🚀 Ejecutando autoUnirseDesdeQR...');
             console.log('   - Tipo reunión:', tipoReunion);
             console.log('   - Fecha:', fecha);
+            console.log('   - Es familia:', esFamilia);
             
             try {
                 // Ocultar el loading
                 document.getElementById('loadingAutoJoin')?.remove();
                 
+                // Mensaje diferente para familias
+                const mensajePrompt = esFamilia 
+                    ? `👨‍👩‍👧 Acceso para FAMILIAS\n\n${tipoReunion}\nFecha: ${fecha}\n\n¿Cuál es tu nombre?`
+                    : `📱 Vas a unirte a:\n\n${tipoReunion}\nFecha: ${fecha}\n\n¿Cuál es tu nombre?`;
+                
                 // Pedir nombre al usuario
-                const nombre = prompt(`📱 Vas a unirte a:\n\n${tipoReunion}\nFecha: ${fecha}\n\n¿Cuál es tu nombre?`);
+                const nombre = prompt(mensajePrompt);
                 
                 if (!nombre || nombre.trim() === '') {
                     console.log('❌ Nombre no proporcionado, cancelando auto-unión');
@@ -4671,14 +4510,20 @@
 
                 // Normalizar nombre: sin espacios extra, minúsculas para la key
                 const nombreNormalizado = nombre.trim().toLowerCase().replace(/\s+/g, '-');
+                
+                // Determinar el rol
+                const rol = esFamilia ? 'familia' : 'maestro';
 
                 // Guardar datos del usuario
                 window.usuarioActual = {
                     nombre: nombre.trim(),
                     nombreKey: nombreNormalizado,
-                    rol: 'maestro',
+                    rol: rol,
                     timestamp: Date.now()
                 };
+                
+                // Marcar si es invitado familia (para restringir navegación)
+                window.esInvitadoFamilia = esFamilia;
 
                 window.sesionActual = tipoReunion;
                 window.fechaActual = fecha;
@@ -4707,10 +4552,10 @@
                 const participanteRef = ref(database, `sesiones/${tipoReunion}/${fecha}/participantes/${nombreNormalizado}`);
                 await set(participanteRef, {
                     nombre: nombre.trim(),
-                    rol: 'maestro',
+                    rol: rol,
                     timestamp: Date.now()
                 });
-                console.log('✅ Participante registrado');
+                console.log('✅ Participante registrado como:', rol);
 
                 console.log('📺 Cambiando a pantalla de reunión...');
                 
@@ -4725,8 +4570,13 @@
                 // Limpiar parámetros de la URL sin recargar la página
                 window.history.replaceState({}, document.title, window.location.pathname);
                 
+                // Mensaje de confirmación diferente para familias
+                const mensajeExito = esFamilia 
+                    ? '✅ Bienvenido/a al Consejo Escolar\n\nTe has unido como representante de familias.'
+                    : '✅ Te has unido correctamente a la reunión';
+                
                 setTimeout(() => {
-                    alert('✅ Te has unido correctamente a la reunión');
+                    alert(mensajeExito);
                 }, 500);
                 
             } catch (error) {
@@ -4951,7 +4801,7 @@
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        z-index: 10010;
+                        z-index: 10000;
                         animation: fadeIn 0.2s ease;
                     }
 
@@ -5263,6 +5113,53 @@
                 const toast = document.createElement('div');
                 toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
                 toast.textContent = '✅ Enlace copiado al portapapeles';
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+        };
+
+        // Función para compartir enlace de familias
+        window.compartirEnlaceFamilias = function() {
+            const url = window.enlaceFamiliasActual;
+            if (!url) {
+                alert('No hay enlace de familias disponible');
+                return;
+            }
+            const nombreReunion = 'Consejo Escolar (Familias)';
+            shareLinksManager.shareLink(url, nombreReunion, formatearFecha(window.fechaActual), '');
+        };
+
+        // Función para copiar enlace de familias al portapapeles
+        window.copiarEnlaceFamilias = async function() {
+            const enlaceInput = document.getElementById('enlaceFamiliasMostrado');
+            if (!enlaceInput || !enlaceInput.value) {
+                alert('No hay enlace de familias disponible');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(enlaceInput.value);
+                
+                // Mostrar confirmación
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
+                toast.textContent = '✅ Enlace para familias copiado';
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            } catch (err) {
+                // Fallback: seleccionar texto
+                enlaceInput.select();
+                document.execCommand('copy');
+                
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
+                toast.textContent = '✅ Enlace para familias copiado';
                 document.body.appendChild(toast);
                 
                 setTimeout(() => {
