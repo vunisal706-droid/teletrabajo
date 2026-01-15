@@ -2325,6 +2325,14 @@
             cargarVideollamada();
             inicializarChatGeneral();
 
+            // Ocultar botón de acta para familias
+            const actaDropdown = document.getElementById('actaDropdown');
+            if (window.usuarioActual.rol === 'familia') {
+                actaDropdown.style.display = 'none';
+            } else {
+                actaDropdown.style.display = 'block';
+            }
+
             // Ajustar margen del contenedor
             document.getElementById('containerReunion').classList.add('con-chat');
 
