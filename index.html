@@ -4426,8 +4426,8 @@
             lista.innerHTML = '<div class="reuniones-loading"><div style="font-size: 32px; margin-bottom: 10px;">⏳</div><p>Cargando reuniones...</p></div>';
             
             try {
-                const sesionesRef = ref(database, 'sesiones');
-                const snapshot = await get(sesionesRef);
+                const sesionesRef = window.ref(window.database, 'sesiones');
+                const snapshot = await window.get(sesionesRef);
                 
                 if (!snapshot.exists()) {
                     lista.innerHTML = '<div class="reuniones-empty"><div class="emoji">📭</div><p>No hay reuniones creadas todavía</p></div>';
@@ -4447,7 +4447,7 @@
                                     fecha: fecha,
                                     creada: datosReunion.creada,
                                     estado: datosReunion.estado || 'activa',
-                                    nombre: datosReunion.nombre || getNombreReunion(tipoReunion, fecha)
+                                    nombre: datosReunion.nombre || window.getNombreReunion(tipoReunion, fecha)
                                 });
                             }
                         });
@@ -4476,8 +4476,8 @@
                     item.innerHTML = `
                         <div class="reunion-avatar ${avatarClass}">${emoji}</div>
                         <div class="reunion-info">
-                            <div class="reunion-titulo">${nombresReunion[reunion.tipo] || reunion.tipo}</div>
-                            <div class="reunion-fecha">📅 ${formatearFecha(reunion.fecha)}</div>
+                            <div class="reunion-titulo">${reunion.nombre}</div>
+                            <div class="reunion-fecha">📅 ${window.formatearFecha(reunion.fecha)}</div>
                         </div>
                         <div class="reunion-estado ${estadoClass}">${estadoTexto}</div>
                     `;
@@ -4520,8 +4520,8 @@
             
             // Mostrar modal para pedir nombre
             document.getElementById('nombreReunionInfo').innerHTML = `
-                <strong>${nombresReunion[reunion.tipo] || reunion.tipo}</strong><br>
-                📅 ${formatearFecha(reunion.fecha)}
+                <strong>${reunion.nombre}</strong><br>
+                📅 ${window.formatearFecha(reunion.fecha)}
             `;
             document.getElementById('nombreParaReunion').value = '';
             document.getElementById('nombreReunionModal').classList.add('active');
@@ -4570,19 +4570,19 @@
             
             try {
                 // Registrar participante
-                const participanteRef = ref(database, `sesiones/${reunionSeleccionada.tipo}/${reunionSeleccionada.fecha}/participantes/${nombreNormalizado}`);
-                await set(participanteRef, {
+                const participanteRef = window.ref(window.database, `sesiones/${reunionSeleccionada.tipo}/${reunionSeleccionada.fecha}/participantes/${nombreNormalizado}`);
+                await window.set(participanteRef, {
                     nombre: nombre,
                     rol: 'maestro',
                     timestamp: Date.now()
                 });
                 
                 // Ir a la reunión
-                const nombreReunion = getNombreReunion(reunionSeleccionada.tipo, reunionSeleccionada.fecha);
+                const nombreReunion = window.getNombreReunion(reunionSeleccionada.tipo, reunionSeleccionada.fecha);
                 document.getElementById('nombreActual').textContent = nombreReunion;
-                mostrarTituloReunion(nombreReunion);
-                cargarReunion();
-                cambiarPantalla('screenReunion');
+                window.mostrarTituloReunion(nombreReunion);
+                window.cargarReunion();
+                window.cambiarPantalla('screenReunion');
                 
                 // Mensaje de bienvenida
                 setTimeout(() => {
