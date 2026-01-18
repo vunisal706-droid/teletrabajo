@@ -1584,6 +1584,290 @@
             margin-top: 20px;
             justify-content: center;
         }
+
+        /* ===== ESTILOS REUNIONES CREADAS (estilo WhatsApp) ===== */
+        
+        /* Botón REUNIONES en el header - MUY VISIBLE */
+        .reuniones-btn-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #ff6b00 0%, #ff8c00 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+            animation: pulseOrange 2s infinite;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .reuniones-btn-header:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 107, 0, 0.5);
+        }
+
+        @keyframes pulseOrange {
+            0%, 100% {
+                box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 4px 25px rgba(255, 107, 0, 0.7);
+            }
+        }
+
+        .reuniones-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .reuniones-modal.active {
+            display: flex;
+        }
+
+        .reuniones-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .reuniones-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reuniones-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .reuniones-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .reuniones-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .reuniones-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .reunion-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .reunion-item:hover {
+            background: var(--background);
+        }
+
+        .reunion-item:active {
+            background: #e0e7ff;
+        }
+
+        .reunion-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            margin-right: 15px;
+        }
+
+        .reunion-avatar.claustro { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .reunion-avatar.etcp { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .reunion-avatar.consejo { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .reunion-avatar.ciclo { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+        .reunion-avatar.equipo { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+
+        .reunion-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .reunion-titulo {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .reunion-fecha {
+            font-size: 14px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .reunion-estado {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .reunion-estado.activa {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .reunion-estado.configurando {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .reuniones-empty {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-light);
+        }
+
+        .reuniones-empty .emoji {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .reuniones-loading {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-light);
+        }
+
+        /* Modal pedir nombre para reunión */
+        .nombre-reunion-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .nombre-reunion-modal.active {
+            display: flex;
+        }
+
+        .nombre-reunion-content {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .nombre-reunion-content h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .nombre-reunion-content p {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .nombre-reunion-content input {
+            width: 100%;
+            padding: 15px;
+            border: 3px solid var(--primary);
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .nombre-reunion-content input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .nombre-reunion-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nombre-reunion-buttons button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nombre-reunion-buttons .btn-cancelar {
+            background: #f1f5f9;
+            color: var(--text);
+            border: none;
+        }
+
+        .nombre-reunion-buttons .btn-unirse {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .nombre-reunion-buttons .btn-unirse:hover {
+            background: var(--primary-dark);
+        }
     </style>
 </head>
 <body>
@@ -1594,9 +1878,7 @@
         <div id="meetingTitleBanner" class="meeting-title-banner" style="display: none;"></div>
     </div>
 
-    <div class="status-indicator" id="statusIndicator" style="display: none;">
-        Conectado en tiempo real
-    </div>
+    <!-- Indicador de conexión eliminado por petición -->
 
     <!-- Botón de instalación -->
     <button id="installButton" class="install-button hidden">
@@ -1877,10 +2159,16 @@
             <div class="card">
                 <div class="card-header-row">
                     <h2 style="margin: 0;">Bienvenido</h2>
-                    <button class="help-btn-inline" onclick="toggleHelpModal()" data-tooltip-help="Pasos para quien no tenga ni idea de cómo funciona esto">
-                        <div class="icon">?</div>
-                        <div class="label">Ayuda</div>
-                    </button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <!-- Botón REUNIONES para maestros mayores -->
+                        <button class="reuniones-btn-header" onclick="abrirReunionesCreadas()">
+                            Reuniones Creadas
+                        </button>
+                        <button class="help-btn-inline" onclick="toggleHelpModal()" data-tooltip-help="Pasos para quien no tenga ni idea de cómo funciona esto">
+                            <div class="icon">?</div>
+                            <div class="label">Ayuda</div>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>
@@ -1954,6 +2242,35 @@
                         🚀 Unirse a Reunión
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reuniones Creadas (estilo WhatsApp) -->
+    <div id="reunionesModal" class="reuniones-modal">
+        <div class="reuniones-content">
+            <div class="reuniones-header">
+                <h2>📋 Reuniones Creadas</h2>
+                <button class="reuniones-close" onclick="cerrarReunionesCreadas()">×</button>
+            </div>
+            <div class="reuniones-list" id="reunionesList">
+                <div class="reuniones-loading">
+                    <div style="font-size: 32px; margin-bottom: 10px;">⏳</div>
+                    <p>Cargando reuniones...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pedir nombre para unirse a reunión -->
+    <div id="nombreReunionModal" class="nombre-reunion-modal">
+        <div class="nombre-reunion-content">
+            <h3>👋 ¡Bienvenido/a!</h3>
+            <p id="nombreReunionInfo">Vas a unirte a una reunión</p>
+            <input type="text" id="nombreParaReunion" placeholder="Escribe tu nombre aquí">
+            <div class="nombre-reunion-buttons">
+                <button class="btn-cancelar" onclick="cerrarNombreReunionModal()">Cancelar</button>
+                <button class="btn-unirse" onclick="confirmarUnirseReunion()">Unirme</button>
             </div>
         </div>
     </div>
@@ -2186,8 +2503,7 @@
             "claustro": "CLAUSTRO", "etcp": "ETCP", "consejo-escolar": "CONSEJO ESCOLAR"
         };
 
-        // Mostrar indicador de conexión
-        document.getElementById('statusIndicator').style.display = 'flex';
+        // Indicador de conexión eliminado
 
         // Diccionario de nombres amigables
         const nombresReunion = {
@@ -2466,6 +2782,11 @@
             const actaDropdown = document.getElementById('actaDropdown');
             if (window.usuarioActual.rol === 'familia') {
                 actaDropdown.style.display = 'none';
+                // También ocultar el botón de instalación para familias
+                const installBtn = document.getElementById('installButton');
+                if (installBtn) {
+                    installBtn.style.display = 'none';
+                }
             } else {
                 actaDropdown.style.display = 'block';
             }
@@ -4083,6 +4404,219 @@
             setTimeout(setupPuntosListener, 500);
         };
 
+        // ===== SISTEMA DE REUNIONES CREADAS (estilo WhatsApp) =====
+        
+        // Variable temporal para guardar la reunión seleccionada
+        let reunionSeleccionada = null;
+        
+        // Abrir modal de reuniones creadas
+        window.abrirReunionesCreadas = async function() {
+            document.getElementById('reunionesModal').classList.add('active');
+            cargarReunionesCreadas();
+        };
+        
+        // Cerrar modal
+        window.cerrarReunionesCreadas = function() {
+            document.getElementById('reunionesModal').classList.remove('active');
+        };
+        
+        // Cargar reuniones desde Firebase
+        async function cargarReunionesCreadas() {
+            const lista = document.getElementById('reunionesList');
+            lista.innerHTML = '<div class="reuniones-loading"><div style="font-size: 32px; margin-bottom: 10px;">⏳</div><p>Cargando reuniones...</p></div>';
+            
+            try {
+                const sesionesRef = ref(database, 'sesiones');
+                const snapshot = await get(sesionesRef);
+                
+                if (!snapshot.exists()) {
+                    lista.innerHTML = '<div class="reuniones-empty"><div class="emoji">📭</div><p>No hay reuniones creadas todavía</p></div>';
+                    return;
+                }
+                
+                const reuniones = [];
+                const data = snapshot.val();
+                
+                // Recorrer estructura sesiones/tipo/fecha
+                Object.entries(data).forEach(([tipoReunion, fechas]) => {
+                    if (fechas && typeof fechas === 'object') {
+                        Object.entries(fechas).forEach(([fecha, datosReunion]) => {
+                            if (datosReunion && datosReunion.creada) {
+                                reuniones.push({
+                                    tipo: tipoReunion,
+                                    fecha: fecha,
+                                    creada: datosReunion.creada,
+                                    estado: datosReunion.estado || 'activa',
+                                    nombre: datosReunion.nombre || getNombreReunion(tipoReunion, fecha)
+                                });
+                            }
+                        });
+                    }
+                });
+                
+                // Ordenar por fecha de creación (más recientes primero)
+                reuniones.sort((a, b) => b.creada - a.creada);
+                
+                if (reuniones.length === 0) {
+                    lista.innerHTML = '<div class="reuniones-empty"><div class="emoji">📭</div><p>No hay reuniones creadas todavía</p></div>';
+                    return;
+                }
+                
+                // Renderizar reuniones
+                lista.innerHTML = '';
+                reuniones.forEach(reunion => {
+                    const avatarClass = getAvatarClass(reunion.tipo);
+                    const emoji = getEmojiReunion(reunion.tipo);
+                    const estadoClass = reunion.estado === 'activa' ? 'activa' : 'configurando';
+                    const estadoTexto = reunion.estado === 'activa' ? '🟢 Activa' : '🟡 Preparando';
+                    
+                    const item = document.createElement('div');
+                    item.className = 'reunion-item';
+                    item.onclick = () => seleccionarReunion(reunion);
+                    item.innerHTML = `
+                        <div class="reunion-avatar ${avatarClass}">${emoji}</div>
+                        <div class="reunion-info">
+                            <div class="reunion-titulo">${nombresReunion[reunion.tipo] || reunion.tipo}</div>
+                            <div class="reunion-fecha">📅 ${formatearFecha(reunion.fecha)}</div>
+                        </div>
+                        <div class="reunion-estado ${estadoClass}">${estadoTexto}</div>
+                    `;
+                    lista.appendChild(item);
+                });
+                
+            } catch (error) {
+                console.error('Error cargando reuniones:', error);
+                lista.innerHTML = '<div class="reuniones-empty"><div class="emoji">⚠️</div><p>Error al cargar las reuniones</p></div>';
+            }
+        }
+        
+        // Determinar clase del avatar según tipo
+        function getAvatarClass(tipo) {
+            if (tipo.includes('claustro')) return 'claustro';
+            if (tipo.includes('etcp')) return 'etcp';
+            if (tipo.includes('consejo')) return 'consejo';
+            if (tipo.includes('ciclo')) return 'ciclo';
+            return 'equipo';
+        }
+        
+        // Obtener emoji según tipo de reunión
+        function getEmojiReunion(tipo) {
+            if (tipo.includes('claustro')) return '🏫';
+            if (tipo.includes('etcp')) return '📊';
+            if (tipo.includes('consejo')) return '🏛️';
+            if (tipo.includes('ciclo')) return '🔄';
+            if (tipo.includes('orientacion')) return '🧭';
+            if (tipo.includes('tea')) return '💜';
+            if (tipo.includes('infantil')) return '🎨';
+            return '👥';
+        }
+        
+        // Seleccionar reunión y pedir nombre
+        function seleccionarReunion(reunion) {
+            reunionSeleccionada = reunion;
+            
+            // Cerrar modal de reuniones
+            cerrarReunionesCreadas();
+            
+            // Mostrar modal para pedir nombre
+            document.getElementById('nombreReunionInfo').innerHTML = `
+                <strong>${nombresReunion[reunion.tipo] || reunion.tipo}</strong><br>
+                📅 ${formatearFecha(reunion.fecha)}
+            `;
+            document.getElementById('nombreParaReunion').value = '';
+            document.getElementById('nombreReunionModal').classList.add('active');
+            
+            // Enfocar el input
+            setTimeout(() => {
+                document.getElementById('nombreParaReunion').focus();
+            }, 100);
+        }
+        
+        // Cerrar modal de nombre
+        window.cerrarNombreReunionModal = function() {
+            document.getElementById('nombreReunionModal').classList.remove('active');
+            reunionSeleccionada = null;
+        };
+        
+        // Confirmar y unirse a la reunión
+        window.confirmarUnirseReunion = async function() {
+            const nombre = document.getElementById('nombreParaReunion').value.trim();
+            
+            if (!nombre) {
+                alert('Por favor, escribe tu nombre');
+                document.getElementById('nombreParaReunion').focus();
+                return;
+            }
+            
+            if (!reunionSeleccionada) {
+                alert('Error: No hay reunión seleccionada');
+                cerrarNombreReunionModal();
+                return;
+            }
+            
+            // Cerrar modal
+            cerrarNombreReunionModal();
+            
+            // Configurar datos
+            const nombreNormalizado = nombre.toLowerCase().replace(/\s+/g, '-');
+            
+            window.sesionActual = reunionSeleccionada.tipo;
+            window.fechaActual = reunionSeleccionada.fecha;
+            window.usuarioActual = {
+                nombre: nombre,
+                nombreKey: nombreNormalizado,
+                rol: 'maestro'
+            };
+            
+            try {
+                // Registrar participante
+                const participanteRef = ref(database, `sesiones/${reunionSeleccionada.tipo}/${reunionSeleccionada.fecha}/participantes/${nombreNormalizado}`);
+                await set(participanteRef, {
+                    nombre: nombre,
+                    rol: 'maestro',
+                    timestamp: Date.now()
+                });
+                
+                // Ir a la reunión
+                const nombreReunion = getNombreReunion(reunionSeleccionada.tipo, reunionSeleccionada.fecha);
+                document.getElementById('nombreActual').textContent = nombreReunion;
+                mostrarTituloReunion(nombreReunion);
+                cargarReunion();
+                cambiarPantalla('screenReunion');
+                
+                // Mensaje de bienvenida
+                setTimeout(() => {
+                    const toast = document.createElement('div');
+                    toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
+                    toast.textContent = `✅ Bienvenido/a, ${nombre}`;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error al unirse:', error);
+                alert('Error al unirse a la reunión: ' + error.message);
+            }
+            
+            reunionSeleccionada = null;
+        };
+        
+        // Permitir Enter para confirmar
+        document.getElementById('nombreParaReunion').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                confirmarUnirseReunion();
+            }
+        });
+        
+        // Cerrar modales al hacer clic fuera
+        document.getElementById('reunionesModal').addEventListener('click', function(e) {
+            if (e.target === this) cerrarReunionesCreadas();
+        });
+        
+        document.getElementById('nombreReunionModal').addEventListener('click', function(e) {
+            if (e.target === this) cerrarNombreReunionModal();
+        });
+
         // ===== SISTEMA DE INSTALACIÓN DE PWA =====
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
@@ -4669,6 +5203,14 @@
                 
                 // Marcar si es invitado familia (para restringir navegación)
                 window.esInvitadoFamilia = esFamilia;
+                
+                // Si es familia, ocultar el botón de instalación
+                if (esFamilia) {
+                    const installBtn = document.getElementById('installButton');
+                    if (installBtn) {
+                        installBtn.style.display = 'none';
+                    }
+                }
 
                 window.sesionActual = tipoReunion;
                 window.fechaActual = fecha;
