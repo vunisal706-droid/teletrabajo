@@ -676,198 +676,7 @@
         }
 
         /* Chat lateral general */
-        .chat-lateral {
-            position: fixed;
-            right: 20px;
-            top: 100px;
-            width: 350px;
-            max-height: calc(100vh - 120px);
-            background: var(--surface);
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column;
-            z-index: 999;
-            transition: transform 0.3s ease;
-        }
 
-        .chat-lateral.minimizado {
-            transform: translateX(calc(100% - 60px));
-        }
-
-        .chat-lateral-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 12px 12px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .chat-lateral-header h3 {
-            font-size: 16px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chat-lateral-toggle {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: all 0.2s;
-        }
-
-        .chat-lateral-toggle:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .chat-lateral-mensajes {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            background: var(--background);
-        }
-
-        .chat-lateral-mensajes::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .chat-lateral-mensajes::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
-        }
-
-        .mensaje-general {
-            background: white;
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .mensaje-general-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .mensaje-general-autor {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--primary);
-        }
-
-        .mensaje-general-hora {
-            font-size: 10px;
-            color: var(--text-light);
-        }
-
-        .mensaje-general-texto {
-            font-size: 14px;
-            line-height: 1.4;
-            color: var(--text);
-            word-wrap: break-word;
-        }
-
-        .chat-lateral-input {
-            padding: 12px;
-            background: white;
-            border-top: 1px solid var(--border);
-            border-radius: 0 0 12px 12px;
-        }
-
-        .chat-lateral-input-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .chat-lateral-input input {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid var(--border);
-            border-radius: 20px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .chat-lateral-input input:focus {
-            border-color: var(--primary);
-        }
-
-        .chat-lateral-input button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: none;
-            background: var(--primary);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: all 0.3s;
-            flex-shrink: 0;
-        }
-
-        .chat-lateral-input button:hover {
-            background: var(--primary-dark);
-            transform: scale(1.05);
-        }
-
-        .chat-badge {
-            background: var(--danger);
-            color: white;
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        @media (max-width: 1200px) {
-            .chat-lateral {
-                width: 300px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .chat-lateral {
-                right: 0;
-                left: 0;
-                top: auto;
-                bottom: 0;
-                width: 100%;
-                max-height: 60vh;
-                border-radius: 12px 12px 0 0;
-            }
-
-            .chat-lateral.minimizado {
-                transform: translateY(calc(100% - 60px));
-            }
-
-            .chat-lateral-header {
-                border-radius: 12px 12px 0 0;
-            }
-        }
-
-        /* Ajustar contenedor principal cuando está el chat */
-        .container.con-chat {
-            margin-right: 370px;
-        }
 
         @media (max-width: 1200px) {
             .container.con-chat {
@@ -1595,7 +1404,7 @@
     </div>
 
     <div class="status-indicator" id="statusIndicator" style="display: none;">
-        Conectado en tiempo real
+        Conectado
     </div>
 
     <!-- Botón de instalación -->
@@ -2041,23 +1850,7 @@
             <div id="contenidoPuntos"></div>
         </div>
 
-        <!-- Chat lateral general -->
-        <div class="chat-lateral" id="chatLateral">
-            <div class="chat-lateral-header" onclick="toggleChatLateral()">
-                <h3>
-                    💬 Chat General
-                    <span class="chat-badge" id="chatBadge" style="display: none;">0</span>
-                </h3>
-                <button class="chat-lateral-toggle" id="chatToggle">−</button>
-            </div>
-            <div class="chat-lateral-mensajes" id="mensajesGenerales"></div>
-            <div class="chat-lateral-input">
-                <div class="chat-lateral-input-group">
-                    <input type="text" id="inputChatGeneral" placeholder="Escribe un mensaje...">
-                    <button onclick="enviarMensajeGeneral()">📤</button>
-                </div>
-            </div>
-        </div>
+
     </div>
 
     <!-- jsPDF para exportar PDF -->
@@ -2460,7 +2253,6 @@
         window.cargarReunion = function() {
             cargarParticipantes();
             cargarVideollamada();
-            inicializarChatGeneral();
 
             // Ocultar botón de acta para familias
             const actaDropdown = document.getElementById('actaDropdown');
@@ -2495,205 +2287,6 @@
             }
         };
 
-        // Inicializar chat general
-        window.inicializarChatGeneral = function() {
-            const chatGeneralRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral`);
-            
-            onValue(chatGeneralRef, (snapshot) => {
-                cargarMensajesGenerales();
-            });
-        };
-
-        // Enviar mensaje al chat general
-        window.enviarMensajeGeneral = async function() {
-            const input = document.getElementById('inputChatGeneral');
-            const texto = input.value.trim();
-
-            if (!texto) return;
-
-            const chatGeneralRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral`);
-            const nuevoMensajeRef = push(chatGeneralRef);
-
-            await set(nuevoMensajeRef, {
-                autor: window.usuarioActual.nombre,
-                rol: window.usuarioActual.rol,
-                texto: texto,
-                timestamp: Date.now()
-            });
-
-            input.value = '';
-        };
-
-        // Cargar mensajes generales
-        window.cargarMensajesGenerales = async function() {
-            const contenedor = document.getElementById('mensajesGenerales');
-            if (!contenedor) return;
-
-            const chatGeneralRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral`);
-            
-            try {
-                const snapshot = await get(chatGeneralRef);
-
-                if (!snapshot.exists()) {
-                    contenedor.innerHTML = '<div class="empty-state"><div class="emoji">💬</div><p style="font-size: 13px;">No hay mensajes aún</p></div>';
-                    return;
-                }
-
-                const mensajes = snapshot.val();
-                const mensajesArray = Object.entries(mensajes).map(([id, data]) => ({ id, ...data }));
-                mensajesArray.sort((a, b) => a.timestamp - b.timestamp);
-
-                contenedor.innerHTML = '';
-                
-                mensajesArray.forEach(msg => {
-                    const div = document.createElement('div');
-                    div.className = 'mensaje-general';
-                    
-                    const esAutor = msg.autor === window.usuarioActual.nombre;
-                    const esCoordinador = window.usuarioActual.rol === 'coordinador';
-                    const puedeEditar = esAutor || esCoordinador;
-                    
-                    div.innerHTML = `
-                        <div class="mensaje-general-header">
-                            <span class="mensaje-general-autor">
-                                ${msg.rol === 'coordinador' ? '👑' : msg.rol === 'familia' ? '👨‍👩‍👧' : '👤'} ${msg.autor}
-                            </span>
-                            <span class="mensaje-general-hora">${new Date(msg.timestamp).toLocaleTimeString('es-ES', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                            })}</span>
-                        </div>
-                        <div class="mensaje-general-texto">${msg.texto}</div>
-                        ${puedeEditar ? `
-                            <div style="margin-top: 6px; display: flex; gap: 6px;">
-                                <button onclick="editarMensajeChat('${msg.id}')" 
-                                        style="padding: 3px 8px; background: var(--warning); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
-                                    ✏️ Editar
-                                </button>
-                                <button onclick="borrarMensajeChat('${msg.id}')" 
-                                        style="padding: 3px 8px; background: var(--danger); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
-                                    🗑️ Borrar
-                                </button>
-                            </div>
-                        ` : ''}
-                    `;
-                    contenedor.appendChild(div);
-                });
-
-                // Scroll automático al final
-                contenedor.scrollTop = contenedor.scrollHeight;
-                
-            } catch (error) {
-                console.error('Error cargando chat general:', error);
-            }
-        };
-
-        // Editar mensaje del chat general (autor o coordinador)
-        window.editarMensajeChat = async function(mensajeId) {
-            const mensajeRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral/${mensajeId}`);
-            const snapshot = await get(mensajeRef);
-            
-            if (!snapshot.exists()) {
-                alert('Mensaje no encontrado');
-                return;
-            }
-            
-            const mensaje = snapshot.val();
-            
-            // Verificar permisos
-            const esAutor = mensaje.autor === window.usuarioActual.nombre;
-            const esCoordinador = window.usuarioActual.rol === 'coordinador';
-            
-            if (!esAutor && !esCoordinador) {
-                alert('Solo puedes editar tus propios mensajes');
-                return;
-            }
-            
-            // Crear modal para editar
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
-            
-            modal.innerHTML = `
-                <div style="background: white; border-radius: 12px; padding: 25px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-                    <h3 style="margin-bottom: 15px; color: var(--primary);">✏️ Editar mensaje</h3>
-                    <textarea id="textareaEditarMensajeChat" style="width: 100%; min-height: 100px; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical;">${mensaje.texto}</textarea>
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button onclick="this.closest('div').parentElement.parentElement.remove()" style="flex: 1; padding: 12px; background: transparent; border: 2px solid var(--primary); color: var(--primary); border-radius: 8px; font-weight: 600; cursor: pointer;">
-                            Cancelar
-                        </button>
-                        <button id="btnGuardarEdicionChat" style="flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                            Guardar
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Focus en el textarea
-            const textarea = document.getElementById('textareaEditarMensajeChat');
-            textarea.focus();
-            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-            
-            // Evento para guardar
-            document.getElementById('btnGuardarEdicionChat').onclick = async function() {
-                const nuevoTexto = textarea.value.trim();
-                
-                if (nuevoTexto !== '') {
-                    await update(mensajeRef, { texto: nuevoTexto });
-                    modal.remove();
-                } else {
-                    alert('El texto no puede estar vacío');
-                }
-            };
-            
-            // Cerrar modal al hacer clic fuera
-            modal.onclick = function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            };
-        };
-
-        // Borrar mensaje del chat general (autor o coordinador)
-        window.borrarMensajeChat = async function(mensajeId) {
-            const mensajeRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatGeneral/${mensajeId}`);
-            const snapshot = await get(mensajeRef);
-            
-            if (!snapshot.exists()) {
-                alert('Mensaje no encontrado');
-                return;
-            }
-            
-            const mensaje = snapshot.val();
-            
-            // Verificar permisos
-            const esAutor = mensaje.autor === window.usuarioActual.nombre;
-            const esCoordinador = window.usuarioActual.rol === 'coordinador';
-            
-            if (!esAutor && !esCoordinador) {
-                alert('Solo puedes borrar tus propios mensajes');
-                return;
-            }
-            
-            if (confirm('¿Estás seguro de que quieres borrar este mensaje?')) {
-                await remove(mensajeRef);
-            }
-        };
-
-        // Toggle chat lateral (minimizar/maximizar)
-        window.toggleChatLateral = function() {
-            const chat = document.getElementById('chatLateral');
-            const toggle = document.getElementById('chatToggle');
-            
-            if (chat.classList.contains('minimizado')) {
-                chat.classList.remove('minimizado');
-                toggle.textContent = '−';
-            } else {
-                chat.classList.add('minimizado');
-                toggle.textContent = '+';
-            }
-        };
 
         // Recargar puntos completamente desde cero
         window.cargarPuntosDesdeCero = function(snapshot) {
@@ -3351,6 +2944,29 @@
                 ">
                     <h2 style="margin: 0 0 20px 0; color: var(--primary);">🎥 Gestionar Enlaces de Videollamada</h2>
                     
+                    <div style="background: rgba(37, 99, 235, 0.1); border-left: 4px solid var(--primary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <strong style="color: var(--primary);">💡 Crear enlace de Google Meet:</strong>
+                        <button onclick="window.open('https://meet.google.com/', '_blank')" 
+                            style="width: 100%; margin-top: 10px; padding: 12px; background: #34A853; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                <circle cx="9.5" cy="9.5" r="1.5"/>
+                            </svg>
+                            Abrir Google Meet
+                        </button>
+                        <small style="color: var(--text-light); display: block; margin-top: 10px; text-align: left; line-height: 1.5;">
+                            <strong>Opción 1 - Para ahora:</strong><br>
+                            • Haz clic en <strong>"Nueva reunión"</strong> → <strong>"Crear una reunión para más tarde"</strong><br>
+                            • Te da el enlace al instante (sin fecha fija)<br><br>
+                            
+                            <strong>Opción 2 - Programada:</strong><br>
+                            • Haz clic en <strong>"Nueva reunión"</strong> → <strong>"Programar en Google Calendar"</strong><br>
+                            • Elige fecha y hora específica<br><br>
+                            
+                            👇 <strong>Copia el enlace que te genere y pégalo abajo</strong>
+                        </small>
+                    </div>
+                    
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text);">
                             1️⃣ Enlace Principal (obligatorio)
@@ -3455,7 +3071,8 @@
             // Botón de gestión para coordinador
             if (window.usuarioActual.rol === 'coordinador') {
                 gestionContainer.innerHTML = `
-                    <button class="btn btn-outline btn-small" onclick="gestionarVideollamada()" style="margin-bottom: 20px;">
+                    <button class="btn btn-small" onclick="gestionarVideollamada()" 
+                        style="margin-bottom: 20px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); font-weight: 700; font-size: 16px;">
                         🎥 Gestionar Enlaces de Videollamada
                     </button>
                 `;
@@ -3759,43 +3376,6 @@
                 y += lineHeight;
             }
             
-            // Chat General
-            y += 5;
-            checkPage();
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text('Chat General:', 20, y);
-            y += lineHeight + 2;
-            
-            if (sesionData.chatGeneral) {
-                doc.setFont(undefined, 'normal');
-                doc.setFontSize(10);
-                
-                const mensajesArray = Object.values(sesionData.chatGeneral);
-                mensajesArray.sort((a, b) => a.timestamp - b.timestamp);
-                
-                mensajesArray.forEach(msg => {
-                    checkPage();
-                    doc.text(`   ${msg.autor}:`, 25, y);
-                    y += lineHeight;
-                    
-                    // Dividir texto largo en líneas
-                    const maxWidth = 160;
-                    const lineas = doc.splitTextToSize(`   ${msg.texto}`, maxWidth);
-                    lineas.forEach(linea => {
-                        checkPage();
-                        doc.text(linea, 25, y);
-                        y += lineHeight - 1;
-                    });
-                    y += 2;
-                });
-            } else {
-                doc.setFont(undefined, 'normal');
-                doc.setFontSize(10);
-                doc.text('No hay mensajes en el chat general', 25, y);
-                y += lineHeight;
-            }
-            
             // Guardar PDF
             const nombreArchivo = `Reunion_${window.sesionActual}_${window.fechaActual}.pdf`;
             doc.save(nombreArchivo);
@@ -3916,21 +3496,6 @@
                     
                     texto += '\n';
                 });
-            }
-            
-            // Chat General
-            texto += '💬 CHAT GENERAL:\n';
-            texto += '═══════════════════════════════════════════\n\n';
-            
-            if (sesionData.chatGeneral) {
-                const mensajesArray = Object.values(sesionData.chatGeneral);
-                mensajesArray.sort((a, b) => a.timestamp - b.timestamp);
-                
-                mensajesArray.forEach(msg => {
-                    texto += `${msg.autor}:\n${msg.texto}\n\n`;
-                });
-            } else {
-                texto += 'No hay mensajes en el chat general\n\n';
             }
             
             texto += '═══════════════════════════════════════════\n';
