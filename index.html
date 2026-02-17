@@ -567,6 +567,38 @@
                 bottom: 20px;
                 right: 20px;
             }
+
+            /* Ajustes para session-info en móviles */
+            .session-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .session-info > div:first-child {
+                width: 100%;
+            }
+
+            .session-info > div:last-child {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+
+            .session-info .btn-small {
+                font-size: 13px;
+                padding: 10px 14px;
+                white-space: nowrap;
+            }
+
+            /* Mejorar visualización del nombre de reunión */
+            .session-code {
+                display: block;
+                margin-top: 5px;
+                font-size: 14px !important;
+                line-height: 1.4;
+                word-break: break-word;
+            }
         }
 
         /* Banner de videollamada */
@@ -1807,10 +1839,13 @@
     <div id="screenReunion" class="screen">
         <div class="container" id="containerReunion">
             <div class="session-info">
-                <div>
-                    <strong>Reunión:</strong> <span class="session-code" id="nombreActual" style="font-size: 16px;"></span>
+                <div style="width: 100%;">
+                    <div style="margin-bottom: 5px;">
+                        <strong>Reunión:</strong>
+                    </div>
+                    <div class="session-code" id="nombreActual" style="font-size: 16px;"></div>
                 </div>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <div class="acta-dropdown" id="actaDropdown">
                         <button class="btn btn-secondary btn-small" onclick="toggleActaDropdown()">
                             📄 Descargar el Acta
