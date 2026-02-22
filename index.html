@@ -1465,7 +1465,7 @@
                 <div class="help-section">
                     <h3>3️⃣ Durante la Reunión</h3>
                     <div class="help-step">
-                        <strong>📎 Documentos:</strong> Arrastra un archivo desde tu escritorio directamente a la zona de drop — se subirá solo y generará el enlace automáticamente. O pega un enlace de Google Drive / Dropbox manualmente. Botón de compartir (⚪⚪⚪) y eliminar (🗑️)
+                        <strong>📎 Documentos:</strong> Adjunta documentos con enlace de Google Drive. Botón de compartir (icono ⚪⚪⚪) y botón de eliminar (🗑️)
                     </div>
                     <div class="help-step">
                         <strong>💬 Aportaciones:</strong> Puedes editar y borrar TODAS las aportaciones (tuyas y de los maestros)
@@ -1488,12 +1488,6 @@
                     </div>
                     <div class="help-step">
                         <strong>📋 Copiar:</strong> Copia el acta al portapapeles para pegarla donde quieras
-                    </div>
-                    <div class="help-step">
-                        <strong>💬 WhatsApp:</strong> Abre WhatsApp con el resumen del acta listo para enviar al grupo del claustro
-                    </div>
-                    <div class="help-step">
-                        <strong>🖼️ Imagen-Resumen:</strong> Descarga una imagen-resumen para adjuntar en el grupo de WhatsApp
                     </div>
                 </div>
             </div>
@@ -1830,12 +1824,6 @@
                             </button>
                             <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta al portapapeles">
                                 📋 Copiar al Portapapeles
-                            </button>
-                            <button class="acta-dropdown-item" onclick="enviarPorWhatsApp(); closeActaDropdown();" data-acta-tooltip="Abre WhatsApp con el resumen listo para enviar al grupo">
-                                💬 Enviar por WhatsApp
-                            </button>
-                            <button class="acta-dropdown-item" onclick="descargarImagenResumen(); closeActaDropdown();" data-acta-tooltip="Genera una imagen-resumen para compartir en el grupo">
-                                🖼️ Imagen-Resumen WhatsApp
                             </button>
                         </div>
                     </div>
@@ -2427,26 +2415,9 @@
                 ${window.usuarioActual.rol === 'coordinador' ? `
                 <div style="margin: 20px 0; padding: 15px; background: var(--background); border-radius: 8px;">
                     <strong style="display: block; margin-bottom: 10px;">📎 Adjuntar documento:</strong>
-                    
-                    <!-- Zona de arrastrar y soltar -->
-                    <div id="dropzone_${punto.id}" 
-                         style="border: 2px dashed var(--primary); border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; background: white;"
-                         onclick="document.getElementById('fileinput_${punto.id}').click()"
-                         ondragover="event.preventDefault(); this.style.background='#eff6ff'; this.style.borderColor='var(--secondary)';"
-                         ondragleave="this.style.background='white'; this.style.borderColor='var(--primary)';"
-                         ondrop="handleFileDrop(event, '${punto.id}')">
-                        <div id="dropzone_text_${punto.id}">
-                            <span style="font-size: 28px;">📂</span><br>
-                            <span style="font-size: 13px; color: var(--text-light);">Arrastra un archivo aquí o <strong style="color:var(--primary)">haz clic para seleccionar</strong></span><br>
-                            <span style="font-size: 11px; color: var(--text-light);">Se subirá automáticamente y generará el enlace</span>
-                        </div>
-                        <input type="file" id="fileinput_${punto.id}" style="display:none" onchange="handleFileSelect(event, '${punto.id}')">
-                    </div>
-                    
-                    <!-- O enlace manual -->
                     <div style="display: grid; gap: 10px; margin-bottom: 10px;">
                         <input type="text" id="nombre_doc_${punto.id}" placeholder="Nombre del documento (ej: Objetivos Trimestre 1)" style="margin: 0;">
-                        <input type="url" id="link_doc_${punto.id}" placeholder="O pega aquí un enlace de Google Drive / Dropbox" style="margin: 0;">
+                        <input type="url" id="link_doc_${punto.id}" placeholder="Enlace de Google Drive (o cualquier URL)" style="margin: 0;">
                     </div>
                     <button class="btn btn-outline btn-small" onclick="adjuntarDocumento('${punto.id}')" style="width: 100%;">
                         📎 Adjuntar
@@ -3614,282 +3585,6 @@
                 }
             };
         }
-
-        // =====================================================
-        // 🔗 CONECTIVIDAD PRÁCTICA: Drag & Drop de Documentos
-        // =====================================================
-
-        // Subir archivo a file.io y obtener enlace automáticamente
-        window.handleFileDrop = async function(event, puntoId) {
-            event.preventDefault();
-            const dropzone = document.getElementById('dropzone_' + puntoId);
-            dropzone.style.background = 'white';
-            dropzone.style.borderColor = 'var(--primary)';
-            
-            const files = event.dataTransfer.files;
-            if (files.length === 0) return;
-            await subirArchivo(files[0], puntoId);
-        };
-
-        window.handleFileSelect = async function(event, puntoId) {
-            const files = event.target.files;
-            if (files.length === 0) return;
-            await subirArchivo(files[0], puntoId);
-        };
-
-        async function subirArchivo(file, puntoId) {
-            const dropzoneText = document.getElementById('dropzone_text_' + puntoId);
-            const nombreInput = document.getElementById('nombre_doc_' + puntoId);
-            const linkInput = document.getElementById('link_doc_' + puntoId);
-            const dropzone = document.getElementById('dropzone_' + puntoId);
-
-            // Mostrar progreso
-            dropzoneText.innerHTML = `<span style="font-size:24px">⏳</span><br><span style="color:var(--primary); font-size:13px">Subiendo <strong>${file.name}</strong>…</span>`;
-            dropzone.style.borderColor = 'var(--warning)';
-            dropzone.style.background = '#fffbeb';
-
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-
-                const response = await fetch('https://file.io?expires=1w', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) throw new Error('Error al subir');
-                const data = await response.json();
-
-                if (!data.success || !data.link) throw new Error('Respuesta inválida');
-
-                // Rellenar campos automáticamente
-                nombreInput.value = file.name.replace(/\.[^/.]+$/, ''); // nombre sin extensión
-                linkInput.value = data.link;
-
-                // Éxito visual
-                dropzoneText.innerHTML = `<span style="font-size:24px">✅</span><br><span style="color:#16a34a; font-size:13px"><strong>${file.name}</strong> subido. Enlace generado.</span><br><span style="font-size:11px; color:var(--text-light)">Pulsa "📎 Adjuntar" para añadirlo a la reunión</span>`;
-                dropzone.style.borderColor = 'var(--secondary)';
-                dropzone.style.background = '#f0fdf4';
-
-                // Auto-reset visual tras 8 segundos
-                setTimeout(() => {
-                    dropzoneText.innerHTML = `<span style="font-size:28px">📂</span><br><span style="font-size:13px; color:var(--text-light)">Arrastra un archivo aquí o <strong style="color:var(--primary)">haz clic para seleccionar</strong></span><br><span style="font-size:11px; color:var(--text-light)">Se subirá automáticamente y generará el enlace</span>`;
-                    dropzone.style.borderColor = 'var(--primary)';
-                    dropzone.style.background = 'white';
-                }, 8000);
-
-            } catch (err) {
-                console.error('Error subiendo archivo:', err);
-                dropzoneText.innerHTML = `<span style="font-size:24px">❌</span><br><span style="color:var(--danger); font-size:13px">Error al subir. Sube el archivo a Google Drive y pega el enlace manualmente.</span>`;
-                dropzone.style.borderColor = 'var(--danger)';
-                dropzone.style.background = '#fef2f2';
-
-                setTimeout(() => {
-                    dropzoneText.innerHTML = `<span style="font-size:28px">📂</span><br><span style="font-size:13px; color:var(--text-light)">Arrastra un archivo aquí o <strong style="color:var(--primary)">haz clic para seleccionar</strong></span><br><span style="font-size:11px; color:var(--text-light)">Se subirá automáticamente y generará el enlace</span>`;
-                    dropzone.style.borderColor = 'var(--primary)';
-                    dropzone.style.background = 'white';
-                }, 5000);
-            }
-        }
-
-        // =====================================================
-        // 💬 WHATSAPP: Envío de acta y resumen visual
-        // =====================================================
-
-        window.enviarPorWhatsApp = async function() {
-            const sesionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}`);
-            const snapshot = await get(sesionRef);
-            if (!snapshot.exists()) { alert('No se pueden cargar los datos de la reunión'); return; }
-            
-            const sesionData = snapshot.val();
-            const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
-            
-            // Generar resumen corto para WhatsApp (más conciso que el PDF)
-            let texto = `📋 *ACTA · ${nombreReunion}*\n`;
-            texto += `📅 ${new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' })}\n`;
-            texto += `🏫 CEIP Capitulaciones de Santa Fe\n\n`;
-            
-            if (sesionData.participantes) {
-                const participantes = Object.values(sesionData.participantes);
-                texto += `👥 *Asistentes (${participantes.length}):* ${participantes.map(p => p.nombre).join(', ')}\n\n`;
-            }
-            
-            if (sesionData.puntos) {
-                const puntosArray = Object.entries(sesionData.puntos)
-                    .map(([id, data]) => ({id, ...data}))
-                    .sort((a, b) => a.orden - b.orden);
-                
-                texto += `📌 *PUNTOS TRATADOS:*\n`;
-                puntosArray.forEach((punto, i) => {
-                    texto += `\n*${i+1}. ${punto.texto}*\n`;
-                    
-                    if (punto.aportaciones) {
-                        const aportes = Object.values(punto.aportaciones)
-                            .sort((a, b) => a.timestamp - b.timestamp)
-                            .slice(0, 3); // máx 3 aportaciones en el resumen
-                        aportes.forEach(a => texto += `   • ${a.autor}: ${a.texto.substring(0, 80)}${a.texto.length > 80 ? '…' : ''}\n`);
-                        if (Object.values(punto.aportaciones).length > 3) {
-                            texto += `   _(y ${Object.values(punto.aportaciones).length - 3} comentarios más)_\n`;
-                        }
-                    }
-                    
-                    if (punto.votacion && punto.votacion.activa && punto.votacion.votos) {
-                        const votos = Object.values(punto.votacion.votos);
-                        const favor = votos.filter(v => v.voto === 'si').length;
-                        const contra = votos.filter(v => v.voto === 'no').length;
-                        const abst = votos.filter(v => v.voto === 'abstencion').length;
-                        texto += `   🗳️ Votación: ✅ ${favor} / ❌ ${contra} / ⬜ ${abst}\n`;
-                    }
-                });
-            }
-            
-            texto += `\n——————————\n_Generado con Teletrabajo Capitulaciones_`;
-            
-            const textoEncoded = encodeURIComponent(texto);
-            window.open(`https://wa.me/?text=${textoEncoded}`, '_blank');
-        };
-
-        // Generar imagen-resumen para WhatsApp usando Canvas
-        window.descargarImagenResumen = async function() {
-            const sesionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}`);
-            const snapshot = await get(sesionRef);
-            if (!snapshot.exists()) { alert('No se pueden cargar los datos'); return; }
-            
-            const sesionData = snapshot.val();
-            const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
-            const fecha = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
-            
-            const participantes = sesionData.participantes ? Object.values(sesionData.participantes) : [];
-            const puntosArray = sesionData.puntos 
-                ? Object.entries(sesionData.puntos).map(([id, data]) => ({id, ...data})).sort((a,b)=>a.orden-b.orden)
-                : [];
-            
-            // Calcular altura del canvas
-            const lineHeight = 28;
-            const padding = 40;
-            let totalLines = 8 + participantes.length + puntosArray.length * 2;
-            puntosArray.forEach(p => {
-                if (p.votacion && p.votacion.activa) totalLines += 1;
-            });
-            const canvasHeight = Math.max(500, padding * 2 + totalLines * lineHeight + 60);
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = 800;
-            canvas.height = canvasHeight;
-            const ctx = canvas.getContext('2d');
-            
-            // Fondo degradado
-            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            grad.addColorStop(0, '#1e40af');
-            grad.addColorStop(1, '#2563eb');
-            ctx.fillStyle = grad;
-            ctx.roundRect(0, 0, canvas.width, canvas.height, 20);
-            ctx.fill();
-            
-            // Tarjeta blanca interior
-            ctx.fillStyle = 'rgba(255,255,255,0.95)';
-            ctx.beginPath();
-            ctx.roundRect(padding - 10, 90, canvas.width - (padding-10)*2, canvas.height - 110, 16);
-            ctx.fill();
-            
-            // Cabecera
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('CEIP Capitulaciones de Santa Fe', canvas.width / 2, 40);
-            ctx.font = '16px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-            ctx.fillText('📋 Acta de Reunión · ' + fecha, canvas.width / 2, 68);
-            
-            // Título reunión
-            ctx.fillStyle = '#1e40af';
-            ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-            ctx.textAlign = 'left';
-            const maxW = canvas.width - padding * 2;
-            // Wrap text
-            const wrapText = (text, x, y, maxWidth, lineH) => {
-                const words = text.split(' ');
-                let line = '';
-                let cy = y;
-                words.forEach(word => {
-                    const test = line + word + ' ';
-                    if (ctx.measureText(test).width > maxWidth && line !== '') {
-                        ctx.fillText(line, x, cy);
-                        line = word + ' ';
-                        cy += lineH;
-                    } else { line = test; }
-                });
-                ctx.fillText(line, x, cy);
-                return cy;
-            };
-            
-            let y = 130;
-            y = wrapText(nombreReunion, padding, y, maxW, lineHeight) + lineHeight;
-            
-            // Separador
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(canvas.width - padding, y); ctx.stroke();
-            y += 20;
-            
-            // Participantes
-            ctx.fillStyle = '#64748b';
-            ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-            ctx.fillText('👥 ASISTENTES:', padding, y); y += lineHeight;
-            ctx.font = '14px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-            ctx.fillStyle = '#334155';
-            participantes.forEach(p => {
-                const ico = p.rol === 'coordinador' ? '👑' : '👤';
-                ctx.fillText(`${ico} ${p.nombre}`, padding + 15, y); y += lineHeight;
-            });
-            y += 10;
-            
-            // Separador
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(canvas.width - padding, y); ctx.stroke();
-            y += 20;
-            
-            // Puntos
-            ctx.fillStyle = '#64748b';
-            ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-            ctx.fillText('📌 PUNTOS TRATADOS:', padding, y); y += lineHeight;
-            
-            puntosArray.forEach((punto, i) => {
-                ctx.fillStyle = '#1e40af';
-                ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-                y = wrapText(`${i+1}. ${punto.texto}`, padding + 10, y, maxW - 10, lineHeight - 4) + lineHeight - 4;
-                
-                if (punto.votacion && punto.votacion.activa && punto.votacion.votos) {
-                    const votos = Object.values(punto.votacion.votos);
-                    const favor = votos.filter(v => v.voto === 'si').length;
-                    const contra = votos.filter(v => v.voto === 'no').length;
-                    const abst = votos.filter(v => v.voto === 'abstencion').length;
-                    ctx.fillStyle = '#64748b';
-                    ctx.font = '13px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-                    ctx.fillText(`   🗳️ Votación: ✅ ${favor} a favor  ❌ ${contra} en contra  ⬜ ${abst} abstenciones`, padding + 15, y);
-                    y += lineHeight;
-                }
-            });
-            
-            y += 10;
-            // Footer
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '12px -apple-system, BlinkMacSystemFont, Arial, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('Generado con Teletrabajo Capitulaciones · CEIP Capitulaciones de Santa Fe', canvas.width / 2, Math.min(y + 20, canvas.height - 15));
-            
-            // Descargar
-            const link = document.createElement('a');
-            link.download = `acta-resumen-${window.sesionActual}-${window.fechaActual}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            
-            // Toast info
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#25D366;color:white;padding:14px 24px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:10000;font-size:14px;text-align:center;max-width:320px;';
-            toast.innerHTML = '🖼️ Imagen descargada<br><small>Adjúntala en el grupo de WhatsApp del claustro</small>';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
-        };
 
         // Salir de reunión
         window.salirDeReunion = function() {
