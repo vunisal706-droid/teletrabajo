@@ -1059,7 +1059,7 @@
         .acta-dropdown-item[data-acta-tooltip]:hover::after {
             content: attr(data-acta-tooltip);
             position: absolute;
-            left: -220px;
+            right: calc(100% + 12px);
             top: 50%;
             transform: translateY(-50%);
             background: #333;
@@ -1067,19 +1067,33 @@
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 12px;
-            white-space: nowrap;
+            white-space: normal;
+            width: max-content;
+            max-width: 240px;
+            line-height: 1.4;
             z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
         }
 
         .acta-dropdown-item[data-acta-tooltip]:hover::before {
             content: '';
             position: absolute;
-            left: -8px;
+            right: 100%;
             top: 50%;
             transform: translateY(-50%);
             border: 6px solid transparent;
             border-left-color: #333;
             z-index: 2000;
+            pointer-events: none;
+        }
+
+        /* En pantallas estrechas no hay sitio para el tooltip a la izquierda: lo ocultamos */
+        @media (max-width: 600px) {
+            .acta-dropdown-item[data-acta-tooltip]:hover::after,
+            .acta-dropdown-item[data-acta-tooltip]:hover::before {
+                display: none;
+            }
         }
 
         .help-modal {
