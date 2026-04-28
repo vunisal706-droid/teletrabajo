@@ -1487,7 +1487,10 @@
                         <strong>📧 Email:</strong> Abre tu correo con el acta lista para enviar
                     </div>
                     <div class="help-step">
-                        <strong>📋 Copiar:</strong> Copia el acta al portapapeles para pegarla donde quieras
+                        <strong>🤖 Generar Acta con IA:</strong> Copia el acta y abre el ChatGPT del cole para darle formato profesional automáticamente
+                    </div>
+                    <div class="help-step">
+                        <strong>📝 Resumir con NotebookLM:</strong> Copia un prompt al portapapeles y abre NotebookLM. Al pegarlo como fuente, generará un resumen estructurado de la reunión
                     </div>
                 </div>
             </div>
@@ -1822,8 +1825,11 @@
                             <button class="acta-dropdown-item" onclick="enviarPorEmail(); closeActaDropdown();" data-acta-tooltip="Abre tu correo con el acta lista">
                                 📧 Enviar por Email
                             </button>
-                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta al portapapeles">
-                                📋 Copiar al Portapapeles
+                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre el ChatGPT del cole para darle formato">
+                                🤖 Generar Acta con IA
+                            </button>
+                            <button class="acta-dropdown-item" onclick="resumirConNotebookLM(); closeActaDropdown();" data-acta-tooltip="Genera un resumen automático del acta con NotebookLM">
+                                📝 Resumir con NotebookLM
                             </button>
                         </div>
                     </div>
@@ -3549,6 +3555,119 @@
                 alert('Error al copiar. Por favor, intenta de nuevo.');
             }
         };
+
+        // Resumir con NotebookLM
+        window.resumirConNotebookLM = async function() {
+            const textoActa = await generarTextoActa();
+            
+            if (!textoActa) return;
+            
+            // Construir el prompt completo (instrucciones + acta) que se pegará en NotebookLM
+            const prompt = `INSTRUCCIONES PARA EL RESUMEN:
+
+A partir de la siguiente acta de reunión del CEIP Capitulaciones de Santa Fe, genera un RESUMEN claro, estructurado y conciso que incluya:
+
+1. PARTICIPANTES: lista de asistentes con su rol (coordinador/maestro).
+2. PUNTOS PRINCIPALES: síntesis de cada punto del orden del día.
+3. ACUERDOS Y DECISIONES: acuerdos alcanzados en cada punto.
+4. RESULTADOS DE VOTACIONES: si las hubo, indica el resultado y porcentajes.
+5. TAREAS Y RESPONSABLES: acciones pendientes y persona responsable.
+6. CONCLUSIONES: cierre y aspectos relevantes para la próxima reunión.
+
+Usa un lenguaje formal, claro y propio de un acta institucional. Adapta el formato para que pueda usarse como resumen ejecutivo.
+
+═══════════════════════════════════════════
+ACTA A RESUMIR:
+═══════════════════════════════════════════
+
+${textoActa}`;
+            
+            // Mostrar modal de aviso ANTES de abrir NotebookLM
+            mostrarAvisoNotebookLM(prompt);
+        };
+
+        // Modal de aviso previo a abrir NotebookLM
+        function mostrarAvisoNotebookLM(prompt) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.65); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 20px;';
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 28px; max-width: 560px; width: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); max-height: 92vh; overflow-y: auto;">
+                    <div style="text-align: center; margin-bottom: 18px;">
+                        <div style="font-size: 48px; margin-bottom: 8px;">📝</div>
+                        <h3 style="color: var(--primary); margin: 0;">Resumen con NotebookLM</h3>
+                    </div>
+                    
+                    <div style="background: #fff8e1; border-left: 4px solid #f5a623; padding: 14px 16px; border-radius: 6px; margin-bottom: 18px;">
+                        <strong style="color: #8a5c00; display: block; margin-bottom: 6px;">⚠️ IMPORTANTE</strong>
+                        <p style="color: #333; margin: 0; line-height: 1.5; font-size: 14px;">
+                            Cuando se abra NotebookLM, tendrás que <strong>pegar el prompt</strong> que se va a copiar al portapapeles. Sigue estos pasos:
+                        </p>
+                    </div>
+                    
+                    <div style="background: #f5f7fa; border-radius: 8px; padding: 16px 18px 16px 14px; margin-bottom: 18px;">
+                        <ol style="margin: 0; padding-left: 22px; line-height: 1.8; color: #333; font-size: 14px;">
+                            <li>Pulsa <strong>"+ Crear nuevo"</strong> en NotebookLM.</li>
+                            <li>En "Añadir fuentes" elige <strong>"Texto copiado"</strong>.</li>
+                            <li>Pega el contenido (<code style="background:#e8eaf0;padding:1px 5px;border-radius:3px;">Ctrl + V</code> o <code style="background:#e8eaf0;padding:1px 5px;border-radius:3px;">Cmd + V</code>).</li>
+                            <li>Pulsa <strong>"Insertar"</strong>.</li>
+                            <li>En el chat escribe: <em>"Genera el resumen siguiendo las instrucciones"</em>.</li>
+                        </ol>
+                    </div>
+                    
+                    <p style="color: #555; font-size: 13px; text-align: center; margin: 0 0 18px 0;">
+                        ✅ Al pulsar el botón se copiará el prompt y se abrirá NotebookLM.
+                    </p>
+                    
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button id="btnCancelarNotebookLM" 
+                                style="background: transparent; border: 2px solid var(--border); color: var(--text); padding: 11px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Cancelar
+                        </button>
+                        <button id="btnAbrirNotebookLM"
+                                style="background: var(--primary); border: none; color: white; padding: 11px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            📝 Copiar prompt y abrir NotebookLM
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Botón Cancelar
+            modal.querySelector('#btnCancelarNotebookLM').onclick = function() {
+                modal.remove();
+            };
+            
+            // Botón Abrir NotebookLM
+            modal.querySelector('#btnAbrirNotebookLM').onclick = async function() {
+                try {
+                    await navigator.clipboard.writeText(prompt);
+                    
+                    // Toast de confirmación
+                    const toast = document.createElement('div');
+                    toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
+                    toast.textContent = '✅ Prompt copiado. Pégalo en NotebookLM como fuente nueva.';
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 4000);
+                    
+                    // Abrir NotebookLM en una pestaña nueva
+                    window.open('https://notebooklm.google.com/', '_blank', 'noopener,noreferrer');
+                    modal.remove();
+                } catch (err) {
+                    console.error('Error al copiar el prompt:', err);
+                    alert('Error al copiar el prompt al portapapeles. Por favor, intenta de nuevo.');
+                }
+            };
+            
+            // Cerrar al hacer clic fuera del cuadro
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+        }
+
 
         // Mostrar aviso de ChatGPT después de exportar
         function mostrarAvisoChatGPT() {
