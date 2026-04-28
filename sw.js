@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teletrabajo-capitulaciones-v7';
+const CACHE_NAME = 'teletrabajo-capitulaciones-v9';
 
 // Obtener la ruta base de la app
 const getBaseUrl = () => {
@@ -21,13 +21,13 @@ const urlsToCache = [
 
 // Instalar service worker y cachear archivos
 self.addEventListener('install', event => {
-  console.log('Service Worker v7: Installing...');
+  console.log('Service Worker v9: Installing...');
   console.log('Base URL:', baseUrl);
   console.log('URLs to cache:', urlsToCache);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker v7: Caching files');
+        console.log('Service Worker v9: Caching files');
         return cache.addAll(urlsToCache).catch(err => {
           console.error('Error caching files:', err);
           // Intentar cachear uno por uno
@@ -41,7 +41,7 @@ self.addEventListener('install', event => {
         });
       })
       .then(() => {
-        console.log('Service Worker v7: Skip waiting');
+        console.log('Service Worker v9: Skip waiting');
         return self.skipWaiting();
       })
   );
@@ -49,19 +49,19 @@ self.addEventListener('install', event => {
 
 // Activar service worker y limpiar cachés antiguas
 self.addEventListener('activate', event => {
-  console.log('Service Worker v7: Activating...');
+  console.log('Service Worker v9: Activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker v7: Deleting old cache:', cacheName);
+            console.log('Service Worker v9: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker v7: Claiming clients');
+      console.log('Service Worker v9: Claiming clients');
       return self.clients.claim();
     })
   );

@@ -1407,6 +1407,302 @@
             margin-top: 20px;
             justify-content: center;
         }
+
+        /* ==========================================================
+           LAVADO DE CARA — Estilo gloss / cristal
+           Mantiene los colores intactos; solo añade brillo, profundidad
+           y volumen. Se logra superponiendo gradientes semitransparentes
+           (blanco arriba, negro abajo) sobre los colores base, así el
+           hex original se ve idéntico en el centro del gradiente.
+           ========================================================== */
+
+        /* --- Fondo general: halo azul sutil --- */
+        body {
+            background:
+                radial-gradient(ellipse 1200px 500px at 50% -200px, rgba(37, 99, 235, 0.08) 0%, transparent 60%),
+                var(--background);
+        }
+
+        /* --- Header: brillo arriba sin tocar el azul corporativo --- */
+        .header {
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.25),
+                0 4px 6px rgba(0, 0, 0, 0.1),
+                0 10px 30px rgba(37, 99, 235, 0.20);
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .header > * { position: relative; z-index: 1; }
+
+        /* --- Cards: papel brillante con luz arriba --- */
+        .card {
+            background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 1px 3px rgba(15, 23, 42, 0.04),
+                0 6px 16px rgba(15, 23, 42, 0.06),
+                0 16px 32px rgba(15, 23, 42, 0.04);
+        }
+
+        /* --- Botones primarios --- */
+        .btn-primary {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.12) 0%,
+                    rgba(255, 255, 255, 0) 35%,
+                    rgba(0, 0, 0, 0.08) 100%
+                ),
+                var(--primary);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+                0 2px 4px rgba(0, 0, 0, 0.10),
+                0 4px 12px rgba(37, 99, 235, 0.30);
+        }
+        .btn-primary:hover {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.16) 0%,
+                    rgba(255, 255, 255, 0) 35%,
+                    rgba(0, 0, 0, 0.05) 100%
+                ),
+                var(--primary-dark);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.35),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+                0 4px 10px rgba(0, 0, 0, 0.12),
+                0 8px 22px rgba(37, 99, 235, 0.40);
+        }
+
+        /* --- Botones secundarios (verde) --- */
+        .btn-secondary {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.12) 0%,
+                    rgba(255, 255, 255, 0) 35%,
+                    rgba(0, 0, 0, 0.08) 100%
+                ),
+                var(--secondary);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+                0 2px 4px rgba(0, 0, 0, 0.10),
+                0 4px 12px rgba(16, 185, 129, 0.30);
+        }
+        .btn-secondary:hover {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.16) 0%,
+                    rgba(255, 255, 255, 0) 35%,
+                    rgba(0, 0, 0, 0.05) 100%
+                ),
+                #059669;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.35),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+                0 4px 10px rgba(0, 0, 0, 0.12),
+                0 8px 22px rgba(16, 185, 129, 0.40);
+        }
+
+        /* --- Botones de peligro (rojo) --- */
+        .btn-danger {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.12) 0%,
+                    rgba(255, 255, 255, 0) 35%,
+                    rgba(0, 0, 0, 0.08) 100%
+                ),
+                var(--danger);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+                0 2px 4px rgba(0, 0, 0, 0.10),
+                0 4px 12px rgba(239, 68, 68, 0.30);
+        }
+        .btn-danger:hover {
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.35),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+                0 4px 10px rgba(0, 0, 0, 0.12),
+                0 8px 22px rgba(239, 68, 68, 0.40);
+        }
+
+        /* --- Botón outline: gloss sutil cuando rellena en hover --- */
+        .btn-outline {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+        .btn-outline:hover {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.12) 0%,
+                    rgba(255, 255, 255, 0) 35%,
+                    rgba(0, 0, 0, 0.08) 100%
+                ),
+                var(--primary);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                0 4px 12px rgba(37, 99, 235, 0.30);
+        }
+
+        /* --- Inputs: ligeramente embedded para que parezcan campos --- */
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 30%, #ffffff 100%);
+            box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+        }
+        input:focus, textarea:focus, select:focus {
+            background: #ffffff;
+            box-shadow:
+                inset 0 1px 2px rgba(15, 23, 42, 0.04),
+                0 0 0 3px rgba(37, 99, 235, 0.15),
+                0 4px 12px rgba(37, 99, 235, 0.08);
+        }
+        #inputNombre {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 2px 8px rgba(37, 99, 235, 0.18),
+                0 8px 20px rgba(37, 99, 235, 0.10);
+        }
+
+        /* --- Círculo del número del punto: efecto bola brillante --- */
+        .punto-numero {
+            background:
+                radial-gradient(circle at 30% 25%,
+                    rgba(255, 255, 255, 0.32) 0%,
+                    rgba(255, 255, 255, 0) 45%
+                ),
+                var(--primary);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.25),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.15),
+                0 2px 6px rgba(37, 99, 235, 0.35);
+        }
+
+        /* --- Badges de usuario con luz superior --- */
+        .user-badge {
+            background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 50%);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                0 1px 3px rgba(15, 23, 42, 0.06),
+                0 4px 10px rgba(15, 23, 42, 0.04);
+        }
+
+        /* --- Punto del orden del día (cada item) --- */
+        .punto-item {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 1px 3px rgba(15, 23, 42, 0.04),
+                0 4px 12px rgba(15, 23, 42, 0.04);
+        }
+        .punto-item:hover {
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 4px 12px rgba(37, 99, 235, 0.15),
+                0 8px 24px rgba(37, 99, 235, 0.08);
+        }
+
+        /* --- Aportación (mensajes en cada punto) --- */
+        .aportacion {
+            background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 1px 2px rgba(15, 23, 42, 0.05),
+                0 4px 8px rgba(15, 23, 42, 0.04);
+        }
+        .aportacion:hover {
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 4px 10px rgba(15, 23, 42, 0.08),
+                0 8px 20px rgba(15, 23, 42, 0.05);
+        }
+
+        /* --- Banners y bloques con gradiente fuerte: añadir capa de brillo --- */
+        .code-display,
+        .videollamada-banner,
+        .votacion-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .code-display::before,
+        .videollamada-banner::before,
+        .votacion-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 40%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            border-radius: inherit;
+            z-index: 0;
+        }
+        .code-display > *,
+        .videollamada-banner > *,
+        .votacion-card > * { position: relative; z-index: 1; }
+
+        .code-display {
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                0 8px 16px rgba(102, 126, 234, 0.30),
+                0 16px 36px rgba(102, 126, 234, 0.20);
+        }
+        .videollamada-banner {
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.25),
+                0 4px 12px rgba(37, 99, 235, 0.30),
+                0 10px 24px rgba(37, 99, 235, 0.18);
+        }
+
+        /* --- Status indicator (pastilla verde flotante) --- */
+        .status-indicator {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.14) 0%,
+                    rgba(255, 255, 255, 0) 35%,
+                    rgba(0, 0, 0, 0.08) 100%
+                ),
+                var(--secondary);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.10),
+                0 2px 6px rgba(0, 0, 0, 0.15),
+                0 6px 16px rgba(16, 185, 129, 0.35);
+        }
+
+        /* --- Banner del título de la reunión --- */
+        .meeting-title-banner {
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                0 2px 8px rgba(0, 0, 0, 0.10);
+        }
+
+        /* --- Dropdown del acta: gloss en items --- */
+        .acta-dropdown-content {
+            background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 8px 24px rgba(15, 23, 42, 0.18),
+                0 16px 40px rgba(15, 23, 42, 0.10);
+        }
     </style>
 </head>
 <body>
