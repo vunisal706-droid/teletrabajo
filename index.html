@@ -1408,6 +1408,229 @@
             justify-content: center;
         }
 
+        /* ============================================================
+           Modal de Asistencia
+           ============================================================ */
+        .asistencia-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            padding: 16px;
+            align-items: center;
+            justify-content: center;
+        }
+        .asistencia-modal.active {
+            display: flex;
+        }
+        .asistencia-content {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 22px;
+            max-width: 640px;
+            width: 100%;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .asistencia-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .asistencia-header h3 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 20px;
+        }
+        .asistencia-cerrar {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 4px 8px;
+            line-height: 1;
+        }
+        .asistencia-contador {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .asistencia-contador span {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            background: var(--background);
+            border: 1px solid var(--border);
+        }
+        .asistencia-contador span.asisten { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
+        .asistencia-contador span.no-asisten { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
+        .asistencia-contador span.sin-marcar { color: #64748b; }
+        .asistencia-acciones-rapidas {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .asistencia-acciones-rapidas button {
+            font-size: 12px;
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text);
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .asistencia-acciones-rapidas button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .asistencia-buscar {
+            margin-bottom: 12px;
+        }
+        .asistencia-buscar input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .asistencia-buscar input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .asistencia-lista {
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 4px;
+            background: var(--background);
+        }
+        .asistencia-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            background: white;
+            border: 1px solid var(--border);
+        }
+        .asistencia-row.hidden { display: none; }
+        .asistencia-row-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .asistencia-row-nombre {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .asistencia-row-puesto {
+            font-size: 11px;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .asistencia-row-puesto .badge-externo {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        .asistencia-row-puesto .badge-conectado {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        .asistencia-pills {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .asistencia-pill {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.15s;
+            padding: 0;
+        }
+        .asistencia-pill:hover {
+            transform: scale(1.05);
+        }
+        .asistencia-pill.activo-asiste {
+            background: #10b981;
+            border-color: #059669;
+            color: white;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+        }
+        .asistencia-pill.activo-no-asiste {
+            background: #ef4444;
+            border-color: #dc2626;
+            color: white;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+        }
+        .asistencia-pill.activo-sin-marcar {
+            background: #94a3b8;
+            border-color: #64748b;
+            color: white;
+        }
+        .asistencia-pill .quitar-externo {
+            font-size: 14px;
+        }
+        .asistencia-quitar {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 4px;
+            opacity: 0.6;
+        }
+        .asistencia-quitar:hover { opacity: 1; }
+        .asistencia-footer {
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .asistencia-footer .izquierda { display: flex; gap: 8px; }
+        .asistencia-footer .derecha { display: flex; gap: 8px; }
+        @media (max-width: 540px) {
+            .asistencia-row { flex-wrap: wrap; }
+            .asistencia-row-info { flex-basis: 100%; margin-bottom: 6px; }
+            .asistencia-pill { width: 32px; height: 32px; font-size: 14px; }
+        }
+
         /* ==========================================================
            LAVADO DE CARA — Estilo gloss / cristal
            Mantiene los colores intactos; solo añade brillo, profundidad
@@ -1993,6 +2216,42 @@
         </div>
     </div>
 
+    <!-- Modal de Asistencia -->
+    <div id="asistenciaModal" class="asistencia-modal">
+        <div class="asistencia-content">
+            <div class="asistencia-header">
+                <h3>👥 Asistencia a la reunión</h3>
+                <button class="asistencia-cerrar" onclick="cerrarModalAsistencia()" title="Cerrar">✕</button>
+            </div>
+            <p style="font-size: 13px; color: var(--text-light); margin: 0 0 12px 0; line-height: 1.5;">
+                Marca <span style="color:#059669;font-weight:600;">✅ Asiste</span> para los presentes y
+                <span style="color:#b91c1c;font-weight:600;">❌ No asiste</span> para los ausentes.
+                Los <span style="color:#64748b;font-weight:600;">⚪ sin marcar</span> no se incluyen en el acta
+                (esa persona no tenía que estar en esta reunión).
+            </p>
+            <div class="asistencia-contador" id="asistenciaContador"></div>
+            <div class="asistencia-acciones-rapidas">
+                <button onclick="marcarTodosAsistencia('asistente')">✅ Todos asisten</button>
+                <button onclick="marcarTodosAsistencia('no_asistente')">❌ Todos no asisten</button>
+                <button onclick="marcarTodosAsistencia(null)">⚪ Limpiar todo</button>
+                <button onclick="añadirAsistenteExterno()" style="border-color: var(--primary); color: var(--primary);">+ Añadir externo</button>
+            </div>
+            <div class="asistencia-buscar">
+                <input type="text" id="asistenciaBuscar" placeholder="🔍 Buscar por nombre..." oninput="filtrarAsistenciaLista()">
+            </div>
+            <div class="asistencia-lista" id="asistenciaLista"></div>
+            <div class="asistencia-footer">
+                <div class="izquierda">
+                    <button class="btn btn-outline btn-small" onclick="cerrarModalAsistencia()">Cerrar</button>
+                </div>
+                <div class="derecha">
+                    <button class="btn btn-secondary btn-small" onclick="guardarAsistencia()">💾 Guardar asistencia</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Pantalla de inicio -->
     <div id="screenInicio" class="screen active">
         <div class="container">
@@ -2143,6 +2402,9 @@
                             </button>
                         </div>
                     </div>
+                    <button id="btnAsistencia" class="btn btn-outline btn-small" onclick="abrirModalAsistencia()" title="Marcar asistentes y ausentes" style="display: none;">
+                        👥 Asistencia
+                    </button>
                     <button class="btn btn-outline btn-small" onclick="toggleCalendario()" title="Consultar calendario">
                         📅 Calendario
                     </button>
@@ -2213,6 +2475,53 @@
         window.usuarioActual = null;
         window.fechaActual = null;
         window.ordenDia = []; // Array con los textos de los puntos del orden del día
+
+        // ============================================================
+        // CLAUSTRO DEL CEIP CAPITULACIONES (Séneca, curso 2025-26)
+        // Listado precargado para el módulo de Asistencia.
+        // Si hay altas/bajas, se edita aquí.
+        // ============================================================
+        window.CLAUSTRO_CAPITULACIONES = [
+            { nombre: "Benoit Perejón, Elisabeth Aurora", puesto: "Religión" },
+            { nombre: "Castilla Alcalde, Eva María", puesto: "Educación Física" },
+            { nombre: "Cobos Carmona, Fátima", puesto: "Educación Infantil" },
+            { nombre: "Cortés Limonchi, María", puesto: "Música" },
+            { nombre: "Desviat García, María Lorena", puesto: "Audición y Lenguaje" },
+            { nombre: "Estévez Pereira, Carmen", puesto: "Primaria-Bilingüe Inglés" },
+            { nombre: "Flores Maldonado, Isabel Rosa", puesto: "Primaria-Bilingüe Inglés" },
+            { nombre: "García Sánchez, Magdalena", puesto: "Educación Primaria" },
+            { nombre: "Lucena González, María Noelia", puesto: "Educación Infantil" },
+            { nombre: "Lupión Puente, Manuel", puesto: "Educación Primaria" },
+            { nombre: "Marfil Álvarez, Estefanía", puesto: "Educación Infantil" },
+            { nombre: "Martín Pérez, María Silvia", puesto: "Educación Infantil" },
+            { nombre: "Medina Salcedo, Miguel", puesto: "Educación Infantil" },
+            { nombre: "Moreno Castro, Belén", puesto: "Música" },
+            { nombre: "Muñoz Romero, Encarnación", puesto: "Lengua Extranjera-Francés" },
+            { nombre: "Pachón Pérez, Lucía", puesto: "Educación Primaria" },
+            { nombre: "Paniza Ortiz, Marisol", puesto: "Religión" },
+            { nombre: "Peláez Martínez, María Encarnación", puesto: "Interculturalidad" },
+            { nombre: "Reyes Amate, Saray", puesto: "Religión" },
+            { nombre: "Rodríguez Rodríguez, María", puesto: "Educación Primaria" },
+            { nombre: "Rodríguez Ruiz, Virginia", puesto: "Primaria (Z. Transf.Social)" },
+            { nombre: "Roldán Rosales, María Esmeralda", puesto: "Religión" },
+            { nombre: "Romero Rodríguez, Miriam Noemi", puesto: "Primaria (Z. Transf.Social)" },
+            { nombre: "Sáez Guerrero, María Noelia", puesto: "Pedagogía Terapéutica T.E.A." },
+            { nombre: "Sojo Cabello, Desiree", puesto: "Lengua Extranjera-Inglés" },
+            { nombre: "Tortosa Espínola, Silvia Tatiana", puesto: "Primaria-Bilingüe Inglés" },
+            { nombre: "Unica Salas, Víctor Manuel", puesto: "Pedagogía Terapéutica" }
+        ];
+
+        // Normaliza un nombre para usarlo como clave en Firebase
+        // (Firebase no admite . # $ [ ] /)
+        window.normalizarClaveAsistencia = function(nombre) {
+            return nombre
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // quita acentos
+                .replace(/[.#$\[\]\/]/g, '')      // quita caracteres prohibidos
+                .replace(/\s+/g, '_')             // espacios -> _
+                .replace(/,/g, '')                // quita comas
+                .toLowerCase();
+        };
 
         // ÓRDENES DEL DÍA PREDEFINIDOS POR ÓRGANO Y MES
         const ordenDelDiaPredefinido = {
@@ -2576,6 +2885,12 @@
                 actaDropdown.style.display = 'none';
             } else {
                 actaDropdown.style.display = 'block';
+            }
+
+            // Mostrar botón de Asistencia solo al coordinador
+            const btnAsistencia = document.getElementById('btnAsistencia');
+            if (btnAsistencia) {
+                btnAsistencia.style.display = (window.usuarioActual.rol === 'coordinador') ? 'inline-flex' : 'none';
             }
 
             // Ajustar margen del contenedor
@@ -3489,22 +3804,73 @@
             
             const sesionData = snapshot.val();
             
-            // Participantes
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text('Participantes:', 20, y);
-            y += lineHeight;
-            
-            doc.setFont(undefined, 'normal');
-            doc.setFontSize(10);
-            
-            if (sesionData.participantes) {
-                Object.values(sesionData.participantes).forEach(p => {
+            // Participantes / Asistencia
+            const tieneAsistenciaPDF = sesionData.asistencia &&
+                Object.values(sesionData.asistencia).some(p => p.estado === 'asistente' || p.estado === 'no_asistente');
+
+            if (tieneAsistenciaPDF) {
+                const asistenPDF = Object.values(sesionData.asistencia).filter(p => p.estado === 'asistente');
+                const noAsistenPDF = Object.values(sesionData.asistencia).filter(p => p.estado === 'no_asistente');
+                asistenPDF.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+                noAsistenPDF.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text(`Asistentes (${asistenPDF.length}):`, 20, y);
+                y += lineHeight;
+
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+
+                if (asistenPDF.length === 0) {
                     checkPage();
-                    const emoji = p.rol === 'coordinador' ? '* ' : '- ';
-                    doc.text(`${emoji}${p.nombre} (${p.rol})`, 25, y);
+                    doc.text('   (ninguno)', 25, y);
                     y += lineHeight;
-                });
+                } else {
+                    asistenPDF.forEach(p => {
+                        checkPage();
+                        const marca = p.externo ? '* ' : '- ';
+                        const puesto = p.puesto ? ` (${p.puesto})` : '';
+                        const linea = doc.splitTextToSize(`${marca}${p.nombre}${puesto}`, 165);
+                        linea.forEach(l => { checkPage(); doc.text(l, 25, y); y += lineHeight; });
+                    });
+                }
+
+                if (noAsistenPDF.length > 0) {
+                    y += 3;
+                    checkPage();
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`No asisten (${noAsistenPDF.length}):`, 20, y);
+                    y += lineHeight;
+
+                    doc.setFont(undefined, 'normal');
+                    doc.setFontSize(10);
+                    noAsistenPDF.forEach(p => {
+                        checkPage();
+                        const puesto = p.puesto ? ` (${p.puesto})` : '';
+                        const linea = doc.splitTextToSize(`- ${p.nombre}${puesto}`, 165);
+                        linea.forEach(l => { checkPage(); doc.text(l, 25, y); y += lineHeight; });
+                    });
+                }
+            } else {
+                // Comportamiento clásico
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text('Participantes:', 20, y);
+                y += lineHeight;
+
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+
+                if (sesionData.participantes) {
+                    Object.values(sesionData.participantes).forEach(p => {
+                        checkPage();
+                        const emoji = p.rol === 'coordinador' ? '* ' : '- ';
+                        doc.text(`${emoji}${p.nombre} (${p.rol})`, 25, y);
+                        y += lineHeight;
+                    });
+                }
             }
             
             y += 5;
@@ -3700,6 +4066,250 @@
             mostrarAvisoChatGPT();
         };
 
+        // ============================================================
+        // MÓDULO DE ASISTENCIA
+        // Permite al coordinador marcar quién asiste / no asiste / queda
+        // sin marcar (porque no le corresponde estar en esta reunión).
+        // Estado: window.asistenciaTemp = { claveNorm: { nombre, puesto,
+        //          estado: 'asistente'|'no_asistente'|null, externo: bool } }
+        // Persistencia en Firebase: sesiones/{sesion}/{fecha}/asistencia
+        // ============================================================
+        window.asistenciaTemp = {};
+
+        window.abrirModalAsistencia = async function() {
+            if (!window.sesionActual || !window.fechaActual) {
+                alert('No hay reunión activa.');
+                return;
+            }
+
+            // 1) Cargar lo que ya esté guardado en Firebase
+            const asistenciaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`);
+            const snap = await get(asistenciaRef);
+            const guardado = snap.exists() ? snap.val() : {};
+
+            // 2) Cargar la lista de participantes conectados (para preselección)
+            const participantesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
+            const partSnap = await get(participantesRef);
+            const conectados = partSnap.exists() ? Object.values(partSnap.val()).map(p => p.nombre) : [];
+
+            // 3) Construir el estado en memoria a partir del claustro + extras guardados
+            window.asistenciaTemp = {};
+
+            // Claustro precargado
+            window.CLAUSTRO_CAPITULACIONES.forEach(persona => {
+                const clave = window.normalizarClaveAsistencia(persona.nombre);
+                let estado = null;
+                let conectado = false;
+
+                // Si ya estaba guardado, respeta el estado
+                if (guardado[clave] && guardado[clave].estado) {
+                    estado = guardado[clave].estado;
+                }
+
+                // Si está conectado en la sala, lo marcamos como Asiste
+                // (solo si el coordinador no había marcado ya algo distinto)
+                if (conectados.includes(persona.nombre)) {
+                    conectado = true;
+                    if (estado === null) estado = 'asistente';
+                }
+
+                window.asistenciaTemp[clave] = {
+                    nombre: persona.nombre,
+                    puesto: persona.puesto,
+                    estado: estado,
+                    externo: false,
+                    conectado: conectado
+                };
+            });
+
+            // Externos guardados previamente
+            Object.entries(guardado).forEach(([clave, datos]) => {
+                if (datos.externo && !window.asistenciaTemp[clave]) {
+                    window.asistenciaTemp[clave] = {
+                        nombre: datos.nombre,
+                        puesto: datos.puesto || 'Externo',
+                        estado: datos.estado || null,
+                        externo: true,
+                        conectado: false
+                    };
+                }
+            });
+
+            // Conectados que NO están en el claustro (sustitutos, familias, inspectores
+            // que se hayan unido directamente): los añadimos como externos
+            conectados.forEach(nombre => {
+                const clave = window.normalizarClaveAsistencia(nombre);
+                if (!window.asistenciaTemp[clave]) {
+                    window.asistenciaTemp[clave] = {
+                        nombre: nombre,
+                        puesto: 'Externo',
+                        estado: 'asistente',
+                        externo: true,
+                        conectado: true
+                    };
+                }
+            });
+
+            renderAsistenciaLista();
+            document.getElementById('asistenciaBuscar').value = '';
+            document.getElementById('asistenciaModal').classList.add('active');
+        };
+
+        window.cerrarModalAsistencia = function() {
+            document.getElementById('asistenciaModal').classList.remove('active');
+        };
+
+        function renderAsistenciaLista() {
+            const cont = document.getElementById('asistenciaLista');
+            const personas = Object.entries(window.asistenciaTemp);
+
+            // Orden: primero quienes asisten, luego sin marcar, luego no asisten,
+            // dentro de cada grupo por nombre
+            personas.sort((a, b) => {
+                const ordenEstado = { 'asistente': 0, null: 1, 'no_asistente': 2 };
+                const ea = ordenEstado[a[1].estado];
+                const eb = ordenEstado[b[1].estado];
+                if (ea !== eb) return ea - eb;
+                return a[1].nombre.localeCompare(b[1].nombre, 'es');
+            });
+
+            cont.innerHTML = personas.map(([clave, p]) => {
+                const cls = p.estado === 'asistente' ? 'activo-asiste'
+                          : p.estado === 'no_asistente' ? 'activo-no-asiste'
+                          : '';
+                const clsSinMarcar = p.estado === null ? 'activo-sin-marcar' : '';
+                const badges = [];
+                if (p.externo) badges.push('<span class="badge-externo">EXTERNO</span>');
+                if (p.conectado) badges.push('<span class="badge-conectado">EN SALA</span>');
+                const badgesHtml = badges.join('');
+                const botonQuitar = p.externo
+                    ? `<button class="asistencia-quitar" onclick="quitarAsistenteExterno('${clave}')" title="Quitar de la lista">🗑️</button>`
+                    : '';
+
+                return `
+                    <div class="asistencia-row" data-nombre="${p.nombre.toLowerCase()}">
+                        <div class="asistencia-row-info">
+                            <div class="asistencia-row-nombre">${p.nombre}</div>
+                            <div class="asistencia-row-puesto">${badgesHtml}${p.puesto}</div>
+                        </div>
+                        <div class="asistencia-pills">
+                            <button class="asistencia-pill ${p.estado === 'asistente' ? 'activo-asiste' : ''}"
+                                    onclick="setEstadoAsistencia('${clave}', 'asistente')" title="Asiste">✅</button>
+                            <button class="asistencia-pill ${p.estado === 'no_asistente' ? 'activo-no-asiste' : ''}"
+                                    onclick="setEstadoAsistencia('${clave}', 'no_asistente')" title="No asiste">❌</button>
+                            <button class="asistencia-pill ${p.estado === null ? 'activo-sin-marcar' : ''}"
+                                    onclick="setEstadoAsistencia('${clave}', null)" title="Sin marcar (no procede)">⚪</button>
+                        </div>
+                        ${botonQuitar}
+                    </div>
+                `;
+            }).join('');
+
+            actualizarContadorAsistencia();
+            filtrarAsistenciaLista(); // Reaplica filtro si había búsqueda
+        }
+
+        function actualizarContadorAsistencia() {
+            const personas = Object.values(window.asistenciaTemp);
+            const asisten = personas.filter(p => p.estado === 'asistente').length;
+            const noAsisten = personas.filter(p => p.estado === 'no_asistente').length;
+            const sinMarcar = personas.filter(p => p.estado === null).length;
+            document.getElementById('asistenciaContador').innerHTML =
+                `<span class="asisten">✅ ${asisten} asisten</span>` +
+                `<span class="no-asisten">❌ ${noAsisten} no asisten</span>` +
+                `<span class="sin-marcar">⚪ ${sinMarcar} sin marcar</span>`;
+        }
+
+        window.setEstadoAsistencia = function(clave, estado) {
+            if (!window.asistenciaTemp[clave]) return;
+            window.asistenciaTemp[clave].estado = estado;
+            renderAsistenciaLista();
+        };
+
+        window.marcarTodosAsistencia = function(estado) {
+            Object.keys(window.asistenciaTemp).forEach(clave => {
+                window.asistenciaTemp[clave].estado = estado;
+            });
+            renderAsistenciaLista();
+        };
+
+        window.filtrarAsistenciaLista = function() {
+            const filtro = (document.getElementById('asistenciaBuscar').value || '')
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            document.querySelectorAll('.asistencia-row').forEach(row => {
+                const nombre = (row.dataset.nombre || '')
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                row.classList.toggle('hidden', filtro && !nombre.includes(filtro));
+            });
+        };
+
+        window.añadirAsistenteExterno = function() {
+            const nombre = prompt('Nombre completo del asistente externo:');
+            if (!nombre || !nombre.trim()) return;
+            const puesto = prompt('Cargo o relación (ej: Inspector, Sustituto, Familia, AMPA):', 'Externo') || 'Externo';
+
+            const clave = window.normalizarClaveAsistencia(nombre.trim());
+            if (window.asistenciaTemp[clave]) {
+                alert('Ya existe una persona con ese nombre en la lista.');
+                return;
+            }
+            window.asistenciaTemp[clave] = {
+                nombre: nombre.trim(),
+                puesto: puesto.trim(),
+                estado: 'asistente',
+                externo: true,
+                conectado: false
+            };
+            renderAsistenciaLista();
+        };
+
+        window.quitarAsistenteExterno = function(clave) {
+            const p = window.asistenciaTemp[clave];
+            if (!p || !p.externo) return;
+            if (!confirm(`¿Quitar a ${p.nombre} de la lista?`)) return;
+            delete window.asistenciaTemp[clave];
+            renderAsistenciaLista();
+        };
+
+        window.guardarAsistencia = async function() {
+            if (!window.sesionActual || !window.fechaActual) return;
+
+            // Construir el objeto a guardar (omitimos el flag conectado, que se recalcula
+            // en cada apertura del modal)
+            const datosAGuardar = {};
+            Object.entries(window.asistenciaTemp).forEach(([clave, p]) => {
+                datosAGuardar[clave] = {
+                    nombre: p.nombre,
+                    puesto: p.puesto || '',
+                    estado: p.estado, // puede ser null = sin marcar
+                    externo: !!p.externo
+                };
+            });
+
+            const asistenciaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`);
+            try {
+                await set(asistenciaRef, datosAGuardar);
+                cerrarModalAsistencia();
+
+                // Toast de confirmación
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10002; font-size: 14px;';
+                toast.textContent = '✅ Asistencia guardada. Aparecerá en el acta.';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3500);
+            } catch (err) {
+                console.error('Error guardando asistencia:', err);
+                alert('No se pudo guardar la asistencia: ' + err.message);
+            }
+        };
+
+        // Cerrar modal con clic fuera
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('asistenciaModal');
+            if (modal && e.target === modal) cerrarModalAsistencia();
+        });
+
         // Generar texto del acta
         window.generarTextoActa = async function() {
             const sesionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}`);
@@ -3719,16 +4329,54 @@
             texto += '═══════════════════════════════════════════\n\n';
             texto += `📋 ${nombreReunion}\n\n`;
             
-            // Participantes
-            texto += '👥 PARTICIPANTES:\n';
-            texto += '─────────────────────────────────────────\n';
-            if (sesionData.participantes) {
-                Object.values(sesionData.participantes).forEach(p => {
-                    const emoji = p.rol === 'coordinador' ? '👑' : '👤';
-                    texto += `${emoji} ${p.nombre} (${p.rol})\n`;
-                });
+            // Participantes / Asistencia
+            // Si el coordinador ha marcado asistencia explícitamente, usamos esa lista
+            // (separando Asistentes y No asistentes, los "sin marcar" no salen).
+            // Si no, caemos al comportamiento clásico (gente conectada en la sala).
+            const tieneAsistencia = sesionData.asistencia &&
+                Object.values(sesionData.asistencia).some(p => p.estado === 'asistente' || p.estado === 'no_asistente');
+
+            if (tieneAsistencia) {
+                const asisten = Object.values(sesionData.asistencia).filter(p => p.estado === 'asistente');
+                const noAsisten = Object.values(sesionData.asistencia).filter(p => p.estado === 'no_asistente');
+
+                asisten.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+                noAsisten.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+                texto += `👥 ASISTENTES (${asisten.length}):\n`;
+                texto += '─────────────────────────────────────────\n';
+                if (asisten.length === 0) {
+                    texto += '   (ninguno)\n';
+                } else {
+                    asisten.forEach(p => {
+                        const marca = p.externo ? '✦' : '✓';
+                        const puesto = p.puesto ? ` — ${p.puesto}` : '';
+                        texto += `   ${marca} ${p.nombre}${puesto}\n`;
+                    });
+                }
+                texto += '\n';
+
+                if (noAsisten.length > 0) {
+                    texto += `❌ NO ASISTEN (${noAsisten.length}):\n`;
+                    texto += '─────────────────────────────────────────\n';
+                    noAsisten.forEach(p => {
+                        const puesto = p.puesto ? ` — ${p.puesto}` : '';
+                        texto += `   • ${p.nombre}${puesto}\n`;
+                    });
+                    texto += '\n';
+                }
+            } else {
+                // Comportamiento clásico: lista de conectados a la sala
+                texto += '👥 PARTICIPANTES:\n';
+                texto += '─────────────────────────────────────────\n';
+                if (sesionData.participantes) {
+                    Object.values(sesionData.participantes).forEach(p => {
+                        const emoji = p.rol === 'coordinador' ? '👑' : '👤';
+                        texto += `${emoji} ${p.nombre} (${p.rol})\n`;
+                    });
+                }
+                texto += '\n';
             }
-            texto += '\n';
             
             // Enlaces de videollamada
             if (sesionData.videollamada) {
