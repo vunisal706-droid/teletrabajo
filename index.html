@@ -2890,6 +2890,31 @@
         </div>
     </div>
 
+    <!-- Modal de Acta anterior -->
+    <div id="actaAnteriorModal" class="asistencia-modal">
+        <div class="asistencia-content" style="max-width: 720px;">
+            <div class="asistencia-header">
+                <h3>📜 Acta anterior</h3>
+                <button class="asistencia-cerrar" onclick="cerrarActaAnterior()" title="Cerrar">✕</button>
+            </div>
+            <div id="actaAnteriorInfo" style="margin-bottom: 12px; font-size: 13px; color: var(--text-light);"></div>
+            <div id="actaAnteriorContenido" style="flex: 1; min-height: 0; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: var(--background); white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; color: var(--text);">
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-light);">
+                    <div style="font-size: 36px; margin-bottom: 10px;">⏳</div>
+                    Buscando el acta anterior...
+                </div>
+            </div>
+            <div class="asistencia-footer" style="margin-top: 14px;">
+                <div class="izquierda">
+                    <button class="btn btn-outline btn-small" onclick="cerrarActaAnterior()">Cerrar</button>
+                </div>
+                <div class="derecha" id="actaAnteriorAcciones" style="display: none;">
+                    <button class="btn btn-outline btn-small" onclick="copiarActaAnterior()">📋 Copiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Pantalla de Modo Guía (wizard paso a paso) -->
     <div id="screenModoGuia" class="screen">
@@ -3222,6 +3247,9 @@
                     </div>
                     <button id="btnAsistencia" class="btn btn-outline btn-small" onclick="abrirModalAsistencia()" title="Marcar asistentes y ausentes" style="display: none;">
                         👥 Asistencia
+                    </button>
+                    <button class="btn btn-outline btn-small" onclick="abrirActaAnterior()" title="Ver el acta de la reunión anterior de este equipo">
+                        📜 Acta anterior
                     </button>
                     <button class="btn btn-outline btn-small" onclick="toggleCalendario()" title="Consultar calendario">
                         📅 Calendario
@@ -5132,17 +5160,117 @@
         });
 
         // Generar texto del acta
-        window.generarTextoActa = async function() {
-            const sesionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}`);
+        // ============================================================
+        // ACTA ANTERIOR — Buscar y mostrar la última acta del mismo
+        // órgano (anterior a la fecha actual)
+        // ============================================================
+        window._textoActaAnteriorActual = '';
+
+        window.abrirActaAnterior = async function() {
+            if (!window.sesionActual || !window.fechaActual) {
+                alert('No hay reunión activa.');
+                return;
+            }
+
+            const modal = document.getElementById('actaAnteriorModal');
+            const info = document.getElementById('actaAnteriorInfo');
+            const cont = document.getElementById('actaAnteriorContenido');
+            const acciones = document.getElementById('actaAnteriorAcciones');
+
+            modal.classList.add('active');
+            info.textContent = 'Buscando…';
+            cont.innerHTML = '<div style="text-align: center; padding: 40px 20px; color: var(--text-light);"><div style="font-size: 36px; margin-bottom: 10px;">⏳</div>Buscando el acta anterior...</div>';
+            acciones.style.display = 'none';
+
+            try {
+                // Listar todas las fechas guardadas para este órgano
+                const sesionRef = ref(database, `sesiones/${window.sesionActual}`);
+                const snap = await get(sesionRef);
+
+                if (!snap.exists()) {
+                    info.textContent = '';
+                    cont.innerHTML = '<div style="text-align: center; padding: 40px 20px; color: var(--text-light);"><div style="font-size: 36px; margin-bottom: 10px;">📭</div><strong>No hay actas anteriores</strong><br><span style="font-size: 12px;">Esta es la primera reunión guardada de este equipo.</span></div>';
+                    return;
+                }
+
+                const fechas = Object.keys(snap.val())
+                    .filter(f => /^\d{4}-\d{2}-\d{2}$/.test(f))
+                    .filter(f => f < window.fechaActual)   // anteriores a la actual
+                    .sort()                                 // alfabético = cronológico
+                    .reverse();                             // más reciente primero
+
+                if (fechas.length === 0) {
+                    info.textContent = '';
+                    cont.innerHTML = '<div style="text-align: center; padding: 40px 20px; color: var(--text-light);"><div style="font-size: 36px; margin-bottom: 10px;">📭</div><strong>No hay actas anteriores</strong><br><span style="font-size: 12px;">No se han guardado reuniones previas de este equipo.</span></div>';
+                    return;
+                }
+
+                const fechaAnterior = fechas[0];
+                const texto = await window.generarTextoActa(window.sesionActual, fechaAnterior);
+
+                if (!texto) {
+                    info.textContent = '';
+                    cont.innerHTML = '<div style="text-align: center; padding: 40px 20px; color: var(--text-light);"><div style="font-size: 36px; margin-bottom: 10px;">⚠️</div>No se pudo cargar el acta de esa fecha.</div>';
+                    return;
+                }
+
+                // Formatear fecha legible
+                const [yy, mm, dd] = fechaAnterior.split('-');
+                const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+                const fechaLegible = `${parseInt(dd, 10)} de ${meses[parseInt(mm, 10) - 1]} de ${yy}`;
+                const totalAnteriores = fechas.length;
+                const sufijoMas = totalAnteriores > 1
+                    ? ` <span style="color: var(--text-light); font-size: 12px;">(hay ${totalAnteriores} actas anteriores en total)</span>`
+                    : '';
+                info.innerHTML = `📅 Reunión del <strong>${fechaLegible}</strong>${sufijoMas}`;
+                cont.textContent = texto;
+                window._textoActaAnteriorActual = texto;
+                acciones.style.display = 'flex';
+            } catch (err) {
+                console.error('Error al cargar acta anterior:', err);
+                info.textContent = '';
+                cont.innerHTML = '<div style="text-align: center; padding: 40px 20px; color: var(--danger);"><div style="font-size: 36px; margin-bottom: 10px;">❌</div>Error al cargar el acta anterior.</div>';
+            }
+        };
+
+        window.cerrarActaAnterior = function() {
+            document.getElementById('actaAnteriorModal').classList.remove('active');
+        };
+
+        window.copiarActaAnterior = async function() {
+            if (!window._textoActaAnteriorActual) return;
+            try {
+                await navigator.clipboard.writeText(window._textoActaAnteriorActual);
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; z-index: 10003; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+                toast.textContent = '✅ Acta anterior copiada al portapapeles';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2500);
+            } catch (err) {
+                alert('No se pudo copiar al portapapeles.');
+            }
+        };
+
+        // Cerrar al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('actaAnteriorModal');
+            if (modal && e.target === modal) cerrarActaAnterior();
+        });
+
+        window.generarTextoActa = async function(sesionId, fechaIso) {
+            // Si no se pasan parámetros, usa la sesión y fecha actuales (comportamiento original)
+            const sesion = sesionId || window.sesionActual;
+            const fecha = fechaIso || window.fechaActual;
+            const sesionRef = ref(database, `sesiones/${sesion}/${fecha}`);
             const snapshot = await get(sesionRef);
-            
+
             if (!snapshot.exists()) {
-                alert('No se pueden cargar los datos de la reunión');
+                if (!sesionId) alert('No se pueden cargar los datos de la reunión');
                 return null;
             }
-            
+
             const sesionData = snapshot.val();
-            const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
+            const nombreReunion = getNombreReunion(sesion, fecha);
             
             let texto = '═══════════════════════════════════════════\n';
             texto += 'CEIP CAPITULACIONES DE SANTA FE\n';
