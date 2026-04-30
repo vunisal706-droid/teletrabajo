@@ -1635,6 +1635,538 @@
             .asistencia-pill { width: 32px; height: 32px; font-size: 14px; }
         }
 
+        /* ============================================================
+           MODO GUÍA — Wizard paso a paso para usuarios poco habituados
+           ============================================================ */
+        .btn-modo-guia {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 18px 22px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 14px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.18);
+            font-family: inherit;
+        }
+        .btn-modo-guia:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.30);
+            border-color: #d97706;
+        }
+        .btn-modo-guia .emoji {
+            font-size: 38px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .btn-modo-guia .texto {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .btn-modo-guia .texto strong {
+            color: #78350f;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .btn-modo-guia .texto small {
+            color: #92400e;
+            font-size: 13px;
+        }
+        .btn-modo-guia .flecha {
+            color: #d97706;
+            font-size: 22px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .modo-guia-container {
+            max-width: 640px;
+            padding: 16px;
+        }
+
+        .guia-cabecera {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .guia-cerrar {
+            background: white;
+            border: 2px solid var(--border);
+            color: var(--text);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: 600;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+        .guia-cerrar:hover {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+        .guia-progreso {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .guia-progreso-barra {
+            flex: 1;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .guia-progreso-barra > div {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 4px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        .guia-progreso-texto {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .guia-paso {
+            background: white;
+            border-radius: 16px;
+            padding: 32px 28px;
+            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+            text-align: center;
+        }
+        .guia-emoji {
+            font-size: 64px;
+            line-height: 1;
+            margin-bottom: 14px;
+        }
+        .guia-paso h2 {
+            font-size: 26px;
+            margin: 0 0 10px 0;
+            color: var(--text);
+        }
+        .guia-descripcion {
+            font-size: 16px;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+        }
+        .guia-tip {
+            font-size: 14px;
+            color: #d97706;
+            background: #fef3c7;
+            padding: 10px 16px;
+            border-radius: 10px;
+            margin: 0 auto 16px auto;
+            display: inline-block;
+        }
+        .guia-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .guia-select-grande,
+        .guia-input-grande {
+            width: 100%;
+            padding: 16px 18px;
+            font-size: 17px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: white;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .guia-select-grande:focus,
+        .guia-input-grande:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .guia-botones {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+        .guia-btn-grande {
+            padding: 14px 30px;
+            font-size: 17px;
+            font-weight: 700;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.30);
+            transition: all 0.15s;
+            min-width: 160px;
+            font-family: inherit;
+        }
+        .guia-btn-grande:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.40);
+        }
+        .guia-btn-grande:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .guia-btn-final {
+            background: var(--secondary);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.30);
+        }
+        .guia-btn-final:hover:not(:disabled) {
+            background: #059669;
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.40);
+        }
+        .guia-btn-secundario {
+            padding: 14px 22px;
+            font-size: 15px;
+            font-weight: 600;
+            background: white;
+            color: var(--text);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .guia-btn-secundario:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Opciones de rol (Maestro / Coordinador) */
+        .guia-opciones-roles {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .guia-opcion-rol {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 22px 18px;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            font-family: inherit;
+        }
+        .guia-opcion-rol:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+            transform: translateY(-2px);
+        }
+        .guia-opcion-rol .opcion-emoji {
+            font-size: 38px;
+            line-height: 1;
+        }
+        .guia-opcion-rol strong {
+            font-size: 18px;
+            color: var(--text);
+        }
+        .guia-opcion-rol small {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.4;
+        }
+
+        /* Grid de tipos de reunión */
+        .guia-grupo-titulo {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-light);
+            margin: 14px 0 8px 0;
+            text-align: left;
+        }
+        .guia-grupo-titulo:first-of-type { margin-top: 0; }
+        .guia-opciones-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .guia-opcion-grid {
+            padding: 14px 8px;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            transition: all 0.15s;
+            font-family: inherit;
+            line-height: 1.3;
+        }
+        .guia-opcion-grid:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+        .guia-opcion-grid.activo {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Fecha */
+        .guia-fecha-acciones {
+            margin-bottom: 12px;
+        }
+        .guia-btn-fecha-hoy {
+            padding: 12px 28px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+            font-family: inherit;
+        }
+        .guia-btn-fecha-hoy:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Resumen final */
+        .guia-resumen {
+            background: var(--background);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 22px;
+            text-align: left;
+            margin-bottom: 16px;
+        }
+        .guia-resumen .item {
+            display: flex;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+        }
+        .guia-resumen .item:last-child { border-bottom: none; }
+        .guia-resumen .item .et {
+            color: var(--text-light);
+            min-width: 90px;
+            font-size: 13px;
+        }
+        .guia-resumen .item .va {
+            color: var(--text);
+            font-weight: 600;
+            flex: 1;
+        }
+
+        @media (max-width: 540px) {
+            .guia-paso { padding: 24px 18px; }
+            .guia-paso h2 { font-size: 22px; }
+            .guia-emoji { font-size: 52px; }
+            .guia-opciones-grid { grid-template-columns: repeat(2, 1fr); }
+            .guia-btn-grande { width: 100%; }
+            .guia-btn-secundario { width: 100%; }
+        }
+
+        /* ============================================================
+           Panel guía flotante (sobre la pantalla de configuración del
+           coordinador). Aparece arriba como banner sticky con el paso
+           actual y un botón "Siguiente".
+           ============================================================ */
+        .panel-guia-config {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+            border-bottom: 3px solid #f59e0b;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.20);
+            z-index: 9000;
+            padding: 14px 16px 12px 16px;
+            font-family: inherit;
+        }
+        .panel-guia-cabecera {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            max-width: 880px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .panel-guia-emoji {
+            font-size: 28px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .panel-guia-titulo {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        .panel-guia-titulo strong {
+            color: #78350f;
+            font-size: 14px;
+        }
+        .panel-guia-titulo small {
+            color: #92400e;
+            font-size: 12px;
+        }
+        .panel-guia-cerrar {
+            background: white;
+            border: 2px solid #f59e0b;
+            color: #92400e;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .panel-guia-cerrar:hover {
+            background: #f59e0b;
+            color: white;
+        }
+        .panel-guia-progreso {
+            height: 5px;
+            background: rgba(245, 158, 11, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            max-width: 880px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .panel-guia-progreso > div {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 3px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        .panel-guia-contenido {
+            display: flex;
+            gap: 14px;
+            max-width: 880px;
+            margin: 0 auto 12px auto;
+            align-items: flex-start;
+        }
+        .panel-guia-icono {
+            font-size: 32px;
+            line-height: 1;
+            flex-shrink: 0;
+            background: white;
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10);
+        }
+        .panel-guia-instruccion {
+            flex: 1;
+        }
+        .panel-guia-instruccion strong {
+            display: block;
+            color: #78350f;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .panel-guia-instruccion p {
+            color: #5c2e05;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .panel-guia-acciones {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            max-width: 880px;
+            margin: 0 auto;
+        }
+        .panel-guia-btn {
+            padding: 10px 22px;
+            background: #d97706;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(217, 119, 6, 0.30);
+            font-family: inherit;
+        }
+        .panel-guia-btn:hover {
+            background: #b45309;
+        }
+        .panel-guia-btn-secundario {
+            padding: 10px 16px;
+            background: white;
+            color: #78350f;
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .panel-guia-btn-secundario:hover {
+            background: #fef3c7;
+        }
+
+        /* Cuando hay un panel guía visible, dejar espacio arriba en el contenido */
+        body.con-panel-guia .container {
+            padding-top: 220px;
+        }
+
+        /* Highlight del elemento que el guía está señalando */
+        .guia-resaltado {
+            position: relative;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.5), 0 0 0 8px rgba(245, 158, 11, 0.20) !important;
+            border-radius: 12px;
+            transition: box-shadow 0.3s;
+            animation: guiaPulso 2s infinite;
+        }
+        @keyframes guiaPulso {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.5), 0 0 0 8px rgba(245, 158, 11, 0.20); }
+            50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.6), 0 0 0 14px rgba(245, 158, 11, 0.10); }
+        }
+
+        @media (max-width: 540px) {
+            body.con-panel-guia .container { padding-top: 240px; }
+            .panel-guia-titulo strong { font-size: 13px; }
+            .panel-guia-titulo small { font-size: 11px; }
+            .panel-guia-instruccion strong { font-size: 14px; }
+            .panel-guia-instruccion p { font-size: 12px; }
+            .panel-guia-icono { width: 44px; height: 44px; font-size: 26px; }
+        }
+
         /* ==========================================================
            LAVADO DE CARA — Estilo gloss / cristal
            Mantiene los colores intactos; solo añade brillo, profundidad
@@ -2343,9 +2875,188 @@
     </div>
 
 
+    <!-- Pantalla de Modo Guía (wizard paso a paso) -->
+    <div id="screenModoGuia" class="screen">
+        <div class="container modo-guia-container">
+
+            <!-- Cabecera con progreso -->
+            <div class="guia-cabecera">
+                <button class="guia-cerrar" onclick="cancelarModoGuia()" title="Salir del modo guía">✕</button>
+                <div class="guia-progreso">
+                    <div class="guia-progreso-barra"><div id="guiaProgresoFill"></div></div>
+                    <div class="guia-progreso-texto"><span id="guiaPasoActual">1</span> de <span id="guiaPasoTotal">6</span></div>
+                </div>
+            </div>
+
+            <!-- Paso 1: Bienvenida -->
+            <div class="guia-paso" data-paso="1">
+                <div class="guia-emoji">🐣</div>
+                <h2>¡Hola!</h2>
+                <p class="guia-descripcion">
+                    Te voy a guiar <strong>paso a paso</strong> para entrar a tu reunión.<br>
+                    Solo tienes que ir respondiendo lo que te pregunto.
+                </p>
+                <p class="guia-tip">⏱️ Tarda menos de un minuto.</p>
+                <div class="guia-botones">
+                    <button class="guia-btn-grande" onclick="guiaSiguiente()">Empezar →</button>
+                </div>
+            </div>
+
+            <!-- Paso 2: Nombre -->
+            <div class="guia-paso" data-paso="2" style="display:none;">
+                <div class="guia-emoji">👋</div>
+                <h2>¿Cómo te llamas?</h2>
+                <p class="guia-descripcion">Selecciona tu nombre para que tus compañeros te reconozcan.</p>
+                <div class="guia-form">
+                    <select id="guiaSelNombre" class="guia-select-grande" onchange="guiaCambioNombre()">
+                        <option value="">— Elige tu nombre —</option>
+                        <!-- Se rellena dinámicamente con CLAUSTRO_CAPITULACIONES -->
+                    </select>
+                    <input type="text" id="guiaInputNombre" class="guia-input-grande" placeholder="Escribe tu nombre completo" style="display:none;">
+                </div>
+                <div class="guia-botones">
+                    <button class="guia-btn-secundario" onclick="guiaAtras()">← Atrás</button>
+                    <button class="guia-btn-grande" id="guiaBtnNombreOK" onclick="guiaSiguiente()" disabled>Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- Paso 3: Rol -->
+            <div class="guia-paso" data-paso="3" style="display:none;">
+                <div class="guia-emoji">🤔</div>
+                <h2>¿Cómo vas a participar?</h2>
+                <p class="guia-descripcion">Elige una de las dos opciones.</p>
+                <div class="guia-opciones-roles">
+                    <button class="guia-opcion-rol" data-rol="maestro" onclick="guiaSeleccionarRol('maestro')">
+                        <span class="opcion-emoji">👤</span>
+                        <strong>Soy Maestro/a</strong>
+                        <small>Voy a participar en una reunión que ya creó el coordinador</small>
+                    </button>
+                    <button class="guia-opcion-rol" data-rol="coordinador" onclick="guiaSeleccionarRol('coordinador')">
+                        <span class="opcion-emoji">👑</span>
+                        <strong>Soy Coordinador/a</strong>
+                        <small>Voy a crear o dirigir la reunión</small>
+                    </button>
+                </div>
+                <div class="guia-botones">
+                    <button class="guia-btn-secundario" onclick="guiaAtras()">← Atrás</button>
+                </div>
+            </div>
+
+            <!-- Paso 4: Tipo de reunión -->
+            <div class="guia-paso" data-paso="4" style="display:none;">
+                <div class="guia-emoji">📅</div>
+                <h2>¿A qué reunión vas?</h2>
+                <p class="guia-descripcion">Pulsa el grupo o el órgano correspondiente.</p>
+                <div class="guia-grupo-titulo">📚 Mi clase</div>
+                <div class="guia-opciones-grid">
+                    <button class="guia-opcion-grid" data-reunion="infantil-3" onclick="guiaSeleccionarReunion('infantil-3', this)">Infantil 3</button>
+                    <button class="guia-opcion-grid" data-reunion="infantil-4" onclick="guiaSeleccionarReunion('infantil-4', this)">Infantil 4</button>
+                    <button class="guia-opcion-grid" data-reunion="infantil-5" onclick="guiaSeleccionarReunion('infantil-5', this)">Infantil 5</button>
+                    <button class="guia-opcion-grid" data-reunion="primero" onclick="guiaSeleccionarReunion('primero', this)">1º Primaria</button>
+                    <button class="guia-opcion-grid" data-reunion="segundo" onclick="guiaSeleccionarReunion('segundo', this)">2º Primaria</button>
+                    <button class="guia-opcion-grid" data-reunion="tercero" onclick="guiaSeleccionarReunion('tercero', this)">3º Primaria</button>
+                    <button class="guia-opcion-grid" data-reunion="cuarto" onclick="guiaSeleccionarReunion('cuarto', this)">4º Primaria</button>
+                    <button class="guia-opcion-grid" data-reunion="quinto" onclick="guiaSeleccionarReunion('quinto', this)">5º Primaria</button>
+                    <button class="guia-opcion-grid" data-reunion="sexto" onclick="guiaSeleccionarReunion('sexto', this)">6º Primaria</button>
+                </div>
+                <div class="guia-grupo-titulo">🔄 Mi ciclo o equipo</div>
+                <div class="guia-opciones-grid">
+                    <button class="guia-opcion-grid" data-reunion="ciclo-infantil" onclick="guiaSeleccionarReunion('ciclo-infantil', this)">Ciclo Infantil</button>
+                    <button class="guia-opcion-grid" data-reunion="primer-ciclo" onclick="guiaSeleccionarReunion('primer-ciclo', this)">Primer Ciclo</button>
+                    <button class="guia-opcion-grid" data-reunion="segundo-ciclo" onclick="guiaSeleccionarReunion('segundo-ciclo', this)">Segundo Ciclo</button>
+                    <button class="guia-opcion-grid" data-reunion="tercer-ciclo" onclick="guiaSeleccionarReunion('tercer-ciclo', this)">Tercer Ciclo</button>
+                    <button class="guia-opcion-grid" data-reunion="orientacion" onclick="guiaSeleccionarReunion('orientacion', this)">Orientación</button>
+                    <button class="guia-opcion-grid" data-reunion="aula-tea" onclick="guiaSeleccionarReunion('aula-tea', this)">Aula TEA</button>
+                </div>
+                <div class="guia-grupo-titulo">🏛️ Reuniones generales</div>
+                <div class="guia-opciones-grid">
+                    <button class="guia-opcion-grid" data-reunion="claustro" onclick="guiaSeleccionarReunion('claustro', this)">Claustro</button>
+                    <button class="guia-opcion-grid" data-reunion="etcp" onclick="guiaSeleccionarReunion('etcp', this)">ETCP</button>
+                    <button class="guia-opcion-grid" data-reunion="consejo-escolar" onclick="guiaSeleccionarReunion('consejo-escolar', this)">Consejo Escolar</button>
+                </div>
+                <div class="guia-botones">
+                    <button class="guia-btn-secundario" onclick="guiaAtras()">← Atrás</button>
+                </div>
+            </div>
+
+            <!-- Paso 5: Fecha -->
+            <div class="guia-paso" data-paso="5" style="display:none;">
+                <div class="guia-emoji">📆</div>
+                <h2>¿Qué día es la reunión?</h2>
+                <p class="guia-descripcion">Pulsa <strong>"Hoy"</strong> si es para ahora, o elige otro día.</p>
+                <div class="guia-fecha-acciones">
+                    <button class="guia-btn-fecha-hoy" onclick="guiaPonerHoy()">📍 Hoy</button>
+                </div>
+                <input type="date" id="guiaInputFecha" class="guia-input-grande" onchange="guiaActualizarBotonFecha()">
+                <p id="guiaFechaTexto" class="guia-tip" style="display:none;"></p>
+                <div class="guia-botones">
+                    <button class="guia-btn-secundario" onclick="guiaAtras()">← Atrás</button>
+                    <button class="guia-btn-grande" id="guiaBtnFechaOK" onclick="guiaSiguiente()" disabled>Siguiente →</button>
+                </div>
+            </div>
+
+            <!-- Paso 6: Resumen y acción final -->
+            <div class="guia-paso" data-paso="6" style="display:none;">
+                <div class="guia-emoji">✅</div>
+                <h2>¿Está todo bien?</h2>
+                <p class="guia-descripcion">Repasa los datos antes de continuar.</p>
+                <div class="guia-resumen" id="guiaResumen">
+                    <!-- Se rellena dinámicamente -->
+                </div>
+                <p class="guia-tip" id="guiaTipFinal"></p>
+                <div class="guia-botones">
+                    <button class="guia-btn-secundario" onclick="guiaAtras()">← Atrás</button>
+                    <button class="guia-btn-grande guia-btn-final" id="guiaBtnFinal" onclick="guiaFinalizar()">
+                        <!-- texto dinámico: "Entrar a la reunión" o "Crear y configurar reunión" -->
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Panel guía flotante (aparece sobre la pantalla de configuración cuando el coordinador llega por el Modo Guía) -->
+    <div id="panelGuiaConfig" class="panel-guia-config" style="display: none;">
+        <div class="panel-guia-cabecera">
+            <span class="panel-guia-emoji">🐣</span>
+            <div class="panel-guia-titulo">
+                <strong>Modo Guía — Paso <span id="pgPasoActual">1</span> de <span id="pgPasoTotal">4</span></strong>
+                <small id="pgSubtitulo">Configura tu reunión paso a paso</small>
+            </div>
+            <button class="panel-guia-cerrar" onclick="cerrarPanelGuiaConfig()" title="Salir del modo guía">✕</button>
+        </div>
+        <div class="panel-guia-progreso">
+            <div id="pgProgresoFill"></div>
+        </div>
+        <div class="panel-guia-contenido">
+            <div class="panel-guia-icono" id="pgIcono">📋</div>
+            <div class="panel-guia-instruccion">
+                <strong id="pgTitulo">Revisa el orden del día</strong>
+                <p id="pgDescripcion">La app ya ha rellenado los puntos automáticamente. Mira la lista, y si quieres quitar algún punto pulsa el botón 🗑️ que hay al lado.</p>
+            </div>
+        </div>
+        <div class="panel-guia-acciones">
+            <button class="panel-guia-btn-secundario" id="pgBtnAtras" onclick="panelGuiaAtras()">← Atrás</button>
+            <button class="panel-guia-btn" id="pgBtnSiguiente" onclick="panelGuiaSiguiente()">Siguiente →</button>
+        </div>
+    </div>
+
+
     <!-- Pantalla de inicio -->
     <div id="screenInicio" class="screen active">
         <div class="container">
+
+            <!-- Botón modo guía: para usuarios que se pierden con el formulario completo -->
+            <button id="btnModoGuia" class="btn-modo-guia" onclick="iniciarModoGuia()">
+                <span class="emoji">🐣</span>
+                <span class="texto">
+                    <strong>Modo Guía</strong>
+                    <small>¿Te pierdes? Te llevo paso a paso</small>
+                </span>
+                <span class="flecha">→</span>
+            </button>
+
             <div class="card">
                 <div class="card-header-row">
                     <h2 style="margin: 0;">Bienvenido</h2>
@@ -4817,6 +5528,363 @@ ${textoActa}`;
         window.crearSesion = function() {
             originalCrearSesion();
             setTimeout(setupPuntosListener, 500);
+        };
+
+        // ============================================================
+        // MODO GUÍA — Wizard paso a paso
+        // ============================================================
+        // Estado del wizard
+        window.guiaEstado = {
+            paso: 1,
+            totalPasos: 6,
+            nombre: '',
+            rol: '',
+            reunion: '',
+            fecha: '',
+            reunionLabel: ''
+        };
+
+        // Etiquetas legibles para el resumen final (las mismas del select del menú)
+        const guiaEtiquetasReunion = {
+            'infantil-3': 'Infantil 3 años',
+            'infantil-4': 'Infantil 4 años',
+            'infantil-5': 'Infantil 5 años',
+            'primero': '1º de Primaria',
+            'segundo': '2º de Primaria',
+            'tercero': '3º de Primaria',
+            'cuarto': '4º de Primaria',
+            'quinto': '5º de Primaria',
+            'sexto': '6º de Primaria',
+            'ciclo-infantil': 'Ciclo Infantil',
+            'primer-ciclo': 'Primer Ciclo de Primaria',
+            'segundo-ciclo': 'Segundo Ciclo de Primaria',
+            'tercer-ciclo': 'Tercer Ciclo de Primaria',
+            'orientacion': 'Equipo de Orientación',
+            'aula-tea': 'Aula TEA',
+            'claustro': 'Claustro',
+            'etcp': 'ETCP',
+            'consejo-escolar': 'Consejo Escolar'
+        };
+
+        window.iniciarModoGuia = function() {
+            // Reset del estado
+            window.guiaEstado = {
+                paso: 1,
+                totalPasos: 6,
+                nombre: '',
+                rol: '',
+                reunion: '',
+                fecha: '',
+                reunionLabel: ''
+            };
+
+            // Rellenar el desplegable de nombres con el claustro
+            const sel = document.getElementById('guiaSelNombre');
+            sel.innerHTML = '<option value="">— Elige tu nombre —</option>';
+            if (window.CLAUSTRO_CAPITULACIONES) {
+                window.CLAUSTRO_CAPITULACIONES.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.nombre;
+                    opt.textContent = p.nombre;
+                    sel.appendChild(opt);
+                });
+            }
+            const optOtro = document.createElement('option');
+            optOtro.value = '__otro__';
+            optOtro.textContent = '✏️ Mi nombre no está en la lista';
+            sel.appendChild(optOtro);
+
+            // Limpiar inputs
+            document.getElementById('guiaInputNombre').value = '';
+            document.getElementById('guiaInputNombre').style.display = 'none';
+            document.getElementById('guiaInputFecha').value = '';
+            document.getElementById('guiaBtnNombreOK').disabled = true;
+            document.getElementById('guiaBtnFechaOK').disabled = true;
+            document.querySelectorAll('.guia-opcion-grid.activo').forEach(b => b.classList.remove('activo'));
+
+            // Mostrar pantalla
+            window.cambiarPantalla('screenModoGuia');
+            mostrarPasoGuia(1);
+        };
+
+        window.cancelarModoGuia = function() {
+            if (confirm('¿Salir del Modo Guía y volver al menú principal?')) {
+                window.cambiarPantalla('screenInicio');
+            }
+        };
+
+        function mostrarPasoGuia(paso) {
+            window.guiaEstado.paso = paso;
+            // Ocultar todos los pasos
+            document.querySelectorAll('.guia-paso').forEach(p => p.style.display = 'none');
+            // Mostrar el actual
+            const pasoEl = document.querySelector(`.guia-paso[data-paso="${paso}"]`);
+            if (pasoEl) pasoEl.style.display = 'block';
+            // Actualizar barra de progreso
+            const pct = (paso / window.guiaEstado.totalPasos) * 100;
+            document.getElementById('guiaProgresoFill').style.width = pct + '%';
+            document.getElementById('guiaPasoActual').textContent = paso;
+            document.getElementById('guiaPasoTotal').textContent = window.guiaEstado.totalPasos;
+            // Si es el paso 6, rellenar el resumen
+            if (paso === 6) rellenarResumenGuia();
+            // Scroll arriba
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.guiaSiguiente = function() {
+            const p = window.guiaEstado.paso;
+            if (p < window.guiaEstado.totalPasos) mostrarPasoGuia(p + 1);
+        };
+
+        window.guiaAtras = function() {
+            const p = window.guiaEstado.paso;
+            if (p > 1) mostrarPasoGuia(p - 1);
+        };
+
+        window.guiaCambioNombre = function() {
+            const sel = document.getElementById('guiaSelNombre');
+            const input = document.getElementById('guiaInputNombre');
+            const btn = document.getElementById('guiaBtnNombreOK');
+
+            if (sel.value === '__otro__') {
+                input.style.display = 'block';
+                input.focus();
+                input.oninput = () => {
+                    btn.disabled = !input.value.trim();
+                    window.guiaEstado.nombre = input.value.trim();
+                };
+                btn.disabled = !input.value.trim();
+            } else if (sel.value) {
+                input.style.display = 'none';
+                window.guiaEstado.nombre = sel.value;
+                btn.disabled = false;
+            } else {
+                input.style.display = 'none';
+                btn.disabled = true;
+                window.guiaEstado.nombre = '';
+            }
+        };
+
+        window.guiaSeleccionarRol = function(rol) {
+            window.guiaEstado.rol = rol;
+            window.guiaSiguiente(); // Avanza inmediatamente al elegir
+        };
+
+        window.guiaSeleccionarReunion = function(id, btn) {
+            // Desmarcar otras opciones
+            document.querySelectorAll('.guia-opcion-grid.activo').forEach(b => b.classList.remove('activo'));
+            btn.classList.add('activo');
+            window.guiaEstado.reunion = id;
+            window.guiaEstado.reunionLabel = guiaEtiquetasReunion[id] || id;
+            // Avanzar tras un instante visual de feedback
+            setTimeout(() => window.guiaSiguiente(), 220);
+        };
+
+        window.guiaPonerHoy = function() {
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dd = String(hoy.getDate()).padStart(2, '0');
+            const fechaIso = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('guiaInputFecha').value = fechaIso;
+            window.guiaEstado.fecha = fechaIso;
+            guiaActualizarBotonFecha();
+        };
+
+        window.guiaActualizarBotonFecha = function() {
+            const inp = document.getElementById('guiaInputFecha');
+            const btn = document.getElementById('guiaBtnFechaOK');
+            const txt = document.getElementById('guiaFechaTexto');
+            if (inp.value) {
+                window.guiaEstado.fecha = inp.value;
+                btn.disabled = false;
+                // Mostrar fecha legible
+                const [yy, mm, dd] = inp.value.split('-');
+                const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+                txt.textContent = `📅 ${parseInt(dd, 10)} de ${meses[parseInt(mm, 10) - 1]} de ${yy}`;
+                txt.style.display = 'inline-block';
+            } else {
+                btn.disabled = true;
+                txt.style.display = 'none';
+            }
+        };
+
+        function rellenarResumenGuia() {
+            const e = window.guiaEstado;
+            const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+            const [yy, mm, dd] = (e.fecha || '').split('-');
+            const fechaLegible = e.fecha ? `${parseInt(dd, 10)} de ${meses[parseInt(mm, 10) - 1]} de ${yy}` : '—';
+            const rolLabel = e.rol === 'coordinador' ? '👑 Coordinador/a' : '👤 Maestro/a';
+            const html = `
+                <div class="item"><span class="et">Tu nombre</span><span class="va">${e.nombre || '—'}</span></div>
+                <div class="item"><span class="et">Tu rol</span><span class="va">${rolLabel}</span></div>
+                <div class="item"><span class="et">Reunión</span><span class="va">${e.reunionLabel || '—'}</span></div>
+                <div class="item"><span class="et">Fecha</span><span class="va">${fechaLegible}</span></div>
+            `;
+            document.getElementById('guiaResumen').innerHTML = html;
+
+            const tip = document.getElementById('guiaTipFinal');
+            const btn = document.getElementById('guiaBtnFinal');
+            if (e.rol === 'coordinador') {
+                tip.textContent = '👑 Como coordinador/a, ahora podrás configurar el orden del día y los enlaces de videollamada.';
+                btn.textContent = '⚙️ Crear y configurar →';
+            } else {
+                tip.textContent = '👤 Vas a unirte a la reunión que ha creado el coordinador/a.';
+                btn.textContent = '🚀 Entrar a la reunión';
+            }
+        }
+
+        window.guiaFinalizar = function() {
+            const e = window.guiaEstado;
+            // Validación final mínima
+            if (!e.nombre || !e.rol || !e.reunion || !e.fecha) {
+                alert('Faltan datos por rellenar. Vuelve atrás y revísalo, por favor.');
+                return;
+            }
+
+            // Volcar a los inputs reales del menú principal — así reusamos crearSesion / unirseASesion
+            document.getElementById('inputNombre').value = e.nombre;
+            document.getElementById('selectRol').value = e.rol;
+            document.getElementById('selectReunion').value = e.reunion;
+            document.getElementById('inputFecha').value = e.fecha;
+
+            // Llamar a la función adecuada según el rol
+            if (e.rol === 'coordinador') {
+                // Activar el panel guía sobre la pantalla de configuración
+                window.guiaActiva = true;
+                window.crearSesion();
+            } else {
+                window.unirseASesion();
+            }
+        };
+
+        // ============================================================
+        // Panel guía sobre la pantalla de configuración del coordinador
+        // ============================================================
+        // Pasos: 1=orden del día, 2=añadir punto (opcional), 3=citación, 4=iniciar
+        const PASOS_PANEL_GUIA = [
+            {
+                icono: '📋',
+                titulo: 'Revisa el orden del día',
+                descripcion: 'La app ya ha rellenado los puntos automáticamente según el tipo de reunión y el mes. Mira la lista. Si hay algún punto que no encaja, púlsale el botón 🗑️ para quitarlo. Cuando hayas revisado, pulsa "Siguiente".',
+                resaltarSelector: '#screenConfig .card'
+            },
+            {
+                icono: '➕',
+                titulo: 'Añade puntos extra (si quieres)',
+                descripcion: 'Si necesitas añadir algo que no esté ya en la lista (un asunto urgente, ruegos y preguntas, etc.), escríbelo en la caja "Nuevo punto del orden del día" y pulsa el botón verde "➕ Agregar Punto". Si no hace falta añadir nada, pulsa "Siguiente".',
+                resaltarSelector: '#screenConfig .form-group'
+            },
+            {
+                icono: '🔗',
+                titulo: 'Genera la citación',
+                descripcion: 'Pulsa el botón verde "🔗 Generar Enlaces de la Reunión". Se abrirá una ventana con el QR y el enlace que tienes que enviar a los maestros (por WhatsApp, email, lo que prefieras). Desde ahí también puedes descargar la convocatoria oficial en PDF. Cuando termines y cierres esa ventana, pulsa "Siguiente".',
+                resaltarSelector: 'button[onclick="generarCitacion()"]'
+            },
+            {
+                icono: '🚀',
+                titulo: 'Inicia la reunión',
+                descripcion: '¡Último paso! Cuando todo esté listo, pulsa el botón azul "🚀 Iniciar Reunión". Entrarás en la sala donde verás a los maestros que se vayan uniendo. Si todavía no has avisado a nadie, vuelve al paso anterior y comparte el enlace.',
+                resaltarSelector: 'button[onclick="iniciarReunion()"]'
+            }
+        ];
+
+        window.panelGuiaPasoActual = 1;
+
+        function mostrarPanelGuiaConfig() {
+            const panel = document.getElementById('panelGuiaConfig');
+            if (!panel) return;
+            panel.style.display = 'block';
+            document.body.classList.add('con-panel-guia');
+            window.panelGuiaPasoActual = 1;
+            renderPanelGuia();
+        }
+
+        function ocultarPanelGuiaConfig() {
+            const panel = document.getElementById('panelGuiaConfig');
+            if (panel) panel.style.display = 'none';
+            document.body.classList.remove('con-panel-guia');
+            // Quitar resaltados
+            document.querySelectorAll('.guia-resaltado').forEach(el => el.classList.remove('guia-resaltado'));
+        }
+
+        function renderPanelGuia() {
+            const total = PASOS_PANEL_GUIA.length;
+            const idx = window.panelGuiaPasoActual - 1;
+            const paso = PASOS_PANEL_GUIA[idx];
+            if (!paso) return;
+
+            document.getElementById('pgPasoActual').textContent = window.panelGuiaPasoActual;
+            document.getElementById('pgPasoTotal').textContent = total;
+            document.getElementById('pgIcono').textContent = paso.icono;
+            document.getElementById('pgTitulo').textContent = paso.titulo;
+            document.getElementById('pgDescripcion').textContent = paso.descripcion;
+
+            // Barra de progreso
+            const pct = (window.panelGuiaPasoActual / total) * 100;
+            document.getElementById('pgProgresoFill').style.width = pct + '%';
+
+            // Botón atrás visible solo si no es el primer paso
+            document.getElementById('pgBtnAtras').style.visibility = (window.panelGuiaPasoActual > 1) ? 'visible' : 'hidden';
+
+            // Texto del botón siguiente
+            const btnSig = document.getElementById('pgBtnSiguiente');
+            if (window.panelGuiaPasoActual === total) {
+                btnSig.textContent = '✅ Listo, cerrar guía';
+            } else {
+                btnSig.textContent = 'Siguiente →';
+            }
+
+            // Resaltar el elemento correspondiente
+            document.querySelectorAll('.guia-resaltado').forEach(el => el.classList.remove('guia-resaltado'));
+            if (paso.resaltarSelector) {
+                const target = document.querySelector(paso.resaltarSelector);
+                if (target) {
+                    target.classList.add('guia-resaltado');
+                    // Scroll suave hacia el elemento (con margen para no quedar bajo el panel)
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                }
+            }
+        }
+
+        window.panelGuiaSiguiente = function() {
+            if (window.panelGuiaPasoActual < PASOS_PANEL_GUIA.length) {
+                window.panelGuiaPasoActual++;
+                renderPanelGuia();
+            } else {
+                // Era el último paso → cerrar guía
+                cerrarPanelGuiaConfig();
+            }
+        };
+
+        window.panelGuiaAtras = function() {
+            if (window.panelGuiaPasoActual > 1) {
+                window.panelGuiaPasoActual--;
+                renderPanelGuia();
+            }
+        };
+
+        window.cerrarPanelGuiaConfig = function() {
+            window.guiaActiva = false;
+            ocultarPanelGuiaConfig();
+        };
+
+        // Wrapper de cambiarPantalla para activar/desactivar el panel guía automáticamente
+        const _cambiarPantalla_original = window.cambiarPantalla;
+        window.cambiarPantalla = function(pantalla) {
+            _cambiarPantalla_original(pantalla);
+            // Mostrar panel guía solo en la pantalla de configuración y si está activo
+            if (pantalla === 'screenConfig' && window.guiaActiva) {
+                // Pequeña espera para que el DOM se asiente
+                setTimeout(() => mostrarPanelGuiaConfig(), 200);
+            } else {
+                ocultarPanelGuiaConfig();
+                if (pantalla === 'screenInicio' || pantalla === 'screenReunion') {
+                    window.guiaActiva = false;
+                }
+            }
         };
 
         // ===== SISTEMA DE INSTALACIÓN DE PWA =====
