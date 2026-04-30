@@ -2861,6 +2861,22 @@
                     </label>
                     <input type="text" id="convocatoriaLugar" placeholder="Ej: Sala de profesores" style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px;">
                 </div>
+
+                <div id="convocatoriaFirmaWrap" style="margin-top: 4px;">
+                    <label style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: var(--text);">
+                        <span>Firma manuscrita: <span style="color: var(--text-light); font-weight: 400; font-size: 12px;">(opcional)</span></span>
+                        <button type="button" onclick="limpiarFirma()" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 12px; font-weight: 600; padding: 0;">
+                            🧹 Borrar
+                        </button>
+                    </label>
+                    <div style="position: relative; border: 2px dashed var(--border); border-radius: 8px; background: white; touch-action: none;">
+                        <canvas id="canvasFirma" width="600" height="180" style="width: 100%; height: 180px; display: block; cursor: crosshair; border-radius: 6px;"></canvas>
+                        <div id="firmaPlaceholder" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #cbd5e1; font-size: 13px; pointer-events: none; user-select: none; text-align: center;">
+                            ✍️ Firma aquí con el dedo o el ratón<br>
+                            <span style="font-size: 11px;">(puedes saltarte este paso)</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="asistencia-footer" style="margin-top: 18px;">
@@ -6245,6 +6261,9 @@ ${textoActa}`;
             }
 
             document.getElementById('convocatoriaModal').classList.add('active');
+
+            // Inicializar canvas de firma (cada apertura empieza limpio)
+            inicializarCanvasFirma();
         };
 
         window.cerrarFormularioConvocatoria = function() {
@@ -6256,6 +6275,149 @@ ${textoActa}`;
             document.getElementById('convocatoriaLugarWrap').style.display = presencial ? 'block' : 'none';
             document.getElementById('convocatoriaEnlacesWrap').style.display = presencial ? 'none' : 'block';
         };
+
+        // ===== FIRMA MANUSCRITA EN CANVAS =====
+        // Estado del canvas: si el usuario ha pintado algo
+        window._firmaPintada = false;
+        let _firmaCtx = null;
+        let _firmaPintando = false;
+        let _firmaUltimoX = 0, _firmaUltimoY = 0;
+
+        function inicializarCanvasFirma() {
+            const canvas = document.getElementById('canvasFirma');
+            if (!canvas) return;
+
+            // Ajustar resolución del canvas al tamaño real en pantalla (Retina, etc.)
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            _firmaCtx = canvas.getContext('2d');
+            _firmaCtx.scale(dpr, dpr);
+            _firmaCtx.lineWidth = 2.2;
+            _firmaCtx.lineCap = 'round';
+            _firmaCtx.lineJoin = 'round';
+            _firmaCtx.strokeStyle = '#0f172a';
+
+            // Limpiar
+            _firmaCtx.clearRect(0, 0, canvas.width, canvas.height);
+            window._firmaPintada = false;
+            const ph = document.getElementById('firmaPlaceholder');
+            if (ph) ph.style.display = 'block';
+
+            // Quitar listeners previos (por si se reabre)
+            canvas.replaceWith(canvas.cloneNode(true));
+            const nuevoCanvas = document.getElementById('canvasFirma');
+            _firmaCtx = nuevoCanvas.getContext('2d');
+            _firmaCtx.scale(dpr, dpr);
+            _firmaCtx.lineWidth = 2.2;
+            _firmaCtx.lineCap = 'round';
+            _firmaCtx.lineJoin = 'round';
+            _firmaCtx.strokeStyle = '#0f172a';
+
+            const obtenerPunto = (e) => {
+                const r = nuevoCanvas.getBoundingClientRect();
+                const x = (e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0)) - r.left;
+                const y = (e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0)) - r.top;
+                return { x, y };
+            };
+
+            const empezar = (e) => {
+                e.preventDefault();
+                _firmaPintando = true;
+                const p = obtenerPunto(e);
+                _firmaUltimoX = p.x;
+                _firmaUltimoY = p.y;
+                // Ocultar placeholder en cuanto se empieza a firmar
+                if (!window._firmaPintada) {
+                    const ph = document.getElementById('firmaPlaceholder');
+                    if (ph) ph.style.display = 'none';
+                }
+                window._firmaPintada = true;
+            };
+            const mover = (e) => {
+                if (!_firmaPintando) return;
+                e.preventDefault();
+                const p = obtenerPunto(e);
+                _firmaCtx.beginPath();
+                _firmaCtx.moveTo(_firmaUltimoX, _firmaUltimoY);
+                _firmaCtx.lineTo(p.x, p.y);
+                _firmaCtx.stroke();
+                _firmaUltimoX = p.x;
+                _firmaUltimoY = p.y;
+            };
+            const parar = () => { _firmaPintando = false; };
+
+            // Pointer events (cubre ratón y dedo en navegadores modernos)
+            nuevoCanvas.addEventListener('pointerdown', empezar);
+            nuevoCanvas.addEventListener('pointermove', mover);
+            nuevoCanvas.addEventListener('pointerup', parar);
+            nuevoCanvas.addEventListener('pointerleave', parar);
+            // Fallback para Safari iOS antiguo
+            nuevoCanvas.addEventListener('touchstart', empezar, { passive: false });
+            nuevoCanvas.addEventListener('touchmove', mover, { passive: false });
+            nuevoCanvas.addEventListener('touchend', parar);
+        }
+
+        window.limpiarFirma = function() {
+            const canvas = document.getElementById('canvasFirma');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            window._firmaPintada = false;
+            const ph = document.getElementById('firmaPlaceholder');
+            if (ph) ph.style.display = 'block';
+            // Reinicializar listeners
+            inicializarCanvasFirma();
+        };
+
+        // Devuelve el data URL PNG de la firma si hay algo pintado, o null si está vacío
+        function obtenerFirmaPNG() {
+            if (!window._firmaPintada) return null;
+            const canvas = document.getElementById('canvasFirma');
+            if (!canvas) return null;
+            try {
+                return canvas.toDataURL('image/png');
+            } catch (e) {
+                console.warn('No se pudo capturar la firma:', e);
+                return null;
+            }
+        }
+
+        // Devuelve el nombre administrativo correcto del órgano para la convocatoria
+        // Para los cursos individuales se nombra como "Equipo Docente de [curso]"
+        // (no "5º de Primaria" a secas, que sería ambiguo)
+        function getNombreOrganoConvocatoria() {
+            const equiposDocentes = {
+                'infantil-3': 'Equipo Docente de Infantil 3 años',
+                'infantil-4': 'Equipo Docente de Infantil 4 años',
+                'infantil-5': 'Equipo Docente de Infantil 5 años',
+                'primero': 'Equipo Docente de 1º de Primaria',
+                'segundo': 'Equipo Docente de 2º de Primaria',
+                'tercero': 'Equipo Docente de 3º de Primaria',
+                'cuarto': 'Equipo Docente de 4º de Primaria',
+                'quinto': 'Equipo Docente de 5º de Primaria',
+                'sexto': 'Equipo Docente de 6º de Primaria'
+            };
+            const ciclos = {
+                'ciclo-infantil': 'Equipo de Ciclo de Infantil',
+                'primer-ciclo': 'Equipo del Primer Ciclo de Primaria',
+                'segundo-ciclo': 'Equipo del Segundo Ciclo de Primaria',
+                'tercer-ciclo': 'Equipo del Tercer Ciclo de Primaria'
+            };
+            const otros = {
+                'orientacion': 'Equipo de Orientación',
+                'aula-tea': 'Aula TEA',
+                'claustro': 'Claustro',
+                'etcp': 'ETCP (Equipo Técnico de Coordinación Pedagógica)',
+                'consejo-escolar': 'Consejo Escolar'
+            };
+            return equiposDocentes[window.sesionActual]
+                || ciclos[window.sesionActual]
+                || otros[window.sesionActual]
+                || window.sesionActual;
+        }
 
         // Devuelve el cargo del convocante según el órgano
         function getCargoConvocatoria() {
@@ -6271,17 +6433,17 @@ ${textoActa}`;
                 return cargosDirectivos[window.sesionActual];
             }
 
-            // Para el resto: "Coordinador/a de [órgano]"
-            const mapa = {
-                'infantil-3': 'Infantil 3 años',
-                'infantil-4': 'Infantil 4 años',
-                'infantil-5': 'Infantil 5 años',
-                'primero': '1º de Primaria',
-                'segundo': '2º de Primaria',
-                'tercero': '3º de Primaria',
-                'cuarto': '4º de Primaria',
-                'quinto': '5º de Primaria',
-                'sexto': '6º de Primaria',
+            // Para el resto: "Coordinador/a de [órgano]" — pero usando el nombre administrativo
+            const mapaCargo = {
+                'infantil-3': 'Equipo Docente de Infantil 3 años',
+                'infantil-4': 'Equipo Docente de Infantil 4 años',
+                'infantil-5': 'Equipo Docente de Infantil 5 años',
+                'primero': 'Equipo Docente de 1º de Primaria',
+                'segundo': 'Equipo Docente de 2º de Primaria',
+                'tercero': 'Equipo Docente de 3º de Primaria',
+                'cuarto': 'Equipo Docente de 4º de Primaria',
+                'quinto': 'Equipo Docente de 5º de Primaria',
+                'sexto': 'Equipo Docente de 6º de Primaria',
                 'ciclo-infantil': 'Ciclo de Infantil',
                 'primer-ciclo': 'Primer Ciclo de Primaria',
                 'segundo-ciclo': 'Segundo Ciclo de Primaria',
@@ -6292,7 +6454,7 @@ ${textoActa}`;
                 'etcp': 'ETCP',
                 'consejo-escolar': 'Consejo Escolar'
             };
-            return 'Coordinador/a de ' + (mapa[window.sesionActual] || window.sesionActual);
+            return 'Coordinador/a de ' + (mapaCargo[window.sesionActual] || window.sesionActual);
         }
 
         window.generarConvocatoriaPDF = async function() {
@@ -6356,6 +6518,9 @@ ${textoActa}`;
             // solo con la parte del nombre (ej: "ETCP" o "Claustro")
             const nombreCompleto = window.getNombreReunion(window.sesionActual, window.fechaActual);
             const tipoReunion = nombreCompleto.split(' - ')[0];
+            // Nombre administrativo correcto para la convocatoria oficial
+            // (ej: "Equipo Docente de 5º de Primaria" en lugar de "5º de Primaria")
+            const nombreOrganoOficial = getNombreOrganoConvocatoria();
             const [yyyy, mm, dd] = window.fechaActual.split('-');
             const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
             const fechaLarga = `${parseInt(dd,10)} de ${meses[parseInt(mm,10)-1]} de ${yyyy}`;
@@ -6418,7 +6583,7 @@ ${textoActa}`;
             doc.setTextColor(80, 80, 80);
             doc.setFontSize(9);
             doc.text('Consejería de Desarrollo Educativo y F.P. — Junta de Andalucía', textoX, y + 10);
-            doc.text('Santa Fe (Granada) — Código: 18002958', textoX, y + 15);
+            doc.text('Santa Fe (Granada) — Código: 18008853', textoX, y + 15);
 
             y += logoSize + 10;
             doc.setTextColor(0, 0, 0);
@@ -6432,7 +6597,7 @@ ${textoActa}`;
             doc.setFontSize(12);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(60, 60, 60);
-            doc.text(tipoReunion.toUpperCase(), pageW / 2, y, { align: 'center' });
+            doc.text(nombreOrganoOficial.toUpperCase(), pageW / 2, y, { align: 'center' });
             doc.setTextColor(0, 0, 0);
             y += 12;
 
@@ -6447,7 +6612,7 @@ ${textoActa}`;
 
             // --- Datos de la reunión (tabla 2 columnas) ---
             const datosReunion = [
-                ['Tipo de reunión:', tipoReunion],
+                ['Tipo de reunión:', nombreOrganoOficial],
                 ['Fecha:', fechaConDia.charAt(0).toUpperCase() + fechaConDia.slice(1)],
                 ['Hora de inicio:', horaInicio + ' h'],
                 ['Modalidad:', modalidad === 'telematica' ? 'Telemática' : 'Presencial']
@@ -6558,12 +6723,29 @@ ${textoActa}`;
             y += 8;
 
             // --- Firma ---
-            checkPage(28);
+            checkPage(50);
             doc.setFontSize(11);
             doc.text(`En Santa Fe, a ${hoyTexto}`, marginX, y);
-            y += 12;
+            y += 6;
 
-            // Espacio para firma manuscrita
+            // Si hay firma manuscrita, insertarla encima de la línea
+            const firmaDataURL = obtenerFirmaPNG();
+            if (firmaDataURL) {
+                checkPage(30);
+                try {
+                    // 60mm de ancho, 22mm de alto, posición justo encima de la línea de firma
+                    doc.addImage(firmaDataURL, 'PNG', marginX + 6, y, 60, 22);
+                    y += 22;
+                } catch (errFirma) {
+                    console.warn('No se pudo insertar la firma manuscrita:', errFirma);
+                    y += 6;
+                }
+            } else {
+                // Sin firma: dejar el espacio en blanco habitual
+                y += 6;
+            }
+
+            // Línea de firma con "Fdo.:"
             doc.setFont('helvetica', 'normal');
             doc.text('Fdo.:', marginX, y);
             doc.setLineWidth(0.3);
