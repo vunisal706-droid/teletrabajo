@@ -1421,6 +1421,10 @@
             align-items: center;
             justify-content: center;
         }
+        /* El modal de convocatoria se abre POR ENCIMA del de citación (z-index 10002) */
+        #convocatoriaModal {
+            z-index: 10010;
+        }
         .asistencia-modal.active {
             display: flex;
         }
@@ -2184,6 +2188,9 @@
             </div>
 
             <div class="citacion-footer">
+                <button class="btn btn-primary" onclick="abrirFormularioConvocatoria()">
+                    📄 Convocatoria PDF
+                </button>
                 <button class="btn btn-primary" onclick="descargarQR()">
                     ⬇️ Descargar QR
                 </button>
@@ -2246,6 +2253,90 @@
                 </div>
                 <div class="derecha">
                     <button class="btn btn-secondary btn-small" onclick="guardarAsistencia()">💾 Guardar asistencia</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Convocatoria oficial -->
+    <div id="convocatoriaModal" class="asistencia-modal">
+        <div class="asistencia-content" style="max-width: 520px;">
+            <div class="asistencia-header">
+                <h3>📄 Convocatoria oficial</h3>
+                <button class="asistencia-cerrar" onclick="cerrarFormularioConvocatoria()" title="Cerrar">✕</button>
+            </div>
+            <p style="font-size: 13px; color: var(--text-light); margin: 0 0 16px 0; line-height: 1.5;">
+                Rellena estos datos y se generará un PDF administrativo con el orden del día, los enlaces y la firma del coordinador/a.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">
+                        Coordinador/a (firma):
+                    </label>
+                    <select id="convocatoriaConvocante" style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; background: white;">
+                        <option value="">— Seleccionar —</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">
+                        Hora de inicio:
+                    </label>
+                    <input type="time" id="convocatoriaHora" value="16:30" style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px;">
+                </div>
+
+                <div>
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">
+                        Modalidad:
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                        <label style="flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px;" id="labelModoTele">
+                            <input type="radio" name="convocatoriaModalidad" value="telematica" checked onchange="actualizarModalidadConvocatoria()" style="margin: 0;">
+                            🎥 Telemática
+                        </label>
+                        <label style="flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px;" id="labelModoPres">
+                            <input type="radio" name="convocatoriaModalidad" value="presencial" onchange="actualizarModalidadConvocatoria()" style="margin: 0;">
+                            🏫 Presencial
+                        </label>
+                    </div>
+                </div>
+
+                <div id="convocatoriaEnlacesWrap">
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">
+                        Enlace de videollamada (Meet, Zoom, Jitsi…):
+                    </label>
+                    <input type="url" id="convocatoriaEnlace1" placeholder="https://meet.google.com/xxx-yyyy-zzz" style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 13px; font-family: monospace;">
+                    <button type="button" onclick="document.getElementById('convocatoriaEnlace2Wrap').style.display='block'; this.style.display='none';"
+                            style="margin-top: 6px; background: none; border: none; color: var(--primary); cursor: pointer; font-size: 12px; padding: 0; font-weight: 600;"
+                            id="btnAddEnlace2">
+                        + Añadir enlace alternativo
+                    </button>
+                    <div id="convocatoriaEnlace2Wrap" style="display: none; margin-top: 8px;">
+                        <label style="display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; color: var(--text-light);">
+                            Enlace alternativo (por si falla el principal):
+                        </label>
+                        <input type="url" id="convocatoriaEnlace2" placeholder="https://zoom.us/j/..." style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 13px; font-family: monospace;">
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-light); margin: 6px 0 0 0; line-height: 1.4;">
+                        💡 Estos enlaces se guardarán también en la gestión de videollamada de la reunión.
+                    </p>
+                </div>
+
+                <div id="convocatoriaLugarWrap" style="display: none;">
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">
+                        Lugar (aula / sala):
+                    </label>
+                    <input type="text" id="convocatoriaLugar" placeholder="Ej: Sala de profesores" style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px;">
+                </div>
+            </div>
+
+            <div class="asistencia-footer" style="margin-top: 18px;">
+                <div class="izquierda">
+                    <button class="btn btn-outline btn-small" onclick="cerrarFormularioConvocatoria()">Cancelar</button>
+                </div>
+                <div class="derecha">
+                    <button class="btn btn-secondary btn-small" onclick="generarConvocatoriaPDF()">📄 Descargar PDF</button>
                 </div>
             </div>
         </div>
@@ -2510,6 +2601,9 @@
             { nombre: "Tortosa Espínola, Silvia Tatiana", puesto: "Primaria-Bilingüe Inglés" },
             { nombre: "Unica Salas, Víctor Manuel", puesto: "Pedagogía Terapéutica" }
         ];
+        // Logo del CEIP Capitulaciones (embebido en base64 para que funcione offline en la PWA)
+        // Dimensiones originales: 250x250 JPEG optimizado, ~5KB
+        window.LOGO_CAPITULACIONES_DATA_URL = 'data:image/jpeg;base64,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';
 
         // Normaliza un nombre para usarlo como clave en Firebase
         // (Firebase no admite . # $ [ ] /)
@@ -5031,6 +5125,420 @@ ${textoActa}`;
                 alert('❌ Error al generar la citación: ' + error.message + '\n\nRevisa la consola del navegador (F12) para más detalles.');
             }
         };
+
+        // ============================================================
+        // CONVOCATORIA OFICIAL — Generación de PDF administrativo
+        // ============================================================
+
+        window.abrirFormularioConvocatoria = async function() {
+            // Rellenar el desplegable con el listado del claustro
+            const sel = document.getElementById('convocatoriaConvocante');
+            sel.innerHTML = '<option value="">— Seleccionar —</option>';
+            window.CLAUSTRO_CAPITULACIONES.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.nombre;
+                opt.textContent = p.nombre;
+                // Preseleccionar al usuario actual si es coordinador y aparece en el claustro
+                if (window.usuarioActual && p.nombre === window.usuarioActual.nombre) {
+                    opt.selected = true;
+                }
+                sel.appendChild(opt);
+            });
+            // Opción para escribir a mano (sustitutos, externos)
+            const optOtro = document.createElement('option');
+            optOtro.value = '__otro__';
+            optOtro.textContent = '✏️ Escribir nombre a mano…';
+            sel.appendChild(optOtro);
+
+            // Precargar los enlaces de videollamada que ya existan en Firebase
+            try {
+                if (window.sesionActual && window.fechaActual) {
+                    const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+                    const snap = await get(videollamadaRef);
+                    if (snap.exists()) {
+                        const v = snap.val();
+                        const enlace1 = v.enlace1 || v.enlace || '';
+                        const enlace2 = v.enlace2 || '';
+                        document.getElementById('convocatoriaEnlace1').value = enlace1;
+                        document.getElementById('convocatoriaEnlace2').value = enlace2;
+                        if (enlace2) {
+                            // Si ya hay enlace alternativo, mostrar el campo y ocultar el botón "+ Añadir"
+                            document.getElementById('convocatoriaEnlace2Wrap').style.display = 'block';
+                            const btn = document.getElementById('btnAddEnlace2');
+                            if (btn) btn.style.display = 'none';
+                        }
+                    } else {
+                        document.getElementById('convocatoriaEnlace1').value = '';
+                        document.getElementById('convocatoriaEnlace2').value = '';
+                    }
+                }
+            } catch (err) {
+                console.warn('No se pudieron precargar enlaces de videollamada:', err);
+            }
+
+            document.getElementById('convocatoriaModal').classList.add('active');
+        };
+
+        window.cerrarFormularioConvocatoria = function() {
+            document.getElementById('convocatoriaModal').classList.remove('active');
+        };
+
+        window.actualizarModalidadConvocatoria = function() {
+            const presencial = document.querySelector('input[name="convocatoriaModalidad"]:checked').value === 'presencial';
+            document.getElementById('convocatoriaLugarWrap').style.display = presencial ? 'block' : 'none';
+            document.getElementById('convocatoriaEnlacesWrap').style.display = presencial ? 'none' : 'block';
+        };
+
+        // Devuelve el cargo del convocante según el órgano
+        function getCargoConvocatoria() {
+            // Órganos donde el convocante actúa como Director/a (sin mencionar el órgano,
+            // porque el director convoca por su cargo, no como coordinador del órgano)
+            const cargosDirectivos = {
+                'etcp': 'Director/a'
+                // Si quieres añadir Claustro o Consejo Escolar a este caso, descoméntalos:
+                // 'claustro': 'Director/a',
+                // 'consejo-escolar': 'Director/a'
+            };
+            if (cargosDirectivos[window.sesionActual]) {
+                return cargosDirectivos[window.sesionActual];
+            }
+
+            // Para el resto: "Coordinador/a de [órgano]"
+            const mapa = {
+                'infantil-3': 'Infantil 3 años',
+                'infantil-4': 'Infantil 4 años',
+                'infantil-5': 'Infantil 5 años',
+                'primero': '1º de Primaria',
+                'segundo': '2º de Primaria',
+                'tercero': '3º de Primaria',
+                'cuarto': '4º de Primaria',
+                'quinto': '5º de Primaria',
+                'sexto': '6º de Primaria',
+                'ciclo-infantil': 'Ciclo de Infantil',
+                'primer-ciclo': 'Primer Ciclo de Primaria',
+                'segundo-ciclo': 'Segundo Ciclo de Primaria',
+                'tercer-ciclo': 'Tercer Ciclo de Primaria',
+                'orientacion': 'Equipo de Orientación',
+                'aula-tea': 'Aula TEA',
+                'claustro': 'Claustro',
+                'etcp': 'ETCP',
+                'consejo-escolar': 'Consejo Escolar'
+            };
+            return 'Coordinador/a de ' + (mapa[window.sesionActual] || window.sesionActual);
+        }
+
+        window.generarConvocatoriaPDF = async function() {
+            // 1) Validar y leer datos del formulario
+            let convocante = document.getElementById('convocatoriaConvocante').value;
+            if (!convocante) {
+                alert('Selecciona el coordinador/a que firma la convocatoria.');
+                return;
+            }
+            if (convocante === '__otro__') {
+                const escrito = prompt('Nombre del convocante:');
+                if (!escrito || !escrito.trim()) return;
+                convocante = escrito.trim();
+            }
+
+            const horaInicio = document.getElementById('convocatoriaHora').value;
+            if (!horaInicio) {
+                alert('Indica la hora de inicio.');
+                return;
+            }
+
+            const modalidad = document.querySelector('input[name="convocatoriaModalidad"]:checked').value;
+            const lugar = modalidad === 'presencial'
+                ? (document.getElementById('convocatoriaLugar').value.trim() || 'Centro escolar')
+                : null;
+
+            // Enlaces de videollamada (leídos del formulario)
+            const enlaces = [];
+            if (modalidad === 'telematica') {
+                const e1 = document.getElementById('convocatoriaEnlace1').value.trim();
+                const e2 = document.getElementById('convocatoriaEnlace2').value.trim();
+
+                // Validación básica: que sean URLs si están rellenas
+                const validar = (url, nombreCampo) => {
+                    if (!url) return true;
+                    try { new URL(url); return true; }
+                    catch { alert(`El ${nombreCampo} no es una URL válida. Debe empezar por https:// o http://`); return false; }
+                };
+                if (!validar(e1, 'enlace principal')) return;
+                if (!validar(e2, 'enlace alternativo')) return;
+
+                if (e1) enlaces.push(e1);
+                if (e2) enlaces.push(e2);
+
+                // Guardar en Firebase para que aparezcan en "Gestión de videollamada"
+                if (e1 || e2) {
+                    try {
+                        const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+                        const datosVideo = {};
+                        if (e1) datosVideo.enlace1 = e1;
+                        if (e2) datosVideo.enlace2 = e2;
+                        await set(videollamadaRef, datosVideo);
+                    } catch (err) {
+                        console.warn('No se pudieron guardar los enlaces en Firebase:', err);
+                    }
+                }
+            }
+
+            // 2) Recopilar datos de la reunión actual
+            // Usamos getNombreReunion con la fecha real y partimos por " - " para quedarnos
+            // solo con la parte del nombre (ej: "ETCP" o "Claustro")
+            const nombreCompleto = window.getNombreReunion(window.sesionActual, window.fechaActual);
+            const tipoReunion = nombreCompleto.split(' - ')[0];
+            const [yyyy, mm, dd] = window.fechaActual.split('-');
+            const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+            const fechaLarga = `${parseInt(dd,10)} de ${meses[parseInt(mm,10)-1]} de ${yyyy}`;
+            const diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+            const fechaObj = new Date(parseInt(yyyy,10), parseInt(mm,10)-1, parseInt(dd,10));
+            const diaSemana = diasSemana[fechaObj.getDay()];
+            const fechaConDia = `${diaSemana}, ${fechaLarga}`;
+
+            // Enlace web a la sala (Teletrabajo Capitulaciones)
+            const enlaceWeb = window.enlaceReunionActual || document.getElementById('enlaceReunionMostrado').value || '';
+
+            // Orden del día
+            const ordenDia = window.ordenDia || [];
+
+            // Fecha actual para el pie de firma
+            const hoy = new Date();
+            const hoyTexto = `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+
+            // 3) Generar PDF con jsPDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const pageW = doc.internal.pageSize.getWidth();   // 210
+            const pageH = doc.internal.pageSize.getHeight();  // 297
+            const marginX = 22;
+            const usableW = pageW - marginX * 2;
+            let y = 22;
+
+            const checkPage = (extra = 0) => {
+                if (y + extra > pageH - 30) {
+                    doc.addPage();
+                    y = 22;
+                }
+            };
+
+            // --- Cabecera institucional con logo ---
+            // Logo a la izquierda (18x18 mm), texto a la derecha
+            const logoSize = 18;
+            const logoX = marginX;
+            const logoY = y;
+            const textoX = marginX + logoSize + 4; // 4mm de separación
+
+            try {
+                if (window.LOGO_CAPITULACIONES_DATA_URL) {
+                    doc.addImage(window.LOGO_CAPITULACIONES_DATA_URL, 'JPEG', logoX, logoY, logoSize, logoSize);
+                }
+            } catch (errLogo) {
+                console.warn('No se pudo insertar el logo en el PDF:', errLogo);
+            }
+
+            doc.setDrawColor(37, 99, 235);
+            doc.setLineWidth(0.6);
+            // La línea va por debajo del logo
+            doc.line(marginX, y + logoSize + 2, pageW - marginX, y + logoSize + 2);
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(37, 99, 235);
+            doc.text('CEIP CAPITULACIONES DE SANTA FE', textoX, y + 5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(80, 80, 80);
+            doc.setFontSize(9);
+            doc.text('Consejería de Desarrollo Educativo y F.P. — Junta de Andalucía', textoX, y + 10);
+            doc.text('Santa Fe (Granada) — Código: 18002958', textoX, y + 15);
+
+            y += logoSize + 10;
+            doc.setTextColor(0, 0, 0);
+
+            // --- Título principal ---
+            doc.setFontSize(15);
+            doc.setFont('helvetica', 'bold');
+            const titulo = 'CONVOCATORIA DE REUNIÓN';
+            doc.text(titulo, pageW / 2, y, { align: 'center' });
+            y += 7;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60, 60, 60);
+            doc.text(tipoReunion.toUpperCase(), pageW / 2, y, { align: 'center' });
+            doc.setTextColor(0, 0, 0);
+            y += 12;
+
+            // --- Encabezado administrativo ---
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            const cargoConvocante = getCargoConvocatoria();
+            const intro = `Por la presente, ${convocante}, en su condición de ${cargoConvocante} del CEIP Capitulaciones de Santa Fe, convoca al profesorado correspondiente a la siguiente reunión:`;
+            const introLineas = doc.splitTextToSize(intro, usableW);
+            introLineas.forEach(l => { checkPage(7); doc.text(l, marginX, y); y += 6; });
+            y += 4;
+
+            // --- Datos de la reunión (tabla 2 columnas) ---
+            const datosReunion = [
+                ['Tipo de reunión:', tipoReunion],
+                ['Fecha:', fechaConDia.charAt(0).toUpperCase() + fechaConDia.slice(1)],
+                ['Hora de inicio:', horaInicio + ' h'],
+                ['Modalidad:', modalidad === 'telematica' ? 'Telemática' : 'Presencial']
+            ];
+            if (modalidad === 'presencial') {
+                datosReunion.push(['Lugar:', lugar]);
+            }
+
+            datosReunion.forEach(([etiqueta, valor]) => {
+                checkPage(7);
+                doc.setFont('helvetica', 'bold');
+                doc.text(etiqueta, marginX, y);
+                doc.setFont('helvetica', 'normal');
+                const valorLineas = doc.splitTextToSize(valor, usableW - 38);
+                valorLineas.forEach((l, i) => {
+                    if (i > 0) { checkPage(6); y += 6; }
+                    doc.text(l, marginX + 38, y);
+                });
+                y += 7;
+            });
+
+            y += 4;
+
+            // --- Modalidad telemática: enlaces ---
+            if (modalidad === 'telematica' && (enlaces.length > 0 || enlaceWeb)) {
+                checkPage(15);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.text('ACCESO TELEMÁTICO', marginX, y);
+                y += 6;
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+
+                if (enlaces.length > 0) {
+                    enlaces.forEach((enl, i) => {
+                        const etiqueta = enlaces.length === 1 ? 'Enlace de videollamada:' : `Enlace ${i + 1}:`;
+                        checkPage(12);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(etiqueta, marginX, y);
+                        y += 5;
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(37, 99, 235);
+                        const enlLineas = doc.splitTextToSize(enl, usableW);
+                        enlLineas.forEach(l => { checkPage(5); doc.textWithLink(l, marginX, y, { url: enl }); y += 5; });
+                        doc.setTextColor(0, 0, 0);
+                        y += 2;
+                    });
+                }
+
+                if (enlaceWeb) {
+                    checkPage(12);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Sala de la reunión (Teletrabajo Capitulaciones):', marginX, y);
+                    y += 5;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(37, 99, 235);
+                    const webLineas = doc.splitTextToSize(enlaceWeb, usableW);
+                    webLineas.forEach(l => { checkPage(5); doc.textWithLink(l, marginX, y, { url: enlaceWeb }); y += 5; });
+                    doc.setTextColor(0, 0, 0);
+                    y += 2;
+                }
+                y += 4;
+            }
+
+            // --- Orden del día ---
+            checkPage(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text('ORDEN DEL DÍA', marginX, y);
+            y += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+
+            if (ordenDia.length === 0) {
+                doc.setTextColor(120, 120, 120);
+                doc.text('(Sin puntos definidos)', marginX, y);
+                doc.setTextColor(0, 0, 0);
+                y += 7;
+            } else {
+                ordenDia.forEach((punto, i) => {
+                    const numero = `${i + 1}.`;
+                    const lineas = doc.splitTextToSize(punto, usableW - 10);
+                    checkPage(lineas.length * 6 + 2);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(numero, marginX, y);
+                    doc.setFont('helvetica', 'normal');
+                    lineas.forEach((l, idx) => {
+                        if (idx > 0) { checkPage(6); y += 6; }
+                        doc.text(l, marginX + 8, y);
+                    });
+                    y += 7;
+                });
+            }
+
+            y += 4;
+
+            // --- Pie administrativo ---
+            checkPage(20);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(70, 70, 70);
+            const pie = 'De conformidad con lo establecido en la normativa vigente, se ruega la asistencia puntual y, en caso de no poder asistir, su justificación previa al coordinador/a.';
+            const pieLineas = doc.splitTextToSize(pie, usableW);
+            pieLineas.forEach(l => { checkPage(5); doc.text(l, marginX, y); y += 5; });
+            doc.setTextColor(0, 0, 0);
+            doc.setFont('helvetica', 'normal');
+            y += 8;
+
+            // --- Firma ---
+            checkPage(28);
+            doc.setFontSize(11);
+            doc.text(`En Santa Fe, a ${hoyTexto}`, marginX, y);
+            y += 12;
+
+            // Espacio para firma manuscrita
+            doc.setFont('helvetica', 'normal');
+            doc.text('Fdo.:', marginX, y);
+            doc.setLineWidth(0.3);
+            doc.line(marginX + 10, y, marginX + 80, y);
+            y += 5;
+            doc.setFont('helvetica', 'bold');
+            doc.text(convocante, marginX, y);
+            y += 5;
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(80, 80, 80);
+            doc.text(cargoConvocante, marginX, y);
+            doc.setTextColor(0, 0, 0);
+
+            // --- Pie de página en todas las páginas ---
+            const totalPaginas = doc.internal.getNumberOfPages();
+            for (let p = 1; p <= totalPaginas; p++) {
+                doc.setPage(p);
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.text('CEIP Capitulaciones de Santa Fe — Convocatoria oficial', marginX, pageH - 10);
+                doc.text(`Página ${p} de ${totalPaginas}`, pageW - marginX, pageH - 10, { align: 'right' });
+                doc.setTextColor(0, 0, 0);
+            }
+
+            // 4) Descargar PDF
+            const nombreLimpio = window.sesionActual.replace(/[^a-z0-9-]/gi, '_');
+            const nombreArchivo = `Convocatoria_${nombreLimpio}_${window.fechaActual}.pdf`;
+            doc.save(nombreArchivo);
+
+            // Cerrar el formulario y mostrar feedback
+            cerrarFormularioConvocatoria();
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10003; font-size: 14px;';
+            toast.textContent = '✅ Convocatoria descargada';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        };
+
+        // Cerrar el modal de convocatoria con clic fuera
+        document.addEventListener('click', function(e) {
+            const m = document.getElementById('convocatoriaModal');
+            if (m && e.target === m) cerrarFormularioConvocatoria();
+        });
 
         // Cerrar modal de citación
         window.cerrarCitacion = function() {
