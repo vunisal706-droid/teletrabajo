@@ -498,6 +498,45 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* En móvil, apilar verticalmente y disponer botones en cuadrícula */
+        @media (max-width: 720px) {
+            .session-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .session-info > div:first-child {
+                text-align: center;
+                font-size: 14px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid var(--border);
+            }
+            .session-info > div:last-child {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px !important;
+                width: 100%;
+            }
+            .session-info .btn-small,
+            .session-info .acta-dropdown {
+                width: 100%;
+            }
+            .session-info .acta-dropdown > button {
+                width: 100%;
+            }
+            /* La asistencia ocupa toda la fila si está visible */
+            .session-info #btnAsistencia[style*="inline-flex"],
+            .session-info #btnAsistencia:not([style*="display: none"]) {
+                grid-column: 1 / -1;
+            }
+            /* Tooltip solo en escritorio: lo quitamos en móvil porque no hay hover */
+            .acta-dropdown-item[data-acta-tooltip]:hover::after,
+            .acta-dropdown-item[data-acta-tooltip]:hover::before {
+                display: none;
+            }
         }
 
         .session-code {
@@ -3248,7 +3287,7 @@
         <div class="container" id="containerReunion">
             <div class="session-info">
                 <div>
-                    <strong>Reunión:</strong> <span class="session-code" id="nombreActual" style="font-size: 16px;"></span>
+                    <span class="session-code" id="nombreActual" style="font-size: 16px;"></span>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <div class="acta-dropdown" id="actaDropdown">
