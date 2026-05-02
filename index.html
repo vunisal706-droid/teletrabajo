@@ -968,6 +968,44 @@
             min-width: 140px;
         }
 
+        /* Botón principal destacado (Convocatoria PDF) — el más importante de la pantalla */
+        .btn-convocatoria-destacado {
+            position: relative;
+            flex-basis: 100% !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            padding: 16px 22px !important;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35), 0 2px 4px rgba(0,0,0,0.10) !important;
+            transform: translateY(0);
+            transition: all 0.2s;
+            order: -1; /* siempre primero, aunque flex-wrap mueva otros */
+        }
+        .btn-convocatoria-destacado:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(16, 185, 129, 0.45), 0 4px 8px rgba(0,0,0,0.12) !important;
+        }
+        .btn-convocatoria-destacado .etiqueta-recomendado {
+            position: absolute;
+            top: -8px;
+            right: 14px;
+            background: #f59e0b;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+        }
+        /* Animación de pulso para llamar la atención cuando el wizard lo señala */
+        .btn-convocatoria-destacado.guia-resaltado {
+            animation: pulsoConvocatoria 1.6s infinite;
+        }
+        @keyframes pulsoConvocatoria {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
         @media (max-width: 768px) {
             .citacion-header {
                 padding: 20px;
@@ -2782,14 +2820,15 @@
             </div>
 
             <div class="citacion-footer">
-                <button class="btn btn-primary" onclick="abrirFormularioConvocatoria()">
+                <button id="btnConvocatoriaPDF" class="btn btn-success btn-convocatoria-destacado" onclick="abrirFormularioConvocatoria()">
                     📄 Convocatoria PDF
+                    <span class="etiqueta-recomendado">RECOMENDADO</span>
                 </button>
-                <button class="btn btn-primary" onclick="descargarQR()">
+                <button class="btn btn-outline" onclick="descargarQR()">
                     ⬇️ Descargar QR
                 </button>
-                <button class="btn btn-success" onclick="compartirCitacion()">
-                    📤 Compartir
+                <button class="btn btn-outline" onclick="compartirCitacion()">
+                    📤 Compartir enlace
                 </button>
                 <button class="btn btn-outline" onclick="cerrarCitacion()">
                     ❌ Cerrar
@@ -4672,7 +4711,21 @@
                     </div>
                 `;
             } else {
-                bannerContainer.innerHTML = '';
+                // No hay enlaces aún. Para las familias del Consejo Escolar mostramos
+                // un aviso amarillo, porque ellas dependen del coordinador para conectar.
+                if (window.usuarioActual && window.usuarioActual.rol === 'familia') {
+                    bannerContainer.innerHTML = `
+                        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%); border: 2px dashed #f59e0b; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 32px;">⏳</div>
+                            <div style="flex: 1;">
+                                <strong style="color: #78350f; display: block; font-size: 15px; margin-bottom: 2px;">Esperando enlace de videollamada</strong>
+                                <span style="color: #92400e; font-size: 12px; line-height: 1.4;">El coordinador/a aún no ha publicado el enlace de la videollamada. Aparecerá automáticamente aquí en cuanto lo añada.</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    bannerContainer.innerHTML = '';
+                }
             }
         };
 
@@ -6062,7 +6115,12 @@ ${textoActa}`;
         // ============================================================
         // Panel guía sobre la pantalla de configuración del coordinador
         // ============================================================
-        // Pasos: 1=orden del día, 2=añadir punto (opcional), 3=citación, 4=iniciar
+        // Pasos:
+        //   1=orden del día
+        //   2=añadir punto (opcional)
+        //   3=abrir modal de citación
+        //   4=pulsar "Convocatoria PDF" (señala el botón destacado dentro del modal)
+        //   5=iniciar reunión
         const PASOS_PANEL_GUIA = [
             {
                 icono: '📋',
@@ -6078,14 +6136,20 @@ ${textoActa}`;
             },
             {
                 icono: '🔗',
-                titulo: 'Genera la citación',
-                descripcion: 'Pulsa el botón verde "🔗 Generar Enlaces de la Reunión". Se abrirá una ventana con el QR y el enlace que tienes que enviar a los maestros (por WhatsApp, email, lo que prefieras). Desde ahí también puedes descargar la convocatoria oficial en PDF. Cuando termines y cierres esa ventana, pulsa "Siguiente".',
+                titulo: 'Abre el panel de citación',
+                descripcion: 'Pulsa el botón verde "🔗 Generar Enlaces de la Reunión". Se abrirá una ventana con el QR y el enlace de la sala. Cuando esté abierta, pulsa "Siguiente" para que te guíe al paso más importante.',
                 resaltarSelector: 'button[onclick="generarCitacion()"]'
+            },
+            {
+                icono: '📄',
+                titulo: 'Genera la convocatoria oficial (¡importante!)',
+                descripcion: 'En la ventana abierta, pulsa el botón verde grande "📄 Convocatoria PDF". Es el botón más importante: prepara el documento oficial firmado para mandar a tus compañeros por WhatsApp o email. Cuando lo hayas descargado o compartido y cierres todas las ventanas, pulsa "Siguiente".',
+                resaltarSelector: '#btnConvocatoriaPDF'
             },
             {
                 icono: '🚀',
                 titulo: 'Inicia la reunión',
-                descripcion: '¡Último paso! Cuando todo esté listo, pulsa el botón azul "🚀 Iniciar Reunión". Entrarás en la sala donde verás a los maestros que se vayan uniendo. Si todavía no has avisado a nadie, vuelve al paso anterior y comparte el enlace.',
+                descripcion: '¡Último paso! Cuando todo esté listo, pulsa el botón azul "🚀 Iniciar Reunión". Entrarás en la sala donde verás a los maestros que se vayan uniendo. Si todavía no has avisado a nadie, vuelve atrás y comparte la convocatoria.',
                 resaltarSelector: 'button[onclick="iniciarReunion()"]'
             }
         ];
@@ -6815,7 +6879,12 @@ ${textoActa}`;
             const fechaConDia = `${diaSemana}, ${fechaLarga}`;
 
             // Enlace web a la sala (Teletrabajo Capitulaciones)
-            const enlaceWeb = window.enlaceReunionActual || document.getElementById('enlaceReunionMostrado').value || '';
+            const enlaceWebMaestros = window.enlaceReunionActual || document.getElementById('enlaceReunionMostrado').value || '';
+            // Si es Consejo Escolar, también necesitamos el enlace para familias
+            const esConsejoEscolar = window.sesionActual === 'consejo-escolar';
+            const enlaceWebFamilias = esConsejoEscolar && enlaceWebMaestros
+                ? (enlaceWebMaestros + (enlaceWebMaestros.includes('?') ? '&' : '?') + 'invitado=familia')
+                : null;
 
             // Orden del día
             const ordenDia = window.ordenDia || [];
@@ -6824,249 +6893,378 @@ ${textoActa}`;
             const hoy = new Date();
             const hoyTexto = `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
 
-            // 3) Generar PDF con jsPDF
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-            const pageW = doc.internal.pageSize.getWidth();   // 210
-            const pageH = doc.internal.pageSize.getHeight();  // 297
-            const marginX = 22;
-            const usableW = pageW - marginX * 2;
-            let y = 22;
+            // 3) Función interna que construye un PDF con los datos comunes + un enlace web concreto.
+            // Devuelve el objeto jsPDF, listo para guardar/compartir.
+            const construirPDF = (enlaceWeb, etiquetaDestinatarios) => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+                const pageW = doc.internal.pageSize.getWidth();
+                const pageH = doc.internal.pageSize.getHeight();
+                const marginX = 22;
+                const usableW = pageW - marginX * 2;
+                let y = 22;
 
-            const checkPage = (extra = 0) => {
-                if (y + extra > pageH - 30) {
-                    doc.addPage();
-                    y = 22;
+                const checkPage = (extra = 0) => {
+                    if (y + extra > pageH - 30) {
+                        doc.addPage();
+                        y = 22;
+                    }
+                };
+
+                // --- Cabecera institucional con logo ---
+                const logoSize = 18;
+                const textoX = marginX + logoSize + 4;
+
+                try {
+                    if (window.LOGO_CAPITULACIONES_DATA_URL) {
+                        doc.addImage(window.LOGO_CAPITULACIONES_DATA_URL, 'JPEG', marginX, y, logoSize, logoSize);
+                    }
+                } catch (errLogo) {
+                    console.warn('No se pudo insertar el logo en el PDF:', errLogo);
                 }
-            };
 
-            // --- Cabecera institucional con logo ---
-            // Logo a la izquierda (18x18 mm), texto a la derecha
-            const logoSize = 18;
-            const logoX = marginX;
-            const logoY = y;
-            const textoX = marginX + logoSize + 4; // 4mm de separación
+                doc.setDrawColor(37, 99, 235);
+                doc.setLineWidth(0.6);
+                doc.line(marginX, y + logoSize + 2, pageW - marginX, y + logoSize + 2);
 
-            try {
-                if (window.LOGO_CAPITULACIONES_DATA_URL) {
-                    doc.addImage(window.LOGO_CAPITULACIONES_DATA_URL, 'JPEG', logoX, logoY, logoSize, logoSize);
-                }
-            } catch (errLogo) {
-                console.warn('No se pudo insertar el logo en el PDF:', errLogo);
-            }
-
-            doc.setDrawColor(37, 99, 235);
-            doc.setLineWidth(0.6);
-            // La línea va por debajo del logo
-            doc.line(marginX, y + logoSize + 2, pageW - marginX, y + logoSize + 2);
-
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(37, 99, 235);
-            doc.text('CEIP CAPITULACIONES DE SANTA FE', textoX, y + 5);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(80, 80, 80);
-            doc.setFontSize(9);
-            doc.text('Consejería de Desarrollo Educativo y F.P. — Junta de Andalucía', textoX, y + 10);
-            doc.text('Santa Fe (Granada) — Código: 18008853', textoX, y + 15);
-
-            y += logoSize + 10;
-            doc.setTextColor(0, 0, 0);
-
-            // --- Título principal ---
-            doc.setFontSize(15);
-            doc.setFont('helvetica', 'bold');
-            const titulo = 'CONVOCATORIA DE REUNIÓN';
-            doc.text(titulo, pageW / 2, y, { align: 'center' });
-            y += 7;
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(60, 60, 60);
-            doc.text(nombreOrganoOficial.toUpperCase(), pageW / 2, y, { align: 'center' });
-            doc.setTextColor(0, 0, 0);
-            y += 12;
-
-            // --- Encabezado administrativo ---
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'normal');
-            const cargoConvocante = getCargoConvocatoria();
-            const intro = `Por la presente, ${convocante}, en su condición de ${cargoConvocante} del CEIP Capitulaciones de Santa Fe, convoca al profesorado correspondiente a la siguiente reunión:`;
-            const introLineas = doc.splitTextToSize(intro, usableW);
-            introLineas.forEach(l => { checkPage(7); doc.text(l, marginX, y); y += 6; });
-            y += 4;
-
-            // --- Datos de la reunión (tabla 2 columnas) ---
-            const datosReunion = [
-                ['Tipo de reunión:', nombreOrganoOficial],
-                ['Fecha:', fechaConDia.charAt(0).toUpperCase() + fechaConDia.slice(1)],
-                ['Hora de inicio:', horaInicio + ' h'],
-                ['Modalidad:', modalidad === 'telematica' ? 'Telemática' : 'Presencial']
-            ];
-            if (modalidad === 'presencial') {
-                datosReunion.push(['Lugar:', lugar]);
-            }
-
-            datosReunion.forEach(([etiqueta, valor]) => {
-                checkPage(7);
-                doc.setFont('helvetica', 'bold');
-                doc.text(etiqueta, marginX, y);
-                doc.setFont('helvetica', 'normal');
-                const valorLineas = doc.splitTextToSize(valor, usableW - 38);
-                valorLineas.forEach((l, i) => {
-                    if (i > 0) { checkPage(6); y += 6; }
-                    doc.text(l, marginX + 38, y);
-                });
-                y += 7;
-            });
-
-            y += 4;
-
-            // --- Modalidad telemática: enlaces ---
-            if (modalidad === 'telematica' && (enlaces.length > 0 || enlaceWeb)) {
-                checkPage(15);
-                doc.setFont('helvetica', 'bold');
                 doc.setFontSize(11);
-                doc.text('ACCESO TELEMÁTICO', marginX, y);
-                y += 6;
-
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(37, 99, 235);
+                doc.text('CEIP CAPITULACIONES DE SANTA FE', textoX, y + 5);
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
+                doc.setTextColor(80, 80, 80);
+                doc.setFontSize(9);
+                doc.text('Consejería de Desarrollo Educativo y F.P. — Junta de Andalucía', textoX, y + 10);
+                doc.text('Santa Fe (Granada) — Código: 18008853', textoX, y + 15);
 
-                if (enlaces.length > 0) {
-                    enlaces.forEach((enl, i) => {
-                        const etiqueta = enlaces.length === 1 ? 'Enlace de videollamada:' : `Enlace ${i + 1}:`;
-                        checkPage(12);
-                        doc.setFont('helvetica', 'bold');
-                        doc.text(etiqueta, marginX, y);
-                        y += 5;
-                        doc.setFont('helvetica', 'normal');
-                        doc.setTextColor(37, 99, 235);
-                        const enlLineas = doc.splitTextToSize(enl, usableW);
-                        enlLineas.forEach(l => { checkPage(5); doc.textWithLink(l, marginX, y, { url: enl }); y += 5; });
-                        doc.setTextColor(0, 0, 0);
-                        y += 2;
-                    });
-                }
-
-                if (enlaceWeb) {
-                    checkPage(12);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('Sala de la reunión (Teletrabajo Capitulaciones):', marginX, y);
-                    y += 5;
-                    doc.setFont('helvetica', 'normal');
-                    doc.setTextColor(37, 99, 235);
-                    const webLineas = doc.splitTextToSize(enlaceWeb, usableW);
-                    webLineas.forEach(l => { checkPage(5); doc.textWithLink(l, marginX, y, { url: enlaceWeb }); y += 5; });
-                    doc.setTextColor(0, 0, 0);
-                    y += 2;
-                }
-                y += 4;
-            }
-
-            // --- Orden del día ---
-            checkPage(12);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.text('ORDEN DEL DÍA', marginX, y);
-            y += 7;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(11);
-
-            if (ordenDia.length === 0) {
-                doc.setTextColor(120, 120, 120);
-                doc.text('(Sin puntos definidos)', marginX, y);
+                y += logoSize + 10;
                 doc.setTextColor(0, 0, 0);
+
+                // --- Título principal ---
+                doc.setFontSize(15);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONVOCATORIA DE REUNIÓN', pageW / 2, y, { align: 'center' });
                 y += 7;
-            } else {
-                ordenDia.forEach((punto, i) => {
-                    const numero = `${i + 1}.`;
-                    const lineas = doc.splitTextToSize(punto, usableW - 10);
-                    checkPage(lineas.length * 6 + 2);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(numero, marginX, y);
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(60, 60, 60);
+                doc.text(nombreOrganoOficial.toUpperCase(), pageW / 2, y, { align: 'center' });
+                doc.setTextColor(0, 0, 0);
+
+                // Si es Consejo Escolar, distinguir el destinatario del PDF
+                if (etiquetaDestinatarios) {
+                    y += 6;
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor(120, 120, 120);
+                    doc.text(`(${etiquetaDestinatarios})`, pageW / 2, y, { align: 'center' });
+                    doc.setTextColor(0, 0, 0);
                     doc.setFont('helvetica', 'normal');
-                    lineas.forEach((l, idx) => {
-                        if (idx > 0) { checkPage(6); y += 6; }
-                        doc.text(l, marginX + 8, y);
+                }
+                y += 12;
+
+                // --- Encabezado administrativo ---
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal');
+                const cargoConvocante = getCargoConvocatoria();
+                // Para familias del Consejo Escolar, ajustar a quién se convoca
+                const aQuienConvoca = etiquetaDestinatarios === 'Para representantes de familias'
+                    ? 'a las familias representantes en el Consejo Escolar'
+                    : (esConsejoEscolar ? 'a los miembros del Consejo Escolar' : 'al profesorado correspondiente');
+                const intro = `Por la presente, ${convocante}, en su condición de ${cargoConvocante} del CEIP Capitulaciones de Santa Fe, convoca ${aQuienConvoca} a la siguiente reunión:`;
+                const introLineas = doc.splitTextToSize(intro, usableW);
+                introLineas.forEach(l => { checkPage(7); doc.text(l, marginX, y); y += 6; });
+                y += 4;
+
+                // --- Datos de la reunión ---
+                const datosReunion = [
+                    ['Tipo de reunión:', nombreOrganoOficial],
+                    ['Fecha:', fechaConDia.charAt(0).toUpperCase() + fechaConDia.slice(1)],
+                    ['Hora de inicio:', horaInicio + ' h'],
+                    ['Modalidad:', modalidad === 'telematica' ? 'Telemática' : 'Presencial']
+                ];
+                if (modalidad === 'presencial') {
+                    datosReunion.push(['Lugar:', lugar]);
+                }
+
+                datosReunion.forEach(([etiqueta, valor]) => {
+                    checkPage(7);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(etiqueta, marginX, y);
+                    doc.setFont('helvetica', 'normal');
+                    const valorLineas = doc.splitTextToSize(valor, usableW - 38);
+                    valorLineas.forEach((l, i) => {
+                        if (i > 0) { checkPage(6); y += 6; }
+                        doc.text(l, marginX + 38, y);
                     });
                     y += 7;
                 });
-            }
 
-            y += 4;
+                y += 4;
 
-            // --- Pie administrativo ---
-            checkPage(20);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'italic');
-            doc.setTextColor(70, 70, 70);
-            const pie = 'De conformidad con lo establecido en la normativa vigente, se ruega la asistencia puntual y, en caso de no poder asistir, su justificación previa al coordinador/a.';
-            const pieLineas = doc.splitTextToSize(pie, usableW);
-            pieLineas.forEach(l => { checkPage(5); doc.text(l, marginX, y); y += 5; });
-            doc.setTextColor(0, 0, 0);
-            doc.setFont('helvetica', 'normal');
-            y += 8;
+                // --- Modalidad telemática: enlaces ---
+                if (modalidad === 'telematica' && (enlaces.length > 0 || enlaceWeb)) {
+                    checkPage(15);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(11);
+                    doc.text('ACCESO TELEMÁTICO', marginX, y);
+                    y += 6;
 
-            // --- Firma ---
-            checkPage(50);
-            doc.setFontSize(11);
-            doc.text(`En Santa Fe, a ${hoyTexto}`, marginX, y);
-            y += 6;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10);
 
-            // Si hay firma manuscrita, insertarla encima de la línea
-            const firmaDataURL = obtenerFirmaPNG();
-            if (firmaDataURL) {
-                checkPage(30);
-                try {
-                    // 60mm de ancho, 22mm de alto, posición justo encima de la línea de firma
-                    doc.addImage(firmaDataURL, 'PNG', marginX + 6, y, 60, 22);
-                    y += 22;
-                } catch (errFirma) {
-                    console.warn('No se pudo insertar la firma manuscrita:', errFirma);
+                    if (enlaces.length > 0) {
+                        enlaces.forEach((enl, i) => {
+                            const etiqueta = enlaces.length === 1 ? 'Enlace de videollamada:' : `Enlace ${i + 1}:`;
+                            checkPage(12);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text(etiqueta, marginX, y);
+                            y += 5;
+                            doc.setFont('helvetica', 'normal');
+                            doc.setTextColor(37, 99, 235);
+                            const enlLineas = doc.splitTextToSize(enl, usableW);
+                            enlLineas.forEach(l => { checkPage(5); doc.textWithLink(l, marginX, y, { url: enl }); y += 5; });
+                            doc.setTextColor(0, 0, 0);
+                            y += 2;
+                        });
+                    }
+
+                    if (enlaceWeb) {
+                        checkPage(12);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Sala de la reunión (Teletrabajo Capitulaciones):', marginX, y);
+                        y += 5;
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(37, 99, 235);
+                        const webLineas = doc.splitTextToSize(enlaceWeb, usableW);
+                        webLineas.forEach(l => { checkPage(5); doc.textWithLink(l, marginX, y, { url: enlaceWeb }); y += 5; });
+                        doc.setTextColor(0, 0, 0);
+                        y += 2;
+                    }
+                    y += 4;
+                }
+
+                // --- Orden del día ---
+                checkPage(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.text('ORDEN DEL DÍA', marginX, y);
+                y += 7;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(11);
+
+                if (ordenDia.length === 0) {
+                    doc.setTextColor(120, 120, 120);
+                    doc.text('(Sin puntos definidos)', marginX, y);
+                    doc.setTextColor(0, 0, 0);
+                    y += 7;
+                } else {
+                    ordenDia.forEach((punto, i) => {
+                        const numero = `${i + 1}.`;
+                        const lineas = doc.splitTextToSize(punto, usableW - 10);
+                        checkPage(lineas.length * 6 + 2);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(numero, marginX, y);
+                        doc.setFont('helvetica', 'normal');
+                        lineas.forEach((l, idx) => {
+                            if (idx > 0) { checkPage(6); y += 6; }
+                            doc.text(l, marginX + 8, y);
+                        });
+                        y += 7;
+                    });
+                }
+
+                y += 4;
+
+                // --- Pie administrativo ---
+                checkPage(20);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(70, 70, 70);
+                const pie = 'De conformidad con lo establecido en la normativa vigente, se ruega la asistencia puntual y, en caso de no poder asistir, su justificación previa al coordinador/a.';
+                const pieLineas = doc.splitTextToSize(pie, usableW);
+                pieLineas.forEach(l => { checkPage(5); doc.text(l, marginX, y); y += 5; });
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                y += 8;
+
+                // --- Firma ---
+                checkPage(50);
+                doc.setFontSize(11);
+                doc.text(`En Santa Fe, a ${hoyTexto}`, marginX, y);
+                y += 6;
+
+                const firmaDataURL = obtenerFirmaPNG();
+                if (firmaDataURL) {
+                    checkPage(30);
+                    try {
+                        doc.addImage(firmaDataURL, 'PNG', marginX + 6, y, 60, 22);
+                        y += 22;
+                    } catch (errFirma) {
+                        console.warn('No se pudo insertar la firma manuscrita:', errFirma);
+                        y += 6;
+                    }
+                } else {
                     y += 6;
                 }
-            } else {
-                // Sin firma: dejar el espacio en blanco habitual
-                y += 6;
-            }
 
-            // Línea de firma con "Fdo.:"
-            doc.setFont('helvetica', 'normal');
-            doc.text('Fdo.:', marginX, y);
-            doc.setLineWidth(0.3);
-            doc.line(marginX + 10, y, marginX + 80, y);
-            y += 5;
-            doc.setFont('helvetica', 'bold');
-            doc.text(convocante, marginX, y);
-            y += 5;
-            doc.setFont('helvetica', 'italic');
-            doc.setTextColor(80, 80, 80);
-            doc.text(cargoConvocante, marginX, y);
-            doc.setTextColor(0, 0, 0);
-
-            // --- Pie de página en todas las páginas ---
-            const totalPaginas = doc.internal.getNumberOfPages();
-            for (let p = 1; p <= totalPaginas; p++) {
-                doc.setPage(p);
-                doc.setFontSize(8);
-                doc.setTextColor(150, 150, 150);
-                doc.text('CEIP Capitulaciones de Santa Fe — Convocatoria oficial', marginX, pageH - 10);
-                doc.text(`Página ${p} de ${totalPaginas}`, pageW - marginX, pageH - 10, { align: 'right' });
+                doc.setFont('helvetica', 'normal');
+                doc.text('Fdo.:', marginX, y);
+                doc.setLineWidth(0.3);
+                doc.line(marginX + 10, y, marginX + 80, y);
+                y += 5;
+                doc.setFont('helvetica', 'bold');
+                doc.text(convocante, marginX, y);
+                y += 5;
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(80, 80, 80);
+                doc.text(cargoConvocante, marginX, y);
                 doc.setTextColor(0, 0, 0);
+
+                // --- Pie de página ---
+                const totalPaginas = doc.internal.getNumberOfPages();
+                for (let p = 1; p <= totalPaginas; p++) {
+                    doc.setPage(p);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text('CEIP Capitulaciones de Santa Fe — Convocatoria oficial', marginX, pageH - 10);
+                    doc.text(`Página ${p} de ${totalPaginas}`, pageW - marginX, pageH - 10, { align: 'right' });
+                    doc.setTextColor(0, 0, 0);
+                }
+
+                return doc;
+            };
+
+            // 4) Generar 1 o 2 PDFs según el órgano
+            const nombreLimpio = window.sesionActual.replace(/[^a-z0-9-]/gi, '_');
+            const pdfsGenerados = [];
+
+            if (esConsejoEscolar && enlaceWebFamilias) {
+                // Consejo Escolar: dos PDFs distintos (maestros + familias)
+                const pdfMaestros = construirPDF(enlaceWebMaestros, 'Para profesorado del Consejo Escolar');
+                pdfsGenerados.push({
+                    doc: pdfMaestros,
+                    filename: `Convocatoria_${nombreLimpio}_${window.fechaActual}_MAESTROS.pdf`,
+                    titulo: '👩‍🏫 Convocatoria para profesorado',
+                    descripcion: 'Esta convocatoria contiene el enlace de la sala para los maestros del Consejo Escolar.'
+                });
+                const pdfFamilias = construirPDF(enlaceWebFamilias, 'Para representantes de familias');
+                pdfsGenerados.push({
+                    doc: pdfFamilias,
+                    filename: `Convocatoria_${nombreLimpio}_${window.fechaActual}_FAMILIAS.pdf`,
+                    titulo: '👨‍👩‍👧 Convocatoria para familias',
+                    descripcion: 'Esta convocatoria contiene el enlace de la sala con acceso restringido para las familias representantes.'
+                });
+            } else {
+                // Resto de órganos: un solo PDF
+                const pdfUnico = construirPDF(enlaceWebMaestros, null);
+                pdfsGenerados.push({
+                    doc: pdfUnico,
+                    filename: `Convocatoria_${nombreLimpio}_${window.fechaActual}.pdf`,
+                    titulo: '📄 Convocatoria generada',
+                    descripcion: 'La convocatoria está lista. Puedes descargarla a tu dispositivo o compartirla directamente por WhatsApp, email u otra app.'
+                });
             }
 
-            // 4) Descargar PDF
-            const nombreLimpio = window.sesionActual.replace(/[^a-z0-9-]/gi, '_');
-            const nombreArchivo = `Convocatoria_${nombreLimpio}_${window.fechaActual}.pdf`;
-            doc.save(nombreArchivo);
-
-            // Cerrar el formulario y mostrar feedback
+            // 5) Cerrar el formulario y mostrar el modal de Descargar / Compartir
             cerrarFormularioConvocatoria();
+            mostrarModalCompartirConvocatoria(pdfsGenerados);
+        };
+
+        // ===== Modal de Descargar / Compartir convocatoria =====
+        // Recibe un array de { doc, filename, titulo, descripcion } y muestra
+        // un modal con botones para cada PDF
+        function mostrarModalCompartirConvocatoria(pdfs) {
+            // Eliminar uno antiguo si existiera
+            const previo = document.getElementById('compartirConvocatoriaModal');
+            if (previo) previo.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'compartirConvocatoriaModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10005; display: flex; align-items: center; justify-content: center; padding: 16px;';
+
+            const titulo = pdfs.length > 1
+                ? '✅ Convocatorias listas (Consejo Escolar)'
+                : '✅ Convocatoria lista';
+            const subtitulo = pdfs.length > 1
+                ? 'Se han preparado <strong>dos convocatorias</strong>: una para profesorado y otra para familias, cada una con su enlace de sala. Descarga o comparte cada una con su grupo correspondiente.'
+                : 'Tu convocatoria está lista. Puedes descargarla o compartirla directamente.';
+
+            const tarjetasHtml = pdfs.map((p, i) => `
+                <div style="background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;">
+                    <div style="font-weight: 700; color: var(--text); font-size: 15px; margin-bottom: 4px;">${p.titulo}</div>
+                    <div style="font-size: 12px; color: var(--text-light); line-height: 1.5; margin-bottom: 12px;">${p.descripcion}</div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-outline btn-small" onclick="descargarConvocatoriaPDF(${i})" style="flex: 1; min-width: 130px;">
+                            📥 Descargar
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="compartirConvocatoriaPDF(${i})" style="flex: 1; min-width: 130px;">
+                            📤 Compartir
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 16px; padding: 24px; max-width: 520px; width: 100%; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 10px;">
+                        <h3 style="margin: 0; color: var(--primary); font-size: 19px; line-height: 1.3;">${titulo}</h3>
+                        <button onclick="document.getElementById('compartirConvocatoriaModal').remove();" style="background: none; border: none; font-size: 22px; color: var(--text-light); cursor: pointer; line-height: 1; padding: 0 4px;">✕</button>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-light); line-height: 1.5; margin: 0 0 16px 0;">${subtitulo}</p>
+                    ${tarjetasHtml}
+                    <div style="margin-top: 14px; text-align: right;">
+                        <button class="btn btn-outline btn-small" onclick="document.getElementById('compartirConvocatoriaModal').remove();">Cerrar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Guardar los PDFs en una variable global para que los botones puedan usarlos
+            window._convocatoriasGeneradas = pdfs;
+
+            // Cerrar al hacer clic fuera
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        }
+
+        window.descargarConvocatoriaPDF = function(idx) {
+            const p = (window._convocatoriasGeneradas || [])[idx];
+            if (!p) return;
+            p.doc.save(p.filename);
+
             const toast = document.createElement('div');
-            toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10003; font-size: 14px;';
-            toast.textContent = '✅ Convocatoria descargada';
+            toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10010; font-size: 14px;';
+            toast.textContent = '📥 ' + p.filename + ' descargada';
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3500);
+        };
+
+        window.compartirConvocatoriaPDF = async function(idx) {
+            const p = (window._convocatoriasGeneradas || [])[idx];
+            if (!p) return;
+            try {
+                // Convertir el PDF a Blob → File para usar Web Share API
+                const blob = p.doc.output('blob');
+                const file = new File([blob], p.filename, { type: 'application/pdf' });
+
+                // Comprobar si el navegador soporta compartir archivos
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: p.titulo.replace(/^[^\w\s]+\s*/, ''), // quitar emoji inicial
+                        text: 'Convocatoria de reunión — CEIP Capitulaciones de Santa Fe'
+                    });
+                } else {
+                    // Fallback: descargar y avisar
+                    p.doc.save(p.filename);
+                    alert('Tu navegador no permite compartir directamente.\nLa convocatoria se ha descargado para que puedas adjuntarla manualmente.');
+                }
+            } catch (err) {
+                // Si el usuario cancela el share, no es un error real
+                if (err && err.name === 'AbortError') return;
+                console.error('Error al compartir:', err);
+                alert('No se pudo compartir: ' + (err.message || 'error desconocido'));
+            }
         };
 
         // Cerrar el modal de convocatoria con clic fuera
