@@ -5675,22 +5675,14 @@
             const textoActa = await generarTextoActa();
             
             if (!textoActa) return;
-
-            const prompt = `Por favor, dale formato de acta oficial e institucional al siguiente texto de reunión del CEIP Capitulaciones de Santa Fe. Respeta exactamente los nombres de los participantes tal como aparecen. Mantén todos los puntos del orden del día sin omitir ninguno. Usa formato profesional con cabecera, secciones bien diferenciadas y lenguaje formal propio de un acta escolar.
-
-═══════════════════════════════════════════
-ACTA A FORMATEAR:
-═══════════════════════════════════════════
-
-${textoActa}`;
             
             try {
-                await copiarTextoSeguro(prompt);
+                await copiarTextoSeguro(textoActa);
                 
                 // Mostrar mensaje de confirmación
                 const toast = document.createElement('div');
                 toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
-                toast.textContent = '✅ Prompt copiado al portapapeles';
+                toast.textContent = '✅ Acta copiada al portapapeles';
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 3000);
                 
