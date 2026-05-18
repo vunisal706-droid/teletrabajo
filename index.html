@@ -5675,9 +5675,30 @@
             const textoActa = await generarTextoActa();
             
             if (!textoActa) return;
+
+            const prompt = `ACTAS OFICIALES:
+Usa siempre la plantilla oficial del centro y esta estructura:
+"ACTA DE REUNIÓN DE …"
+"ACTA Nº ___"
+Cabecera oficial con fecha, modalidad (presencial/telemática), hora y orden del día.
+Asistentes.
+Desarrollo.
+Cierre:
+"Y sin más asuntos que tratar, se levanta la sesión a las : horas del día de la fecha."
+DESARROLLO DEL ACTA:
+Las actas deberán redactarse con desarrollo amplio, lenguaje técnico-administrativo e institucional y un nivel de detalle suficiente para reflejar fielmente el contenido real de la reunión.
+El desarrollo del acta NO debe ser esquemático, ni telegráfico. En aportaciones breves alarga la aportación con lenguaje profesional sin inventar nada.
+Comprobar siempre que la numeración del desarrollo del acta coincida exactamente y de forma correlativa con la numeración oficial del Orden del Día, sin omitir, duplicar ni alterar apartados.
+Todas las intervenciones deben aparecer identificadas con el nombre de quien participa.
+
+═══════════════════════════════════════════
+DATOS DE LA REUNIÓN:
+═══════════════════════════════════════════
+
+${textoActa}`;
             
             try {
-                await copiarTextoSeguro(textoActa);
+                await copiarTextoSeguro(prompt);
                 
                 // Mostrar mensaje de confirmación
                 const toast = document.createElement('div');
