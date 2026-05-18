@@ -2656,8 +2656,7 @@
                         <strong>📧 Email:</strong> Abre tu correo con el acta lista para enviar
                     </div>
                     <div class="help-step">
-                        <strong>🤖 Generar Acta con ChatGPT:</strong> Copia el acta y abre el ChatGPT del cole para darle formato profesional automáticamente<br>
-                        <strong>✨ Generar Acta con Gemini:</strong> Copia el acta y abre el Gemini del cole para darle formato profesional con IA de Google
+                        <strong>🤖 Generar Acta con IA:</strong> Copia el acta y abre el ChatGPT del cole para darle formato profesional automáticamente
                     </div>
                     <div class="help-step">
                         <strong>📝 Resumir con NotebookLM:</strong> Copia un prompt al portapapeles y abre NotebookLM. Al pegarlo como fuente, generará un resumen estructurado de la reunión
@@ -3341,7 +3340,7 @@
                             <button class="acta-dropdown-item" onclick="enviarPorEmail(); closeActaDropdown();" data-acta-tooltip="Abre tu correo con el acta lista">
                                 📧 Enviar por Email
                             </button>
-                            <button class="acta-dropdown-item" onclick="generarActaConIA(); closeActaDropdown();" data-acta-tooltip="Copia el acta y elige entre Gemini o ChatGPT para darle formato profesional">
+                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre el ChatGPT del cole para darle formato">
                                 🤖 Generar Acta con IA
                             </button>
                             <button class="acta-dropdown-item" onclick="resumirConNotebookLM(); closeActaDropdown();" data-acta-tooltip="Genera un resumen automático del acta con NotebookLM">
@@ -5651,32 +5650,24 @@
         // Copiar al portapapeles
         window.copiarActa = async function() {
             const textoActa = await generarTextoActa();
+            
             if (!textoActa) return;
+            
             try {
                 await navigator.clipboard.writeText(textoActa);
+                
+                // Mostrar mensaje de confirmación
                 const toast = document.createElement('div');
                 toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
                 toast.textContent = '✅ Acta copiada al portapapeles';
                 document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3000);
-                mostrarModalEleccionIA();
-            } catch (err) {
-                alert('Error al copiar. Por favor, intenta de nuevo.');
-            }
-        };
-
-        // Nueva función principal: copia y muestra el modal de elección de IA
-        window.generarActaConIA = async function() {
-            const textoActa = await generarTextoActa();
-            if (!textoActa) return;
-            try {
-                await navigator.clipboard.writeText(textoActa);
-                const toast = document.createElement('div');
-                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
-                toast.textContent = '✅ Acta copiada al portapapeles';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3000);
-                mostrarModalEleccionIA();
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+                
+                // Mostrar aviso de ChatGPT
+                mostrarAvisoChatGPT();
             } catch (err) {
                 alert('Error al copiar. Por favor, intenta de nuevo.');
             }
@@ -5796,76 +5787,42 @@ ${textoActa}`;
 
 
         // Mostrar aviso de ChatGPT después de exportar
-        // Modal unificado de elección de IA para generar el acta
-        function mostrarModalEleccionIA() {
+        function mostrarAvisoChatGPT() {
             const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 20px;';
-
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 20px;';
+            
             modal.innerHTML = `
-                <div style="background: white; border-radius: 16px; padding: 28px 28px 24px; max-width: 520px; width: 100%; box-shadow: 0 24px 64px rgba(0,0,0,0.3);">
-                    <div style="text-align: center; margin-bottom: 18px;">
-                        <div style="font-size: 40px; margin-bottom: 8px;">🤖</div>
-                        <h3 style="color: var(--primary); margin: 0; font-size: 20px;">Generar Acta con IA</h3>
-                        <p style="color: var(--text-light); font-size: 13px; margin: 8px 0 0;">
-                            El acta ya está copiada en el portapapeles.<br>
-                            Elige dónde quieres pegarla para darle formato profesional.
-                        </p>
-                    </div>
-
-                    <!-- Gemini: opción recomendada -->
-                    <a href="https://gemini.google.com/gem/1ses5OZ4b3lrN8EMurFISqwUs9xEdHVgr?usp=sharing"
-                       target="_blank"
-                       onclick="this.closest('.modal-ia-wrapper').querySelector('.modal-ia-overlay').remove();"
-                       style="display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg, #e8f0fe 0%, #f0fffe 100%); border: 2px solid #4285F4; border-radius: 12px; padding: 16px 18px; text-decoration: none; margin-bottom: 12px; transition: box-shadow 0.2s; position: relative;"
-                       onmouseover="this.style.boxShadow='0 4px 16px rgba(66,133,244,0.25)'" onmouseout="this.style.boxShadow='none'">
-                        <div style="font-size: 32px; flex-shrink: 0;">✨</div>
-                        <div style="flex: 1; text-align: left;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
-                                <span style="font-weight: 700; color: #1a73e8; font-size: 15px;">Gemini del CEIP Capitulaciones</span>
-                                <span style="background: #1a73e8; color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.5px;">⭐ RECOMENDADO</span>
-                            </div>
-                            <span style="color: #555; font-size: 13px;">Produce actas más completas y con mejor redacción</span>
-                        </div>
-                        <div style="color: #4285F4; font-size: 20px; flex-shrink: 0;">→</div>
-                    </a>
-
-                    <!-- ChatGPT: opción alternativa -->
-                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
-                       target="_blank"
-                       style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px 18px; text-decoration: none; margin-bottom: 18px; transition: box-shadow 0.2s;"
-                       onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'; this.style.borderColor='#94a3b8';" onmouseout="this.style.boxShadow='none'; this.style.borderColor='#e2e8f0';">
-                        <div style="font-size: 32px; flex-shrink: 0;">🤖</div>
-                        <div style="flex: 1; text-align: left;">
-                            <div style="font-weight: 700; color: var(--text); font-size: 15px; margin-bottom: 3px;">ChatGPT del CEIP Capitulaciones</div>
-                            <span style="color: #888; font-size: 13px;">También genera el acta con buen formato</span>
-                        </div>
-                        <div style="color: #94a3b8; font-size: 20px; flex-shrink: 0;">→</div>
-                    </a>
-
-                    <p style="color: var(--text-light); font-size: 12px; text-align: center; margin: 0 0 16px;">
-                        💡 Recuerda pegar el texto con <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px;">Ctrl+V</code> cuando se abra la IA
+                <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">ℹ️</div>
+                    <h3 style="color: var(--primary); margin-bottom: 15px;">Formato del Acta</h3>
+                    <p style="color: var(--text); margin-bottom: 20px; line-height: 1.6;">
+                        Recuerda darle formato correcto al acta en el ChatGPT del cole:
                     </p>
-
-                    <div style="text-align: center;">
-                        <button id="btnCerrarModalIA"
-                                style="background: transparent; border: 2px solid var(--border); color: var(--text); padding: 10px 28px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                            Cerrar
+                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones" 
+                       target="_blank"
+                       style="display: inline-block; background: var(--primary); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 15px;">
+                        🤖 Abrir ChatGPT del CEIP Capitulaciones
+                    </a>
+                    <div>
+                        <button onclick="this.closest('div').parentElement.parentElement.remove()" 
+                                style="background: transparent; border: 2px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Entendido
                         </button>
                     </div>
                 </div>
             `;
-
+            
             document.body.appendChild(modal);
-
-            modal.querySelector('#btnCerrarModalIA').onclick = () => modal.remove();
-            modal.onclick = e => { if (e.target === modal) modal.remove(); };
+            
+            // Cerrar al hacer clic fuera
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
         }
 
-        // Mantener mostrarAvisoChatGPT como alias por si se llama desde email/PDF
-        function mostrarAvisoChatGPT() {
-            mostrarModalEleccionIA();
-        }
-
+        // Salir de reunión
         window.salirDeReunion = function() {
             // Si es familia invitada, no puede volver al menú principal
             if (window.esInvitadoFamilia) {
