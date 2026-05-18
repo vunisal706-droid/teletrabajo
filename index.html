@@ -5647,26 +5647,54 @@
             mostrarAvisoChatGPT();
         };
 
+        // Copia texto largo de forma robusta (evita truncados en textos largos)
+        async function copiarTextoSeguro(texto) {
+            // Método 1: Clipboard API (contexto seguro)
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(texto);
+                    return;
+                } catch(e) {
+                    // fallback al método 2
+                }
+            }
+            // Método 2: textarea + execCommand (más fiable para textos muy largos)
+            const textarea = document.createElement('textarea');
+            textarea.value = texto;
+            textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            const ok = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            if (!ok) throw new Error('No se pudo copiar');
+        }
+
         // Copiar al portapapeles
         window.copiarActa = async function() {
             const textoActa = await generarTextoActa();
             
             if (!textoActa) return;
+
+            const prompt = `Por favor, dale formato de acta oficial e institucional al siguiente texto de reunión del CEIP Capitulaciones de Santa Fe. Respeta exactamente los nombres de los participantes tal como aparecen. Mantén todos los puntos del orden del día sin omitir ninguno. Usa formato profesional con cabecera, secciones bien diferenciadas y lenguaje formal propio de un acta escolar.
+
+═══════════════════════════════════════════
+ACTA A FORMATEAR:
+═══════════════════════════════════════════
+
+${textoActa}`;
             
             try {
-                await navigator.clipboard.writeText(textoActa);
+                await copiarTextoSeguro(prompt);
                 
                 // Mostrar mensaje de confirmación
                 const toast = document.createElement('div');
                 toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
-                toast.textContent = '✅ Acta copiada al portapapeles';
+                toast.textContent = '✅ Prompt copiado al portapapeles';
                 document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
                 
-                setTimeout(() => {
-                    toast.remove();
-                }, 3000);
-                
-                // Mostrar aviso de ChatGPT
+                // Mostrar aviso de ChatGPT/Gemini
                 mostrarAvisoChatGPT();
             } catch (err) {
                 alert('Error al copiar. Por favor, intenta de nuevo.');
@@ -5802,11 +5830,7 @@ ${textoActa}`;
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
                             <span style="font-size: 20px;">🤖</span>
                             <strong style="color: var(--primary-dark); font-size: 15px;">ChatGPT del cole</strong>
-                            <span style="background: var(--primary); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">RECOMENDADO</span>
                         </div>
-                        <p style="font-size: 13px; color: var(--primary-dark); margin-bottom: 10px; line-height: 1.5;">
-                            Genera el acta con el mejor formato y respeta los nombres de los participantes.
-                        </p>
                         <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
                            target="_blank"
                            style="display: inline-block; background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
