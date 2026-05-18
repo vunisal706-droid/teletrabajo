@@ -2656,7 +2656,7 @@
                         <strong>📧 Email:</strong> Abre tu correo con el acta lista para enviar
                     </div>
                     <div class="help-step">
-                        <strong>🤖 Generar Acta con IA:</strong> Copia el acta y abre el ChatGPT del cole para darle formato profesional automáticamente
+                        <strong>🤖 Generar Acta con IA:</strong> Copia el acta y abre el Gemini o ChatGPT del cole para darle formato profesional automáticamente
                     </div>
                     <div class="help-step">
                         <strong>📝 Resumir con NotebookLM:</strong> Copia un prompt al portapapeles y abre NotebookLM. Al pegarlo como fuente, generará un resumen estructurado de la reunión
@@ -3340,7 +3340,7 @@
                             <button class="acta-dropdown-item" onclick="enviarPorEmail(); closeActaDropdown();" data-acta-tooltip="Abre tu correo con el acta lista">
                                 📧 Enviar por Email
                             </button>
-                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre el ChatGPT del cole para darle formato">
+                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre Gemini o ChatGPT del cole para darle formato">
                                 🤖 Generar Acta con IA
                             </button>
                             <button class="acta-dropdown-item" onclick="resumirConNotebookLM(); closeActaDropdown();" data-acta-tooltip="Genera un resumen automático del acta con NotebookLM">
@@ -4927,7 +4927,7 @@
                         
                         aportacionesArray.forEach(aport => {
                             checkPage();
-                            doc.text(`   ${aport.autor}:`, 25, y);
+                            doc.text(`   ${aport.autor || '(anónimo)'}:`, 25, y);
                             y += lineHeight;
                             
                             // Dividir texto largo en líneas
@@ -5786,29 +5786,48 @@ ${textoActa}`;
         }
 
 
-        // Mostrar aviso de ChatGPT después de exportar
+        // Mostrar aviso de IA después de exportar
         function mostrarAvisoChatGPT() {
             const modal = document.createElement('div');
             modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 20px;';
             
             modal.innerHTML = `
-                <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">ℹ️</div>
-                    <h3 style="color: var(--primary); margin-bottom: 15px;">Formato del Acta</h3>
-                    <p style="color: var(--text); margin-bottom: 20px; line-height: 1.6;">
-                        Recuerda darle formato correcto al acta en el ChatGPT del cole:
+                <div style="background: white; border-radius: 12px; padding: 30px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🤖</div>
+                    <h3 style="color: var(--primary); margin-bottom: 10px;">Dar formato al Acta con IA</h3>
+                    <p style="color: var(--text); margin-bottom: 16px; line-height: 1.6;">
+                        Pega el acta copiada en uno de estos asistentes para darle formato profesional:
                     </p>
-                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones" 
-                       target="_blank"
-                       style="display: inline-block; background: var(--primary); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 15px;">
-                        🤖 Abrir ChatGPT del CEIP Capitulaciones
-                    </a>
-                    <div>
-                        <button onclick="this.closest('div').parentElement.parentElement.remove()" 
-                                style="background: transparent; border: 2px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            Entendido
-                        </button>
+                    <div style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 10px; padding: 14px 18px; margin-bottom: 12px; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <span style="font-size: 20px;">✨</span>
+                            <strong style="color: #15803d; font-size: 15px;">Gemini del cole</strong>
+                            <span style="background: #22c55e; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">RECOMENDADO</span>
+                        </div>
+                        <p style="font-size: 13px; color: #166534; margin-bottom: 10px; line-height: 1.5;">
+                            Respeta los nombres de los participantes tal como aparecen en las conversaciones.
+                        </p>
+                        <a href="https://gemini.google.com/gem/1ses5OZ4b3lrN8EMurFISqwUs9xEdHVgr?usp=sharing"
+                           target="_blank"
+                           style="display: inline-block; background: #16a34a; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                            ✨ Abrir Gemini del CEIP Capitulaciones
+                        </a>
                     </div>
+                    <div style="background: #f8fafc; border: 2px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 20px;">🤖</span>
+                            <strong style="color: var(--text); font-size: 15px;">ChatGPT del cole</strong>
+                        </div>
+                        <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
+                           target="_blank"
+                           style="display: inline-block; background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                            🤖 Abrir ChatGPT del CEIP Capitulaciones
+                        </a>
+                    </div>
+                    <button onclick="this.closest('div').parentElement.parentElement.remove()"
+                            style="background: transparent; border: 2px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        Entendido
+                    </button>
                 </div>
             `;
             
