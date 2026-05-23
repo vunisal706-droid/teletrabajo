@@ -2902,7 +2902,7 @@
                 Rellena estos datos y se generará un PDF administrativo con el orden del día, los enlaces y la firma del coordinador/a.
             </p>
 
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1; padding-right: 2px;">
                 <div>
                     <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">
                         Coordinador/a (firma):
@@ -2964,18 +2964,28 @@
                 </div>
 
                 <div id="convocatoriaFirmaWrap" style="margin-top: 4px;">
-                    <label style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: var(--text);">
-                        <span>Firma manuscrita: <span style="color: var(--text-light); font-weight: 400; font-size: 12px;">(opcional)</span></span>
-                        <button type="button" onclick="limpiarFirma()" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 12px; font-weight: 600; padding: 0;">
-                            🧹 Borrar
-                        </button>
-                    </label>
-                    <div style="position: relative; border: 2px dashed var(--border); border-radius: 8px; background: white; touch-action: none;">
-                        <canvas id="canvasFirma" width="600" height="180" style="width: 100%; height: 180px; display: block; cursor: crosshair; border-radius: 6px;"></canvas>
-                        <div id="firmaPlaceholder" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #cbd5e1; font-size: 13px; pointer-events: none; user-select: none; text-align: center;">
-                            ✍️ Firma aquí con el dedo o el ratón<br>
-                            <span style="font-size: 11px;">(puedes saltarte este paso)</span>
+                    <!-- Botón toggle para mostrar/ocultar el canvas de firma -->
+                    <button type="button" id="btnToggleFirma"
+                        onclick="toggleCanvasFirma()"
+                        style="width: 100%; padding: 10px 14px; border: 2px dashed var(--border); border-radius: 8px; background: var(--background); color: var(--text-light); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; justify-content: center; transition: all 0.2s;">
+                        ✍️ Añadir firma manuscrita <span style="font-weight: 400; font-size: 12px;">(opcional)</span>
+                    </button>
+                    <!-- Canvas de firma: oculto por defecto -->
+                    <div id="firmaCanvasWrap" style="display: none; margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 12px; color: var(--text-light);">Dibuja con el dedo o el ratón:</span>
+                            <button type="button" onclick="limpiarFirma()" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 12px; font-weight: 600; padding: 0;">🧹 Borrar</button>
                         </div>
+                        <div style="position: relative; border: 2px dashed var(--border); border-radius: 8px; background: white; touch-action: none;">
+                            <canvas id="canvasFirma" width="600" height="130" style="width: 100%; height: 130px; display: block; cursor: crosshair; border-radius: 6px;"></canvas>
+                            <div id="firmaPlaceholder" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #cbd5e1; font-size: 13px; pointer-events: none; user-select: none; text-align: center;">
+                                ✍️ Firma aquí
+                            </div>
+                        </div>
+                        <button type="button" onclick="ocultarCanvasFirma()"
+                            style="margin-top: 6px; background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 12px; padding: 0; width: 100%; text-align: center;">
+                            ✕ Quitar firma y continuar sin firmar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -6611,8 +6621,12 @@ ${textoActa}`;
 
             document.getElementById('convocatoriaModal').classList.add('active');
 
-            // Inicializar canvas de firma (cada apertura empieza limpio)
-            inicializarCanvasFirma();
+            // Reiniciar firma: ocultar canvas, mostrar botón toggle (cada apertura empieza limpio)
+            const firmaWrap = document.getElementById('firmaCanvasWrap');
+            const firmaBtn  = document.getElementById('btnToggleFirma');
+            if (firmaWrap) firmaWrap.style.display = 'none';
+            if (firmaBtn)  firmaBtn.style.display  = 'flex';
+            window._firmaPintada = false;
         };
 
         window.cerrarFormularioConvocatoria = function() {
@@ -6628,6 +6642,30 @@ ${textoActa}`;
         // ===== FIRMA MANUSCRITA EN CANVAS =====
         // Estado del canvas: si el usuario ha pintado algo
         window._firmaPintada = false;
+
+        // Toggle mostrar/ocultar canvas de firma
+        window.toggleCanvasFirma = function() {
+            const wrap = document.getElementById('firmaCanvasWrap');
+            const btn  = document.getElementById('btnToggleFirma');
+            if (!wrap) return;
+            if (wrap.style.display === 'none') {
+                wrap.style.display = 'block';
+                btn.style.display = 'none';
+                // Inicializar canvas si aún no se hizo
+                inicializarCanvasFirma();
+            } else {
+                wrap.style.display = 'none';
+                btn.style.display = 'flex';
+            }
+        };
+
+        window.ocultarCanvasFirma = function() {
+            const wrap = document.getElementById('firmaCanvasWrap');
+            const btn  = document.getElementById('btnToggleFirma');
+            if (wrap) wrap.style.display = 'none';
+            if (btn)  btn.style.display = 'flex';
+            limpiarFirma();
+        };
         let _firmaCtx = null;
         let _firmaPintando = false;
         let _firmaUltimoX = 0, _firmaUltimoY = 0;
@@ -6900,9 +6938,9 @@ ${textoActa}`;
                 const doc = new jsPDF({ unit: 'mm', format: 'a4' });
                 const pageW = doc.internal.pageSize.getWidth();
                 const pageH = doc.internal.pageSize.getHeight();
-                const marginX = 22;
+                const marginX = 18;           // reducido de 22
                 const usableW = pageW - marginX * 2;
-                let y = 22;
+                let y = 16;                   // reducido de 22
 
                 const checkPage = (extra = 0) => {
                     if (y + extra > pageH - 30) {
@@ -6912,7 +6950,7 @@ ${textoActa}`;
                 };
 
                 // --- Cabecera institucional con logo ---
-                const logoSize = 18;
+                const logoSize = 16;           // reducido de 18
                 const textoX = marginX + logoSize + 4;
 
                 try {
@@ -6937,15 +6975,15 @@ ${textoActa}`;
                 doc.text('Consejería de Desarrollo Educativo y F.P. — Junta de Andalucía', textoX, y + 10);
                 doc.text('Santa Fe (Granada) — Código: 18008853', textoX, y + 15);
 
-                y += logoSize + 10;
+                y += logoSize + 7;            // reducido de +10
                 doc.setTextColor(0, 0, 0);
 
                 // --- Título principal ---
-                doc.setFontSize(15);
+                doc.setFontSize(14);           // reducido de 15
                 doc.setFont('helvetica', 'bold');
                 doc.text('CONVOCATORIA DE REUNIÓN', pageW / 2, y, { align: 'center' });
-                y += 7;
-                doc.setFontSize(12);
+                y += 6;                        // reducido de 7
+                doc.setFontSize(11);           // reducido de 12
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(60, 60, 60);
                 doc.text(nombreOrganoOficial.toUpperCase(), pageW / 2, y, { align: 'center' });
@@ -6953,7 +6991,7 @@ ${textoActa}`;
 
                 // Si es Consejo Escolar, distinguir el destinatario del PDF
                 if (etiquetaDestinatarios) {
-                    y += 6;
+                    y += 5;                    // reducido de 6
                     doc.setFontSize(10);
                     doc.setFont('helvetica', 'italic');
                     doc.setTextColor(120, 120, 120);
@@ -6961,7 +6999,7 @@ ${textoActa}`;
                     doc.setTextColor(0, 0, 0);
                     doc.setFont('helvetica', 'normal');
                 }
-                y += 12;
+                y += 9;                        // reducido de 12
 
                 // --- Encabezado administrativo ---
                 doc.setFontSize(11);
@@ -6973,8 +7011,9 @@ ${textoActa}`;
                     : (esConsejoEscolar ? 'a los miembros del Consejo Escolar' : 'al profesorado correspondiente');
                 const intro = `Por la presente, ${convocante}, en su condición de ${cargoConvocante} del CEIP Capitulaciones de Santa Fe, convoca ${aQuienConvoca} a la siguiente reunión:`;
                 const introLineas = doc.splitTextToSize(intro, usableW);
-                introLineas.forEach(l => { checkPage(7); doc.text(l, marginX, y); y += 6; });
-                y += 4;
+                doc.setFontSize(10);           // ligeramente más pequeño
+                introLineas.forEach(l => { checkPage(6); doc.text(l, marginX, y); y += 5.5; });
+                y += 3;                        // reducido de 4
 
                 // --- Datos de la reunión ---
                 const datosReunion = [
@@ -6987,20 +7026,21 @@ ${textoActa}`;
                     datosReunion.push(['Lugar:', lugar]);
                 }
 
+                doc.setFontSize(10);
                 datosReunion.forEach(([etiqueta, valor]) => {
-                    checkPage(7);
+                    checkPage(6);
                     doc.setFont('helvetica', 'bold');
                     doc.text(etiqueta, marginX, y);
                     doc.setFont('helvetica', 'normal');
                     const valorLineas = doc.splitTextToSize(valor, usableW - 38);
                     valorLineas.forEach((l, i) => {
-                        if (i > 0) { checkPage(6); y += 6; }
+                        if (i > 0) { checkPage(5); y += 5; }
                         doc.text(l, marginX + 38, y);
                     });
-                    y += 7;
+                    y += 6;                    // reducido de 7
                 });
 
-                y += 4;
+                y += 3;                        // reducido de 4
 
                 // --- Modalidad telemática: enlaces ---
                 if (modalidad === 'telematica' && (enlaces.length > 0 || enlaceWeb)) {
@@ -7045,78 +7085,80 @@ ${textoActa}`;
                 }
 
                 // --- Orden del día ---
-                checkPage(12);
+                checkPage(10);
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(12);
+                doc.setFontSize(11);           // reducido de 12
                 doc.text('ORDEN DEL DÍA', marginX, y);
-                y += 7;
+                y += 6;                        // reducido de 7
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(11);
+                doc.setFontSize(10);           // reducido de 11
 
                 if (ordenDia.length === 0) {
                     doc.setTextColor(120, 120, 120);
                     doc.text('(Sin puntos definidos)', marginX, y);
                     doc.setTextColor(0, 0, 0);
-                    y += 7;
+                    y += 6;
                 } else {
                     ordenDia.forEach((punto, i) => {
                         const numero = `${i + 1}.`;
                         const lineas = doc.splitTextToSize(punto, usableW - 10);
-                        checkPage(lineas.length * 6 + 2);
+                        checkPage(lineas.length * 5.5 + 2);
                         doc.setFont('helvetica', 'bold');
                         doc.text(numero, marginX, y);
                         doc.setFont('helvetica', 'normal');
                         lineas.forEach((l, idx) => {
-                            if (idx > 0) { checkPage(6); y += 6; }
+                            if (idx > 0) { checkPage(5); y += 5; }
                             doc.text(l, marginX + 8, y);
                         });
-                        y += 7;
+                        y += 6;                // reducido de 7
                     });
                 }
 
-                y += 4;
+                y += 3;                        // reducido de 4
 
                 // --- Pie administrativo ---
-                checkPage(20);
-                doc.setFontSize(10);
+                checkPage(18);
+                doc.setFontSize(9);            // reducido de 10
                 doc.setFont('helvetica', 'italic');
                 doc.setTextColor(70, 70, 70);
                 const pie = 'De conformidad con lo establecido en la normativa vigente, se ruega la asistencia puntual y, en caso de no poder asistir, su justificación previa al coordinador/a.';
                 const pieLineas = doc.splitTextToSize(pie, usableW);
-                pieLineas.forEach(l => { checkPage(5); doc.text(l, marginX, y); y += 5; });
+                pieLineas.forEach(l => { checkPage(5); doc.text(l, marginX, y); y += 4.5; });
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
-                y += 8;
+                y += 6;                        // reducido de 8
 
                 // --- Firma ---
-                checkPage(50);
-                doc.setFontSize(11);
+                checkPage(36);                 // reducido de 50: solo necesitamos ~36mm para firma
+                doc.setFontSize(10);           // reducido de 11
                 doc.text(`En Santa Fe, a ${hoyTexto}`, marginX, y);
-                y += 6;
+                y += 5;                        // reducido de 6
 
                 const firmaDataURL = obtenerFirmaPNG();
                 if (firmaDataURL) {
-                    checkPage(30);
+                    checkPage(26);
                     try {
-                        doc.addImage(firmaDataURL, 'PNG', marginX + 6, y, 60, 22);
-                        y += 22;
+                        doc.addImage(firmaDataURL, 'PNG', marginX + 6, y, 55, 18); // ligeramente más pequeña
+                        y += 18;
                     } catch (errFirma) {
                         console.warn('No se pudo insertar la firma manuscrita:', errFirma);
-                        y += 6;
+                        y += 4;
                     }
                 } else {
-                    y += 6;
+                    y += 4;                    // reducido de 6 (espacio para línea de firma)
                 }
 
                 doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
                 doc.text('Fdo.:', marginX, y);
                 doc.setLineWidth(0.3);
                 doc.line(marginX + 10, y, marginX + 80, y);
                 y += 5;
                 doc.setFont('helvetica', 'bold');
                 doc.text(convocante, marginX, y);
-                y += 5;
+                y += 4;
                 doc.setFont('helvetica', 'italic');
+                doc.setFontSize(9);
                 doc.setTextColor(80, 80, 80);
                 doc.text(cargoConvocante, marginX, y);
                 doc.setTextColor(0, 0, 0);
