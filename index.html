@@ -148,14 +148,14 @@
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        /* Mejorar visibilidad del input de nombre en móviles */
-        #inputNombre {
+        /* Mejorar visibilidad del selector de nombre en móviles */
+        #selectNombre, #inputNombreManual {
             border: 3px solid var(--primary);
             background: white;
             box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
         }
 
-        #inputNombre::placeholder {
+        #inputNombreManual::placeholder {
             color: #94a3b8;
             font-weight: 500;
         }
@@ -2431,7 +2431,7 @@
                 0 0 0 3px rgba(37, 99, 235, 0.15),
                 0 4px 12px rgba(37, 99, 235, 0.08);
         }
-        #inputNombre {
+        #selectNombre, #inputNombreManual {
             background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 1),
@@ -3221,9 +3221,15 @@
                 <div class="form-group">
                     <label>
                         Tu nombre:
-                        <span class="tooltip" data-tooltip="Este nombre aparecerá en todas tus aportaciones">?</span>
+                        <span class="tooltip" data-tooltip="Selecciona tu nombre de la lista. Si no apareces, elige 'Otro / Externo'">?</span>
                     </label>
-                    <input type="text" id="inputNombre" placeholder="Ej: María García">
+                    <select id="selectNombre" onchange="onCambioNombre(this)"
+                            style="width:100%; padding:10px; border:2px solid var(--border); border-radius:8px; font-size:14px; background:white;">
+                        <option value="">— Selecciona tu nombre —</option>
+                        <!-- se rellena por JS -->
+                    </select>
+                    <input type="text" id="inputNombreManual" placeholder="Escribe tu nombre completo"
+                           style="display:none; margin-top:8px; width:100%; padding:10px; border:2px solid var(--border); border-radius:8px; font-size:14px; box-sizing:border-box;">
                 </div>
                 <div class="form-group">
                     <label>
@@ -3492,6 +3498,44 @@
         // Normaliza un nombre para usarlo como clave en Firebase
         // (Firebase no admite . # $ [ ] /)
         window.normalizarClaveAsistencia = function(nombre) {
+
+        // Poblar el desplegable de nombre con el claustro
+        (function poblarSelectNombre() {
+            const sel = document.getElementById('selectNombre');
+            if (!sel) return;
+            window.CLAUSTRO_CAPITULACIONES.slice()
+                .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+                .forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.nombre;
+                    opt.textContent = `${p.nombre} — ${p.puesto}`;
+                    sel.appendChild(opt);
+                });
+            const optOtro = document.createElement('option');
+            optOtro.value = '__externo__';
+            optOtro.textContent = '✏️ Otro / Externo (escribir nombre)';
+            sel.appendChild(optOtro);
+        })();
+
+        window.onCambioNombre = function(sel) {
+            const manual = document.getElementById('inputNombreManual');
+            if (sel.value === '__externo__') {
+                manual.style.display = 'block';
+                manual.focus();
+            } else {
+                manual.style.display = 'none';
+            }
+        };
+
+        // Helper: obtener el nombre final del input de la pantalla inicio
+        window.getNombreInicio = function() {
+            const sel = document.getElementById('selectNombre');
+            if (!sel) return '';
+            if (sel.value === '__externo__') {
+                return document.getElementById('inputNombreManual').value.trim();
+            }
+            return sel.value;
+        };
             return nombre
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '') // quita acentos
@@ -3629,7 +3673,7 @@
 
         // Crear sesión
         window.crearSesion = async function() {
-            const nombre = document.getElementById('inputNombre').value.trim();
+            const nombre = window.getNombreInicio();
             const rol = document.getElementById('selectRol').value;
             const idReunion = document.getElementById('selectReunion').value;
             const fecha = document.getElementById('inputFecha').value;
@@ -3735,7 +3779,7 @@
 
         // Unirse a sesión
         window.unirseASesion = async function() {
-            const nombre = document.getElementById('inputNombre').value.trim();
+            const nombre = window.getNombreInicio();
             const rol = document.getElementById('selectRol').value;
             const idReunion = document.getElementById('selectReunion').value;
             const fecha = document.getElementById('inputFecha').value;
@@ -5841,33 +5885,47 @@ ${textoActa}`;
             modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 20px;';
             
             modal.innerHTML = `
-                <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">ℹ️</div>
-                    <h3 style="color: var(--primary); margin-bottom: 15px;">Formato del Acta</h3>
-                    <p style="color: var(--text); margin-bottom: 20px; line-height: 1.6;">
-                        Recuerda darle formato correcto al acta en el ChatGPT del cole:
+                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
+                    <div style="font-size: 44px; margin-bottom: 12px;">✅</div>
+                    <h3 style="color: var(--primary); margin-bottom: 10px;">Acta copiada al portapapeles</h3>
+                    <p style="color: var(--text); margin-bottom: 20px; line-height: 1.6; font-size: 14px;">
+                        ¿Qué quieres hacer ahora?
                     </p>
-                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones" 
+
+                    <!-- Opción 1: ChatGPT formato -->
+                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
                        target="_blank"
-                       style="display: inline-block; background: var(--primary); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 15px;">
-                        🤖 Abrir ChatGPT del CEIP Capitulaciones
+                       style="display: flex; align-items: center; gap: 12px; background: #10a37f; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-bottom: 10px; font-size: 14px;">
+                        <span style="font-size: 22px;">🤖</span>
+                        <span style="text-align: left;">
+                            <strong>Dar formato al acta</strong><br>
+                            <span style="font-weight: 400; font-size: 12px; opacity: 0.9;">Pega el texto en el ChatGPT del cole para obtener el acta con formato profesional</span>
+                        </span>
                     </a>
-                    <div>
-                        <button onclick="this.closest('div').parentElement.parentElement.remove()" 
-                                style="background: transparent; border: 2px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            Entendido
-                        </button>
-                    </div>
+
+                    <!-- Opción 2: GPT PDF oficial -->
+                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
+                       target="_blank"
+                       style="display: flex; align-items: center; gap: 12px; background: #2563eb; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-bottom: 18px; font-size: 14px;">
+                        <span style="font-size: 22px;">📄</span>
+                        <span style="text-align: left;">
+                            <strong>Generar PDF oficial del acta</strong><br>
+                            <span style="font-weight: 400; font-size: 12px; opacity: 0.9;">Pega el texto en el GPT de actas para obtener el documento PDF listo para firmar</span>
+                        </span>
+                    </a>
+
+                    <button onclick="this.closest('div').parentElement.remove()"
+                            style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        Ahora no
+                    </button>
                 </div>
             `;
             
             document.body.appendChild(modal);
             
-            // Cerrar al hacer clic fuera
             modal.onclick = function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
+                if (e.target === modal) modal.remove();
+            };
             };
         }
 
@@ -6159,7 +6217,18 @@ ${textoActa}`;
             }
 
             // Volcar a los inputs reales del menú principal — así reusamos crearSesion / unirseASesion
-            document.getElementById('inputNombre').value = e.nombre;
+            // Intentar seleccionar el nombre en el desplegable del claustro; si no aparece, poner en manual
+            const selNombre = document.getElementById('selectNombre');
+            const optMatch = selNombre && Array.from(selNombre.options).find(o => o.value === e.nombre);
+            if (optMatch) {
+                selNombre.value = e.nombre;
+                document.getElementById('inputNombreManual').style.display = 'none';
+            } else if (selNombre) {
+                selNombre.value = '__externo__';
+                const manual = document.getElementById('inputNombreManual');
+                manual.style.display = 'block';
+                manual.value = e.nombre;
+            }
             document.getElementById('selectRol').value = e.rol;
             document.getElementById('selectReunion').value = e.reunion;
             document.getElementById('inputFecha').value = e.fecha;
