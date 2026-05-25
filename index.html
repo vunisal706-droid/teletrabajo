@@ -3498,6 +3498,14 @@
         // Normaliza un nombre para usarlo como clave en Firebase
         // (Firebase no admite . # $ [ ] /)
         window.normalizarClaveAsistencia = function(nombre) {
+            return nombre
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // quita acentos
+                .replace(/[.#$\[\]\/]/g, '')      // quita caracteres prohibidos
+                .replace(/\s+/g, '_')             // espacios -> _
+                .replace(/,/g, '')                // quita comas
+                .toLowerCase();
+        };
 
         // Poblar el desplegable de nombre con el claustro
         (function poblarSelectNombre() {
@@ -3535,14 +3543,6 @@
                 return document.getElementById('inputNombreManual').value.trim();
             }
             return sel.value;
-        };
-            return nombre
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '') // quita acentos
-                .replace(/[.#$\[\]\/]/g, '')      // quita caracteres prohibidos
-                .replace(/\s+/g, '_')             // espacios -> _
-                .replace(/,/g, '')                // quita comas
-                .toLowerCase();
         };
 
         // ÓRDENES DEL DÍA PREDEFINIDOS POR ÓRGANO Y MES
@@ -5925,7 +5925,6 @@ ${textoActa}`;
             
             modal.onclick = function(e) {
                 if (e.target === modal) modal.remove();
-            };
             };
         }
 
