@@ -6439,6 +6439,8 @@ ${textoActa}`;
             } catch (e) {
                 console.log('ℹ️ No hay videollamadas configuradas:', e.message);
             }
+            // Guardar en window para que compartirCitacion pueda usarlos
+            window.videollamadasActuales = videollamadas;
 
             // Construir URL para el QR
             // Obtener la URL base correctamente para GitHub Pages
@@ -7423,7 +7425,17 @@ ${textoActa}`;
             window.ordenDia.forEach((punto, index) => {
                 textoCompleto += `${index + 1}. ${punto}\n`;
             });
-            
+
+            // Añadir enlaces de videollamada si existen
+            const vl = window.videollamadasActuales;
+            if (vl) {
+                const enlace1 = vl.enlace1 || vl.enlace;
+                const enlace2 = vl.enlace2;
+                textoCompleto += `\n*🎥 VIDEOLLAMADA:*\n`;
+                if (enlace1) textoCompleto += `1️⃣ Enlace principal: ${enlace1}\n`;
+                if (enlace2) textoCompleto += `2️⃣ Enlace alternativo: ${enlace2}\n`;
+            }
+
             textoCompleto += `\n*📱 ACCESO RÁPIDO:*\n`;
             textoCompleto += `${qrUrl}\n\n`;
             textoCompleto += `👆 Pulsa el enlace o escanea el QR para unirte directamente`;
