@@ -2766,73 +2766,72 @@
                     <div id="citacion-videollamadas"></div>
                 </div>
 
-                <div class="qr-container">
-                    <h3>📱 Acceso Rápido</h3>
-                    <div id="qrcode"></div>
-                    <div class="qr-instructions">
-                        <strong>Escanea este código QR con tu móvil</strong><br>
-                        para unirte directamente a la reunión
+                <!-- qrcode div oculto: lo usa el JS internamente para generar el enlace -->
+                <div id="qrcode" style="display:none;"></div>
+                <div style="margin-top: 12px; padding: 16px; background: rgba(37,99,235,0.05); border-radius: 10px; border: 1px solid rgba(37,99,235,0.2);">
+                    <strong style="display: block; margin-bottom: 8px; color: var(--primary); font-size: 14px;">🔗 Enlace directo a la sala:</strong>
+                    <input type="text" id="enlaceReunionMostrado" readonly
+                           style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: white; font-family: monospace; margin-bottom: 10px;">
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="copiarEnlaceReunion()"
+                                style="flex: 1; background: var(--success); color: white; border: none; border-radius: 6px; padding: 10px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;"
+                                title="Copiar enlace al portapapeles">
+                            📋 Copiar Enlace
+                        </button>
+                        <button onclick="compartirEnlaceReunion()"
+                                style="background: #f97316; color: white; border: none; border-radius: 6px; padding: 10px 16px; cursor: pointer; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-shrink: 0;"
+                                title="Compartir enlace por WhatsApp u otras apps">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                            Compartir
+                        </button>
                     </div>
-                    
-                    <!-- Enlace directo con botón compartir -->
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(37, 99, 235, 0.05); border-radius: 8px; border: 1px solid rgba(37, 99, 235, 0.2);">
-                        <strong style="display: block; margin-bottom: 8px; color: var(--primary);">🔗 Enlace directo:</strong>
-                        <input type="text" id="enlaceReunionMostrado" readonly 
-                               style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: white; font-family: monospace; margin-bottom: 10px;">
-                        <div style="display: flex; gap: 8px;">
-                            <button onclick="copiarEnlaceReunion()" 
-                                    style="flex: 1; background: var(--success); color: white; border: none; border-radius: 6px; padding: 10px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;" 
-                                    title="Copiar enlace al portapapeles">
-                                📋 Copiar Enlace
-                            </button>
-                            <button onclick="compartirEnlaceReunion()" 
-                                    style="background: var(--primary); color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 8px; flex-shrink: 0;" 
-                                    title="Compartir enlace">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Enlace para familias (solo Consejo Escolar) -->
-                    <div id="enlaceFamiliasSection" style="display: none; margin-top: 15px; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; border: 2px solid rgba(139, 92, 246, 0.3);">
-                        <strong style="display: block; margin-bottom: 8px; color: #8b5cf6;">👨‍👩‍👧 Enlace para FAMILIAS:</strong>
-                        <p style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">Este enlace especial es para invitar a representantes de familias. Solo podrán ver esta reunión.</p>
-                        <input type="text" id="enlaceFamiliasMostrado" readonly 
-                               style="width: 100%; padding: 10px; border: 1px solid #8b5cf6; border-radius: 6px; font-size: 13px; background: white; font-family: monospace; margin-bottom: 10px;">
-                        <div style="display: flex; gap: 8px;">
-                            <button onclick="copiarEnlaceFamilias()" 
-                                    style="flex: 1; background: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 10px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;" 
-                                    title="Copiar enlace para familias">
-                                📋 Copiar Enlace Familias
-                            </button>
-                            <button onclick="compartirEnlaceFamilias()" 
-                                    style="background: #8b5cf6; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 8px; flex-shrink: 0;" 
-                                    title="Compartir enlace para familias">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
-                                </svg>
-                            </button>
-                        </div>
+                </div>
+
+                <!-- Enlace para familias (solo Consejo Escolar) -->
+                <div id="enlaceFamiliasSection" style="display: none; margin-top: 12px; padding: 15px; background: rgba(139,92,246,0.1); border-radius: 8px; border: 2px solid rgba(139,92,246,0.3);">
+                    <strong style="display: block; margin-bottom: 8px; color: #8b5cf6;">👨‍👩‍👧 Enlace para FAMILIAS:</strong>
+                    <p style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">Este enlace especial es para invitar a representantes de familias. Solo podrán ver esta reunión.</p>
+                    <input type="text" id="enlaceFamiliasMostrado" readonly
+                           style="width: 100%; padding: 10px; border: 1px solid #8b5cf6; border-radius: 6px; font-size: 12px; background: white; font-family: monospace; margin-bottom: 10px;">
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="copiarEnlaceFamilias()"
+                                style="flex: 1; background: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 10px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;"
+                                title="Copiar enlace para familias">
+                            📋 Copiar Enlace Familias
+                        </button>
+                        <button onclick="compartirEnlaceFamilias()"
+                                style="background: #f97316; color: white; border: none; border-radius: 6px; padding: 10px 16px; cursor: pointer; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-shrink: 0;"
+                                title="Compartir enlace para familias">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                            Compartir
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="citacion-footer">
-                <button id="btnConvocatoriaPDF" class="btn btn-success btn-convocatoria-destacado" onclick="abrirFormularioConvocatoria()">
-                    📄 Convocatoria PDF
-                    <span class="etiqueta-recomendado">RECOMENDADO</span>
-                </button>
-                <button class="btn btn-outline" onclick="descargarQR()">
-                    ⬇️ Descargar QR
-                </button>
-                <button class="btn btn-outline" onclick="compartirCitacion()">
-                    📤 Compartir enlace
-                </button>
-                <button class="btn btn-outline" onclick="cerrarCitacion()">
-                    ❌ Cerrar
-                </button>
+            <div class="citacion-footer" style="display: flex; flex-direction: column; gap: 10px; padding-top: 14px;">
+                <!-- Bloque Convocatoria PDF destacado -->
+                <div style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); border-radius: 12px; padding: 14px 16px; position: relative; overflow: hidden;">
+                    <span style="position: absolute; top: 8px; right: 10px; background: #fbbf24; color: #1c1917; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px;">RECOMENDADO</span>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.85); margin-bottom: 8px; padding-right: 80px; line-height: 1.4;">
+                        📄 <strong>Convocatoria oficial en PDF</strong> — Documento administrativo con el orden del día, enlaces y firma. Envíalo al equipo por WhatsApp o email.
+                    </div>
+                    <button id="btnConvocatoriaPDF" onclick="abrirFormularioConvocatoria()"
+                            style="width: 100%; background: white; color: #1d4ed8; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                        📄 Generar Convocatoria PDF
+                    </button>
+                </div>
+                <!-- Segunda fila: Compartir + Cerrar -->
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="compartirCitacion()"
+                            style="flex: 1; background: #f97316; color: white; border: none; border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(249,115,22,0.35);">
+                        📤 Compartir por WhatsApp
+                    </button>
+                    <button onclick="cerrarCitacion()"
+                            style="background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; padding: 12px 16px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                        ✕ Cerrar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -3310,6 +3309,23 @@
                     ℹ️ Los puntos se cargan automáticamente según el tipo de reunión y la fecha seleccionada.<br>
                     Puedes eliminar puntos o añadir otros nuevos según tus necesidades.
                 </div>
+
+                <!-- Horas de la reunión -->
+                <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 140px;">
+                        <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">⏰ Hora de inicio:</label>
+                        <input type="time" id="inputHoraInicio" value="16:30"
+                               style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;"
+                               onchange="guardarHorasReunion()">
+                    </div>
+                    <div style="flex: 1; min-width: 140px;">
+                        <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">🏁 Hora de finalización:</label>
+                        <input type="time" id="inputHoraFin" value=""
+                               style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;"
+                               onchange="guardarHorasReunion()">
+                    </div>
+                </div>
+
                 <div id="listaPuntos"></div>
                 <div class="form-group">
                     <label>Nuevo punto del orden del día:</label>
@@ -3786,6 +3802,19 @@
             mostrarTituloReunion(nombreReunion);
             cargarReunion();
             cambiarPantalla('screenReunion');
+        };
+
+        // Guardar horas de inicio y fin en Firebase
+        window.guardarHorasReunion = async function() {
+            if (!window.sesionActual || !window.fechaActual) return;
+            const horaInicio = document.getElementById('inputHoraInicio')?.value || '';
+            const horaFin    = document.getElementById('inputHoraFin')?.value || '';
+            try {
+                const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                await set(horasRef, { inicio: horaInicio, fin: horaFin });
+            } catch (err) {
+                console.warn('No se pudieron guardar las horas:', err);
+            }
         };
 
         // Agregar punto del orden del día
@@ -5493,7 +5522,17 @@
             texto += 'CEIP CAPITULACIONES DE SANTA FE\n';
             texto += 'ACTA DE REUNIÓN\n';
             texto += '═══════════════════════════════════════════\n\n';
-            texto += `📋 ${nombreReunion}\n\n`;
+            texto += `📋 ${nombreReunion}\n`;
+            texto += `📡 Modalidad: Telemática\n`;
+
+            // Horas de la reunión
+            if (sesionData.horas) {
+                const hi = sesionData.horas.inicio;
+                const hf = sesionData.horas.fin;
+                if (hi) texto += `⏰ Hora de inicio: ${hi} h\n`;
+                if (hf) texto += `🏁 Hora de finalización: ${hf} h\n`;
+            }
+            texto += '\n';
             
             // Participantes / Asistencia
             // Si el coordinador ha marcado asistencia explícitamente, usamos esa lista
@@ -5872,6 +5911,19 @@ ${textoActa}`;
                 // Actualizar window.ordenDia con los textos de los puntos
                 window.ordenDia = puntosArray.map(punto => punto.texto);
                 console.log('✅ Orden del día actualizado:', window.ordenDia);
+
+                // Cargar horas guardadas (solo una vez, sin listener continuo)
+                try {
+                    const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                    const horasSnap = await get(horasRef);
+                    if (horasSnap.exists()) {
+                        const h = horasSnap.val();
+                        const campoInicio = document.getElementById('inputHoraInicio');
+                        const campoFin    = document.getElementById('inputHoraFin');
+                        if (campoInicio && h.inicio) campoInicio.value = h.inicio;
+                        if (campoFin && h.fin)       campoFin.value    = h.fin;
+                    }
+                } catch (e) { /* sin horas guardadas aún */ }
 
                 puntosArray.forEach(punto => {
                     const div = document.createElement('div');
@@ -6623,6 +6675,12 @@ ${textoActa}`;
 
             document.getElementById('convocatoriaModal').classList.add('active');
 
+            // Pre-rellenar hora de inicio desde el campo de la pantalla de organización
+            const horaInicioGuardada = document.getElementById('inputHoraInicio')?.value;
+            if (horaInicioGuardada) {
+                document.getElementById('convocatoriaHora').value = horaInicioGuardada;
+            }
+
             // Reiniciar firma: ocultar canvas, mostrar botón toggle (cada apertura empieza limpio)
             const firmaWrap = document.getElementById('firmaCanvasWrap');
             const firmaBtn  = document.getElementById('btnToggleFirma');
@@ -6900,6 +6958,16 @@ ${textoActa}`;
                         console.warn('No se pudieron guardar los enlaces en Firebase:', err);
                     }
                 }
+                // Sincronizar hora de inicio con el campo de la pantalla y Firebase
+                try {
+                    const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                    const horasSnap = await get(horasRef);
+                    const horasAct  = horasSnap.exists() ? horasSnap.val() : {};
+                    horasAct.inicio = horaInicio;
+                    await set(horasRef, horasAct);
+                    const campoInicio = document.getElementById('inputHoraInicio');
+                    if (campoInicio) campoInicio.value = horaInicio;
+                } catch (err) { /* no crítico */ }
             }
 
             // 2) Recopilar datos de la reunión actual
@@ -7437,16 +7505,16 @@ ${textoActa}`;
             }
 
             textoCompleto += `\n*📱 ACCESO RÁPIDO:*\n`;
-            textoCompleto += `${qrUrl}\n\n`;
-            textoCompleto += `👆 Pulsa el enlace o escanea el QR para unirte directamente`;
+            textoCompleto += `${qrUrl}\n`;
+            textoCompleto += `👆 Pulsa el enlace para unirte directamente a la reunión`;
 
             // Intentar usar Web Share API si está disponible
             if (navigator.share) {
                 try {
                     await navigator.share({
                         title: `Convocatoria: ${window.sesionActual}`,
-                        text: textoCompleto,
-                        url: qrUrl
+                        text: textoCompleto
+                        // sin url: para evitar que aparezca dos veces el enlace
                     });
                     console.log('✅ Compartido correctamente');
                 } catch (err) {
@@ -7883,7 +7951,7 @@ ${textoActa}`;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        z-index: 10000;
+                        z-index: 20000;
                         animation: fadeIn 0.2s ease;
                     }
 
