@@ -5745,21 +5745,34 @@
             const textoActa = await generarTextoActa();
             
             if (!textoActa) return;
-            
+
+            // Construir prompt completo con instrucciones de formato y espaciado
+            const prompt = `INSTRUCCIONES PARA GENERAR EL ACTA:
+
+A partir del texto de reunión que encontrarás al final, genera un ACTA DE REUNIÓN oficial con el siguiente formato:
+
+FORMATO DEL DOCUMENTO:
+- Encabezado institucional: logos y nombre del centro en la parte superior. El encabezado debe ocupar el mínimo espacio posible y estar pegado al título sin líneas en blanco entre medias.
+- Título centrado y en negrita: "ACTA DE REUNIÓN DE [ÓRGANO]" y "ACTA Nº ___". Debe aparecer inmediatamente debajo del encabezado, sin espacio extra.
+- En todas las páginas del documento, el contenido debe comenzar lo más arriba posible, sin márgenes superiores grandes ni espacios en blanco innecesarios.
+- Párrafo de apertura: "En Santa Fe, siendo las [HORA] horas del día [FECHA], se celebra reunión de [ÓRGANO COMPLETO] del CEIP Capitulaciones, en modalidad telemática."
+- Sección ASISTENTES con nombre y puesto de cada persona.
+- Sección de DESARROLLO con cada punto del orden del día numerado.
+- Sin bloque de firmas al final. Las firmas se gestionan por Séneca.
+- Márgenes normales y compactos en todas las páginas. Cero espaciado extra entre el encabezado y el cuerpo del documento.
+
+IMPORTANTE AL FINALIZAR:
+Una vez hayas generado el acta formateada, pregunta al usuario:
+"¿Deseas que genere también el PDF oficial del acta listo para imprimir y firmar?"
+
+═══════════════════════════════════════════
+DATOS DE LA REUNIÓN:
+═══════════════════════════════════════════
+
+${textoActa}`;
+
             try {
-                await navigator.clipboard.writeText(textoActa);
-                
-                // Mostrar mensaje de confirmación
-                const toast = document.createElement('div');
-                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
-                toast.textContent = '✅ Acta copiada al portapapeles';
-                document.body.appendChild(toast);
-                
-                setTimeout(() => {
-                    toast.remove();
-                }, 3000);
-                
-                // Mostrar aviso de ChatGPT
+                await navigator.clipboard.writeText(prompt);
                 mostrarAvisoChatGPT();
             } catch (err) {
                 alert('Error al copiar. Por favor, intenta de nuevo.');
@@ -5882,47 +5895,30 @@ ${textoActa}`;
         // Mostrar aviso de ChatGPT después de exportar
         function mostrarAvisoChatGPT() {
             const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 20px;';
-            
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
+
             modal.innerHTML = `
-                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
-                    <div style="font-size: 44px; margin-bottom: 12px;">✅</div>
-                    <h3 style="color: var(--primary); margin-bottom: 10px;">Acta copiada al portapapeles</h3>
-                    <p style="color: var(--text); margin-bottom: 20px; line-height: 1.6; font-size: 14px;">
-                        ¿Qué quieres hacer ahora?
+                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
+                    <div style="font-size: 44px; margin-bottom: 10px;">✅</div>
+                    <h3 style="color: #16a34a; margin-bottom: 8px;">Prompt copiado</h3>
+                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 20px; line-height: 1.5;">
+                        Abre el ChatGPT del cole, pega el texto y él generará el acta.<br>
+                        <strong>Al terminar te preguntará si quieres el PDF oficial.</strong>
                     </p>
-
-                    <!-- Opción 1: ChatGPT formato -->
                     <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
                        target="_blank"
-                       style="display: flex; align-items: center; gap: 12px; background: #10a37f; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-bottom: 10px; font-size: 14px;">
-                        <span style="font-size: 22px;">🤖</span>
-                        <span style="text-align: left;">
-                            <strong>Dar formato al acta</strong><br>
-                            <span style="font-weight: 400; font-size: 12px; opacity: 0.9;">Pega el texto en el ChatGPT del cole para obtener el acta con formato profesional</span>
-                        </span>
+                       onclick="this.closest('div').parentElement.remove()"
+                       style="display: block; background: #10a37f; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 12px;">
+                        🤖 Abrir ChatGPT del cole
                     </a>
-
-                    <!-- Opción 2: GPT PDF oficial -->
-                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
-                       target="_blank"
-                       style="display: flex; align-items: center; gap: 12px; background: #2563eb; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-bottom: 18px; font-size: 14px;">
-                        <span style="font-size: 22px;">📄</span>
-                        <span style="text-align: left;">
-                            <strong>Generar PDF oficial del acta</strong><br>
-                            <span style="font-weight: 400; font-size: 12px; opacity: 0.9;">Pega el texto en el GPT de actas para obtener el documento PDF listo para firmar</span>
-                        </span>
-                    </a>
-
                     <button onclick="this.closest('div').parentElement.remove()"
-                            style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                            style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px;">
                         Ahora no
                     </button>
                 </div>
             `;
-            
+
             document.body.appendChild(modal);
-            
             modal.onclick = function(e) {
                 if (e.target === modal) modal.remove();
             };
