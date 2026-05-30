@@ -2242,7 +2242,7 @@
 
         /* Cuando hay un panel guía visible, dejar espacio arriba en el contenido */
         body.con-panel-guia .container {
-            padding-top: 220px;
+            padding-top: 290px;
         }
 
         /* Highlight del elemento que el guía está señalando */
@@ -2259,7 +2259,7 @@
         }
 
         @media (max-width: 540px) {
-            body.con-panel-guia .container { padding-top: 240px; }
+            body.con-panel-guia .container { padding-top: 310px; }
             .panel-guia-titulo strong { font-size: 13px; }
             .panel-guia-titulo small { font-size: 11px; }
             .panel-guia-instruccion strong { font-size: 14px; }
@@ -3174,7 +3174,7 @@
         <div class="panel-guia-cabecera">
             <span class="panel-guia-emoji">🐣</span>
             <div class="panel-guia-titulo">
-                <strong>Modo Guía — Paso <span id="pgPasoActual">1</span> de <span id="pgPasoTotal">4</span></strong>
+                <strong>Modo Guía — Paso <span id="pgPasoActual">1</span> de <span id="pgPasoTotal">7</span></strong>
                 <small id="pgSubtitulo">Configura tu reunión paso a paso</small>
             </div>
             <button class="panel-guia-cerrar" onclick="cerrarPanelGuiaConfig()" title="Salir del modo guía">✕</button>
@@ -3307,6 +3307,19 @@
                 <div>Reunión de:</div>
                 <div class="code" id="nombreReunion" style="font-size: 32px; letter-spacing: 2px;">------</div>
                 <p>Los participantes deben seleccionar la misma opción para unirse</p>
+            </div>
+
+            <!-- Gestión de videollamada en pantalla de configuración -->
+            <div class="card" id="cardVideollamadaConfig" style="border: 2px solid #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);">
+                <h2 style="color: #92400e;">🎥 Videollamada</h2>
+                <div class="info-box" style="background: rgba(245, 158, 11, 0.1); border-color: #f59e0b;">
+                    ℹ️ Si la reunión es telemática, configura aquí los enlaces de videollamada <strong>antes de generar la convocatoria</strong>. Así aparecerán en el PDF y podrás compartirlos con los compañeros.
+                </div>
+                <div id="videollamadaBannerConfig" style="margin-bottom: 10px;"></div>
+                <button id="btnGestionarVideollamadaConfig" class="btn btn-small" onclick="gestionarVideollamadaConfig()" 
+                    style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); font-weight: 700; font-size: 15px; width: 100%;">
+                    🎥 Gestionar Videollamada
+                </button>
             </div>
 
             <div class="card">
@@ -3477,7 +3490,7 @@
             { nombre: "Martín Pérez, María Silvia", puesto: "Educación Infantil" },
             { nombre: "Medina Salcedo, Miguel", puesto: "Educación Infantil" },
             { nombre: "Moreno Castro, Belén", puesto: "Música" },
-            { nombre: "Muñoz Romero, Encarnación", puesto: "Lengua Extranjera-Francés" },
+            { nombre: "Muñoz Romero, Encarnación", puesto: "Francés y Pedagogía Terapéutica" },
             { nombre: "Pachón Pérez, Lucía", puesto: "Educación Primaria" },
             { nombre: "Paniza Ortiz, Marisol", puesto: "Religión" },
             { nombre: "Peláez Martínez, María Encarnación", puesto: "Interculturalidad" },
@@ -3489,7 +3502,7 @@
             { nombre: "Sáez Guerrero, María Noelia", puesto: "Pedagogía Terapéutica T.E.A." },
             { nombre: "Sojo Cabello, Desiree", puesto: "Lengua Extranjera-Inglés" },
             { nombre: "Tortosa Espínola, Silvia Tatiana", puesto: "Primaria-Bilingüe Inglés" },
-            { nombre: "Unica Salas, Víctor Manuel", puesto: "Pedagogía Terapéutica" }
+            { nombre: "Única Salas, Víctor Manuel", puesto: "Pedagogía Terapéutica" }
         ];
         // Logo del CEIP Capitulaciones (embebido en base64 para que funcione offline en la PWA)
         // Dimensiones originales: 250x250 JPEG optimizado, ~5KB
@@ -3722,8 +3735,10 @@
                 
                 // Configurar y mostrar pantalla de configuración
                 document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
+                mostrarTituloReunion(getNombreReunion(idReunion, fecha));
                 setupPuntosListener();
                 cambiarPantalla('screenConfig');
+                setTimeout(() => { if(window.cargarVideollamadaConfig) cargarVideollamadaConfig(); }, 300);
             } else {
                 // Crear nueva reunión
                 await set(sesionRef, {
@@ -3737,8 +3752,10 @@
                 await cargarPuntosPredefinidos(idReunion, fecha);
                 
                 document.getElementById('nombreReunion').textContent = getNombreReunion(idReunion, fecha);
+                mostrarTituloReunion(getNombreReunion(idReunion, fecha));
                 setupPuntosListener();
                 cambiarPantalla('screenConfig');
+                setTimeout(() => { if(window.cargarVideollamadaConfig) cargarVideollamadaConfig(); }, 300);
             }
         };
 
@@ -3837,6 +3854,7 @@
                 mostrarTituloReunion(nombreReunion);
                 setupPuntosListener();
                 cambiarPantalla('screenConfig');
+                setTimeout(() => { if(window.cargarVideollamadaConfig) cargarVideollamadaConfig(); }, 300);
                 return;
             }
 
@@ -4724,6 +4742,41 @@
         window.cerrarModalVideollamada = function() {
             const modal = document.getElementById('modalVideollamada');
             if (modal) modal.remove();
+            // Refrescar banner en pantalla de configuración si está activa
+            if (window.cargarVideollamadaConfig) cargarVideollamadaConfig();
+        };
+
+        // Gestión de videollamada desde la pantalla de CONFIGURACIÓN
+        window.gestionarVideollamadaConfig = async function() {
+            await gestionarVideollamada();
+        };
+
+        // Cargar y mostrar banner de videollamada en la pantalla de configuración
+        window.cargarVideollamadaConfig = async function() {
+            const banner = document.getElementById('videollamadaBannerConfig');
+            if (!banner) return;
+            if (!window.sesionActual || !window.fechaActual) return;
+            const videollamadaRef = ref(database, 'sesiones/' + window.sesionActual + '/' + window.fechaActual + '/videollamada');
+            const snapshot = await get(videollamadaRef);
+            if (!snapshot.exists()) {
+                banner.innerHTML = '<p style="color:#92400e;font-size:13px;margin:0 0 10px 0;">⚠️ Sin videollamada configurada todavía. Pulsa el botón para añadir el enlace de Meet o Zoom.</p>';
+                return;
+            }
+            const v = snapshot.val();
+            const enlace1 = v.enlace1 || v.enlace || '';
+            const enlace2 = v.enlace2 || '';
+            let html = '<p style="color:#15803d;font-size:13px;font-weight:600;margin:0 0 8px 0;">✅ Videollamada configurada:</p>';
+            if (enlace1) {
+                html += '<div style="background:rgba(37,99,235,0.1);border-left:4px solid #2563eb;padding:10px;border-radius:8px;margin-bottom:8px;font-size:13px;">';
+                html += '<strong>1️⃣ Enlace Principal:</strong><br>';
+                html += '<a href="' + enlace1 + '" target="_blank" style="color:#2563eb;word-break:break-all;">' + enlace1 + '</a></div>';
+            }
+            if (enlace2) {
+                html += '<div style="background:rgba(16,185,129,0.1);border-left:4px solid #10b981;padding:10px;border-radius:8px;margin-bottom:8px;font-size:13px;">';
+                html += '<strong>2️⃣ Enlace Alternativo:</strong><br>';
+                html += '<a href="' + enlace2 + '" target="_blank" style="color:#10b981;word-break:break-all;">' + enlace2 + '</a></div>';
+            }
+            banner.innerHTML = html;
         };
 
         // Cargar videollamada
@@ -5939,8 +5992,13 @@ ${textoActa}`;
         };
 
         // Cargar puntos en configuración con listener en tiempo real
+        // Guard: evita registrar el mismo listener más de una vez
+        let puntosConfigListenerActivo = false;
+
         const setupPuntosListener = () => {
             if (!window.sesionActual || !window.fechaActual) return;
+            if (puntosConfigListenerActivo) return; // ya hay un listener activo
+            puntosConfigListenerActivo = true;
             
             const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
             onValue(puntosRef, async (snapshot) => {
@@ -5992,12 +6050,6 @@ ${textoActa}`;
             });
         };
 
-        // Cuando se crea una sesión, configurar el listener
-        const originalCrearSesion = window.crearSesion;
-        window.crearSesion = function() {
-            originalCrearSesion();
-            setTimeout(setupPuntosListener, 500);
-        };
 
         // ============================================================
         // MODO GUÍA — Wizard paso a paso
@@ -6249,33 +6301,45 @@ ${textoActa}`;
         //   5=iniciar reunión
         const PASOS_PANEL_GUIA = [
             {
+                icono: '⏰',
+                titulo: 'Hora de inicio y finalización',
+                descripcion: 'Mira los dos campos de hora que hay justo arriba de la lista de puntos: "⏰ Hora de inicio" y "🏁 Hora de finalización". La hora de inicio ya tiene 16:30 por defecto. Cámbiala si la reunión es a otra hora, y pon también la hora a la que calculáis terminar. Estos datos saldrán en la convocatoria PDF. Cuando los hayas ajustado, pulsa "Siguiente".',
+                resaltarSelector: '#inputHoraInicio'
+            },
+            {
                 icono: '📋',
                 titulo: 'Revisa el orden del día',
-                descripcion: 'La app ya ha rellenado los puntos automáticamente según el tipo de reunión y el mes. Mira la lista. Si hay algún punto que no encaja, púlsale el botón 🗑️ para quitarlo. Cuando hayas revisado, pulsa "Siguiente".',
-                resaltarSelector: '#screenConfig .card'
+                descripcion: 'La app ya ha rellenado los puntos del orden del día automáticamente según el tipo de reunión y el mes del año. Léelos con calma. Si algún punto no encaja con tu reunión de hoy, pulsa el botón ❌ que hay a su derecha para eliminarlo. No pasa nada, puedes volver a añadirlo después. Cuando hayas revisado la lista, pulsa "Siguiente".',
+                resaltarSelector: '#listaPuntos'
             },
             {
                 icono: '➕',
                 titulo: 'Añade puntos extra (si quieres)',
-                descripcion: 'Si necesitas añadir algo que no esté ya en la lista (un asunto urgente, ruegos y preguntas, etc.), escríbelo en la caja "Nuevo punto del orden del día" y pulsa el botón verde "➕ Agregar Punto". Si no hace falta añadir nada, pulsa "Siguiente".',
-                resaltarSelector: '#screenConfig .form-group'
+                descripcion: 'Si hay algún asunto que no aparece en la lista y quieres tratarlo en la reunión, escríbelo en el cuadro de texto que pone "Nuevo punto del orden del día" y después pulsa el botón verde "➕ Agregar Punto". Puedes añadir tantos puntos como necesites. Si la lista ya está completa tal como está, no hace falta añadir nada: pulsa directamente "Siguiente".',
+                resaltarSelector: '#inputNuevoPunto'
+            },
+            {
+                icono: '🎥',
+                titulo: 'Configura la videollamada (si la reunión es telemática)',
+                descripcion: 'Si la reunión se va a celebrar por videollamada, este es el momento de pegar el enlace de Google Meet o Zoom. Pulsa el botón amarillo "🎥 Gestionar Videollamada" que aparece en esta misma pantalla. Se abrirá una ventana: abre Google Meet, crea una reunión nueva, copia el enlace y pégalo en el campo "Enlace Principal". Así el enlace aparecerá automáticamente en la convocatoria PDF. Si la reunión es presencial, salta este paso pulsando "Siguiente".',
+                resaltarSelector: '#btnGestionarVideollamadaConfig'
             },
             {
                 icono: '🔗',
-                titulo: 'Abre el panel de citación',
-                descripcion: 'Pulsa el botón verde "🔗 Generar Enlaces de la Reunión". Se abrirá una ventana con el QR y el enlace de la sala. Cuando esté abierta, pulsa "Siguiente" para que te guíe al paso más importante.',
+                titulo: 'Genera la convocatoria y el QR',
+                descripcion: 'Pulsa el botón verde "🔗 Generar Enlaces de la Reunión". Se abrirá una ventana con el código QR, el enlace de la sala y los puntos del orden del día. Desde ahí podrás compartir el enlace por WhatsApp y descargar la convocatoria oficial en PDF. Cuando hayas abierto esa ventana, pulsa "Siguiente".',
                 resaltarSelector: 'button[onclick="generarCitacion()"]'
             },
             {
                 icono: '📄',
-                titulo: 'Genera la convocatoria oficial (¡importante!)',
-                descripcion: 'En la ventana abierta, pulsa el botón verde grande "📄 Convocatoria PDF". Es el botón más importante: prepara el documento oficial firmado para mandar a tus compañeros por WhatsApp o email. Cuando lo hayas descargado o compartido y cierres todas las ventanas, pulsa "Siguiente".',
+                titulo: '¡Descarga la convocatoria oficial en PDF!',
+                descripcion: 'En la ventana que se ha abierto, busca el botón verde grande "📄 Convocatoria PDF". Es el documento oficial con membrete del colegio, el orden del día, la hora y los enlaces de videollamada. Descárgalo y envíalo a tus compañeros por WhatsApp o email. Una vez que lo hayas compartido, cierra esa ventana y pulsa "Siguiente" aquí.',
                 resaltarSelector: '#btnConvocatoriaPDF'
             },
             {
                 icono: '🚀',
-                titulo: 'Inicia la reunión',
-                descripcion: '¡Último paso! Cuando todo esté listo, pulsa el botón azul "🚀 Iniciar Reunión". Entrarás en la sala donde verás a los maestros que se vayan uniendo. Si todavía no has avisado a nadie, vuelve atrás y comparte la convocatoria.',
+                titulo: '¡Inicia la reunión!',
+                descripcion: '¡Ya está todo listo! Pulsa el botón azul "🚀 Iniciar Reunión". Entrarás en la sala virtual donde irán apareciendo los compañeros que se vayan uniendo con el enlace o el QR que has compartido. Si todavía no has enviado la convocatoria, vuelve al paso anterior antes de iniciar. ¡Buena reunión!',
                 resaltarSelector: 'button[onclick="iniciarReunion()"]'
             }
         ];
