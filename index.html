@@ -5789,36 +5789,63 @@
             mostrarAvisoChatGPT();
         };
 
+        // Limpia caracteres Unicode decorativos que pueden truncar el pegado en IAs externas
+        function limpiarUnicodeParaIA(texto) {
+            return texto
+                // Separadores de línea doble (═══) → línea de guiones
+                .replace(/[═]{3,}/g, '---')
+                // Separadores de línea simple (───) → línea de guiones
+                .replace(/[─]{3,}/g, '---')
+                // Eliminar todos los emojis (no son apropiados en un acta oficial)
+                .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
+                .replace(/[\u{2600}-\u{27BF}]/gu, '')
+                // Marcas de asistencia especiales → guión simple
+                .replace(/✦/g, '-')
+                .replace(/✓/g, '-')
+                // Guión largo em dash → guión normal
+                .replace(/—/g, '-')
+                // Comillas tipográficas → rectas
+                .replace(/[""]/g, '"')
+                .replace(/['']/g, "'")
+                // Limpiar líneas que quedaron vacías tras quitar emojis
+                .replace(/^\s*-?\s*\n/gm, '')
+                // Colapsar más de dos saltos de línea seguidos
+                .replace(/\n{3,}/g, '\n\n');
+        }
+
         // Copiar al portapapeles
         window.copiarActa = async function() {
             const textoActa = await generarTextoActa();
             
             if (!textoActa) return;
 
+            // Sanitizar el texto del acta para evitar truncado por Unicode en IAs externas
+            const textoActaLimpio = limpiarUnicodeParaIA(textoActa);
+
             // Construir prompt completo con instrucciones de formato y espaciado
             const prompt = `INSTRUCCIONES PARA GENERAR EL ACTA:
 
-A partir del texto de reunión que encontrarás al final, genera un ACTA DE REUNIÓN oficial con el siguiente formato:
+A partir del texto de reunion que encontraras al final, genera un ACTA DE REUNION oficial con el siguiente formato:
 
 FORMATO DEL DOCUMENTO:
-- Encabezado institucional: logos y nombre del centro en la parte superior. El encabezado debe ocupar el mínimo espacio posible y estar pegado al título sin líneas en blanco entre medias.
-- Título centrado y en negrita: "ACTA DE REUNIÓN DE [ÓRGANO]" y "ACTA Nº ___". Debe aparecer inmediatamente debajo del encabezado, sin espacio extra.
-- En todas las páginas del documento, el contenido debe comenzar lo más arriba posible, sin márgenes superiores grandes ni espacios en blanco innecesarios.
-- Párrafo de apertura: "En Santa Fe, siendo las [HORA] horas del día [FECHA], se celebra reunión de [ÓRGANO COMPLETO] del CEIP Capitulaciones, en modalidad telemática."
-- Sección ASISTENTES con nombre y puesto de cada persona.
-- Sección de DESARROLLO con cada punto del orden del día numerado.
-- Sin bloque de firmas al final. Las firmas se gestionan por Séneca.
-- Márgenes normales y compactos en todas las páginas. Cero espaciado extra entre el encabezado y el cuerpo del documento.
+- Encabezado institucional: logos y nombre del centro en la parte superior. El encabezado debe ocupar el minimo espacio posible y estar pegado al titulo sin lineas en blanco entre medias.
+- Titulo centrado y en negrita: "ACTA DE REUNION DE [ORGANO]" y "ACTA N. ___". Debe aparecer inmediatamente debajo del encabezado, sin espacio extra.
+- En todas las paginas del documento, el contenido debe comenzar lo mas arriba posible, sin margenes superiores grandes ni espacios en blanco innecesarios.
+- Parrafo de apertura: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de [ORGANO COMPLETO] del CEIP Capitulaciones, en modalidad telematica."
+- Seccion ASISTENTES con nombre y puesto de cada persona.
+- Seccion de DESARROLLO con cada punto del orden del dia numerado.
+- Sin bloque de firmas al final. Las firmas se gestionan por Seneca.
+- Margenes normales y compactos en todas las paginas. Cero espaciado extra entre el encabezado y el cuerpo del documento.
 
 IMPORTANTE AL FINALIZAR:
 Una vez hayas generado el acta formateada, pregunta al usuario:
-"¿Deseas que genere también el PDF oficial del acta listo para imprimir y firmar?"
+"Deseas que genere tambien el PDF oficial del acta listo para imprimir y firmar?"
 
-═══════════════════════════════════════════
-DATOS DE LA REUNIÓN:
-═══════════════════════════════════════════
+---
+DATOS DE LA REUNION:
+---
 
-${textoActa}`;
+${textoActaLimpio}`;
 
             try {
                 await navigator.clipboard.writeText(prompt);
@@ -5833,26 +5860,28 @@ ${textoActa}`;
             const textoActa = await generarTextoActa();
             
             if (!textoActa) return;
+
+            const textoActaLimpio = limpiarUnicodeParaIA(textoActa);
             
             // Construir el prompt completo (instrucciones + acta) que se pegará en NotebookLM
             const prompt = `INSTRUCCIONES PARA EL RESUMEN:
 
-A partir de la siguiente acta de reunión del CEIP Capitulaciones de Santa Fe, genera un RESUMEN claro, estructurado y conciso que incluya:
+A partir de la siguiente acta de reunion del CEIP Capitulaciones de Santa Fe, genera un RESUMEN claro, estructurado y conciso que incluya:
 
 1. PARTICIPANTES: lista de asistentes con su rol (coordinador/maestro).
-2. PUNTOS PRINCIPALES: síntesis de cada punto del orden del día.
+2. PUNTOS PRINCIPALES: sintesis de cada punto del orden del dia.
 3. ACUERDOS Y DECISIONES: acuerdos alcanzados en cada punto.
 4. RESULTADOS DE VOTACIONES: si las hubo, indica el resultado y porcentajes.
 5. TAREAS Y RESPONSABLES: acciones pendientes y persona responsable.
-6. CONCLUSIONES: cierre y aspectos relevantes para la próxima reunión.
+6. CONCLUSIONES: cierre y aspectos relevantes para la proxima reunion.
 
 Usa un lenguaje formal, claro y propio de un acta institucional. Adapta el formato para que pueda usarse como resumen ejecutivo.
 
-═══════════════════════════════════════════
+---
 ACTA A RESUMIR:
-═══════════════════════════════════════════
+---
 
-${textoActa}`;
+${textoActaLimpio}`;
             
             // Mostrar modal de aviso ANTES de abrir NotebookLM
             mostrarAvisoNotebookLM(prompt);
