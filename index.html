@@ -5703,12 +5703,12 @@
                 puntosArray.sort((a, b) => (a.orden || 0) - (b.orden || 0));
 
                 puntosArray.forEach((punto, index) => {
-                    texto += `**${index + 1}. ${punto.texto || '(sin título)'}**\n`;
+                    texto += `\nPUNTO ${index + 1}. ${punto.texto || '(sin título)'}\n`;
                     texto += '─────────────────────────────────────────\n';
 
                     // Aportaciones
                     if (punto.aportaciones) {
-                        texto += '\n💬 Conversación:\n';
+                        texto += 'Debate:\n';
                         const aportacionesArray = Object.values(punto.aportaciones).filter(a => a);
                         aportacionesArray.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
@@ -5720,8 +5720,8 @@
                     
                     // Votación
                     if (punto.votacion && punto.votacion.activa) {
-                        const tipoVotacion = punto.votacion.conNombres ? 'VOTACIÓN PÚBLICA' : 'VOTACIÓN ANÓNIMA';
-                        texto += `\n🗳️ ${tipoVotacion}:\n`;
+                        const tipoVotacion = punto.votacion.conNombres ? 'VOTACION PUBLICA' : 'VOTACION ANONIMA';
+                        texto += `\n${tipoVotacion}:\n`;
                         
                         const votos = { si: [], no: [], abstencion: [] };
                         let total = 0;
@@ -5748,7 +5748,7 @@
                     
                     // Documentos adjuntos
                     if (punto.documentos) {
-                        texto += '\n📎 Documentos adjuntos:\n';
+                        texto += '\nDocumentos adjuntos:\n';
                         const documentosArray = Object.values(punto.documentos);
                         documentosArray.sort((a, b) => a.timestamp - b.timestamp);
                         
