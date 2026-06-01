@@ -5609,6 +5609,15 @@
             }
 
             const sesionData = snapshot.val();
+
+            // Leer la asistencia de forma independiente para garantizar datos frescos
+            // (el snapshot raíz puede no incluir subclaves guardadas por set() separado)
+            const asistenciaRef = ref(database, `sesiones/${sesion}/${fecha}/asistencia`);
+            const asistenciaSnap = await get(asistenciaRef);
+            if (asistenciaSnap.exists()) {
+                sesionData.asistencia = asistenciaSnap.val();
+            }
+
             const nombreReunion = getNombreReunion(sesion, fecha);
             
             let texto = '═══════════════════════════════════════════\n';
