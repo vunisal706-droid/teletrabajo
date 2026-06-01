@@ -3487,6 +3487,9 @@
             { nombre: "Moreno Castro, Belén", puesto: "Música" },
             { nombre: "Muñoz Romero, Encarnación", puesto: "Francés y Pedagogía Terapéutica" },
             { nombre: "Pachón Pérez, Lucía", puesto: "Educación Primaria" },
+            { nombre: "Paniza Ortiz, Marisol", puesto: "Religión" },
+            { nombre: "Peláez Martínez, María Encarnación", puesto: "Interculturalidad" },
+            { nombre: "Reyes Amate, Saray", puesto: "Religión Evangélica" },
             { nombre: "Rodríguez Rodríguez, María", puesto: "Educación Primaria" },
             { nombre: "Rodríguez Ruiz, Virginia", puesto: "Primaria (Z. Transf.Social)" },
             { nombre: "Roldán Rosales, María Esmeralda", puesto: "Religión" },
@@ -5795,28 +5798,52 @@
             mostrarAvisoChatGPT();
         };
 
-        // Limpia caracteres Unicode decorativos que pueden truncar el pegado en IAs externas
+        // Limpia y comprime el texto del acta para que no se trunque al pegar en IAs externas
         function limpiarUnicodeParaIA(texto) {
-            return texto
+            let resultado = texto
                 // Separadores de línea doble (═══) → línea de guiones
                 .replace(/[═]{3,}/g, '---')
                 // Separadores de línea simple (───) → línea de guiones
                 .replace(/[─]{3,}/g, '---')
-                // Eliminar todos los emojis (no son apropiados en un acta oficial)
+                // Eliminar todos los emojis
                 .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
                 .replace(/[\u{2600}-\u{27BF}]/gu, '')
-                // Marcas de asistencia especiales → guión simple
+                // Marcas de asistencia → guión simple
                 .replace(/✦/g, '-')
                 .replace(/✓/g, '-')
+                .replace(/•/g, '-')
                 // Guión largo em dash → guión normal
                 .replace(/—/g, '-')
                 // Comillas tipográficas → rectas
                 .replace(/[""]/g, '"')
                 .replace(/['']/g, "'")
-                // Limpiar líneas que quedaron vacías tras quitar emojis
+                // Limpiar líneas vacías tras quitar emojis
                 .replace(/^\s*-?\s*\n/gm, '')
                 // Colapsar más de dos saltos de línea seguidos
                 .replace(/\n{3,}/g, '\n\n');
+
+            // Abreviar especialidades para reducir tamaño del prompt
+            const abreviaturas = [
+                [/Educaci[oó]n Primaria/g,                    'Primaria'],
+                [/Educaci[oó]n Infantil/g,                    'Infantil'],
+                [/Educaci[oó]n F[ií]sica/g,                   'EF'],
+                [/Pedagog[ií]a Terap[eé]utica T\.E\.A\./g, 'PT-TEA'],
+                [/Pedagog[ií]a Terap[eé]utica/g,              'PT'],
+                [/Audici[oó]n y Lenguaje/g,                   'AL'],
+                [/Lengua Extranjera[-–]?Ingl[eé]s/g,          'Inglés'],
+                [/Primaria[-–]?Biling[uü]e Ingl[eé]s/g,      'Bilingüe'],
+                [/Franc[eé]s y Pedagog[ií]a Terap[eé]utica/g, 'Francés-PT'],
+                [/Primaria \(Z\. Transf\.?Social\)/g,     'ZTS'],
+                [/Lengua Extranjera/g,                         'Inglés'],
+                [/Religi[oó]n Evang[eé]lica/g,                'Rel. Evang.'],
+                [/Interculturalidad/g,                         'Intercult.'],
+                [/Orientadora/g,                               'Orient.'],
+            ];
+            abreviaturas.forEach(([patron, abrev]) => {
+                resultado = resultado.replace(patron, abrev);
+            });
+
+            return resultado;
         }
 
         // Copiar al portapapeles
@@ -5828,8 +5855,8 @@
             // Sanitizar el texto del acta para evitar truncado por Unicode en IAs externas
             const textoActaLimpio = limpiarUnicodeParaIA(textoActa);
 
-            // Construir prompt completo con instrucciones de formato y espaciado
-            const prompt = `INSTRUCCIONES PARA GENERAR EL ACTA:
+            // Prompt estándar (todos los órganos excepto Claustro)
+            const promptEstandar = `INSTRUCCIONES PARA GENERAR EL ACTA:
 
 A partir del texto de reunion que encontraras al final, genera un ACTA DE REUNION oficial con el siguiente formato:
 
@@ -5838,7 +5865,7 @@ FORMATO DEL DOCUMENTO:
 - Titulo centrado y en negrita: "ACTA DE REUNION DE [ORGANO]" y "ACTA N. ___". Debe aparecer inmediatamente debajo del encabezado, sin espacio extra.
 - En todas las paginas del documento, el contenido debe comenzar lo mas arriba posible, sin margenes superiores grandes ni espacios en blanco innecesarios.
 - Parrafo de apertura: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de [ORGANO COMPLETO] del CEIP Capitulaciones, en modalidad telematica."
-- Seccion ASISTENTES con nombre y puesto de cada persona.
+- Seccion ASISTENTES con nombre y puesto de cada persona, uno debajo del otro en lineas separadas.
 - Seccion de DESARROLLO con cada punto del orden del dia numerado.
 - Sin bloque de firmas al final. Las firmas se gestionan por Seneca.
 - Margenes normales y compactos en todas las paginas. Cero espaciado extra entre el encabezado y el cuerpo del documento.
@@ -5853,11 +5880,74 @@ DATOS DE LA REUNION:
 
 ${textoActaLimpio}`;
 
-            try {
-                await navigator.clipboard.writeText(prompt);
+            // Prompt especial para Claustro: la IA pregunta la asistencia en vez de recibirla en el prompt
+            // Esto evita el truncado causado por la lista larga de personal
+            const claustroPersonal = window.CLAUSTRO_CAPITULACIONES
+                .map(p => `${p.nombre} (${p.puesto.replace(/Educaci[oó]n /g,'').replace(/Pedagog[ií]a Terap[eé]utica/g,'PT').replace(/Audici[oó]n y Lenguaje/,'AL')})`)
+                .join(', ');
+
+            const promptClaustro = `INSTRUCCIONES PARA GENERAR EL ACTA:
+
+Eres el asistente del CEIP Capitulaciones de Santa Fe. Conoces al claustro completo:
+${claustroPersonal}
+
+PASO 1 - ANTES DE GENERAR EL ACTA, pregunta al usuario:
+"Para completar el acta necesito saber quien asistio. Puedes decirme los nombres (o quien falto, que es mas rapido si la asistencia fue mayoritaria)."
+Espera la respuesta e identifica a cada persona por nombre de pila y primer apellido.
+
+PASO 2 - Una vez confirmada la asistencia, genera el ACTA DE REUNION oficial con este formato:
+- Encabezado institucional con nombre del centro.
+- Titulo centrado y en negrita: "ACTA DE REUNION DE CLAUSTRO" y "ACTA N. ___".
+- Parrafo de apertura: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de Claustro de Maestros del CEIP Capitulaciones, en modalidad telematica."
+- Seccion ASISTENTES con nombre completo y puesto de cada persona, uno debajo del otro.
+- Si hubo ausentes, seccion NO ASISTEN con sus nombres.
+- Seccion DESARROLLO con cada punto del orden del dia numerado.
+- Sin bloque de firmas al final. Las firmas se gestionan por Seneca.
+
+IMPORTANTE AL FINALIZAR:
+Una vez generada el acta, pregunta al usuario:
+"Deseas que genere tambien el PDF oficial del acta listo para imprimir y firmar?"
+
+---
+DATOS DE LA REUNION (sin lista de asistencia, la confirmaras en el Paso 1):
+---
+
+${textoActaLimpio}`;
+
+            const prompt = (window.sesionActual === 'claustro') ? promptClaustro : promptEstandar;
+
+            // Intentar con Clipboard API moderna
+            let copiado = false;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                    await navigator.clipboard.writeText(prompt);
+                    copiado = true;
+                } catch (err) {
+                    console.warn('Clipboard API falló, usando fallback textarea:', err);
+                }
+            }
+
+            // Fallback con textarea (soporta textos de cualquier tamaño)
+            if (!copiado) {
+                const textarea = document.createElement('textarea');
+                textarea.value = prompt;
+                textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    copiado = true;
+                } catch (err2) {
+                    console.error('Fallback textarea también falló:', err2);
+                }
+                document.body.removeChild(textarea);
+            }
+
+            if (copiado) {
                 mostrarAvisoChatGPT();
-            } catch (err) {
-                alert('Error al copiar. Por favor, intenta de nuevo.');
+            } else {
+                alert('No se pudo copiar automáticamente. Usa Ctrl+C sobre el texto manualmente.');
             }
         };
 
@@ -5948,9 +6038,36 @@ ${textoActaLimpio}`;
             
             // Botón Abrir NotebookLM
             modal.querySelector('#btnAbrirNotebookLM').onclick = async function() {
-                try {
-                    await navigator.clipboard.writeText(prompt);
-                    
+                let copiado = false;
+
+                // Intento 1: Clipboard API moderna
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    try {
+                        await navigator.clipboard.writeText(prompt);
+                        copiado = true;
+                    } catch (err) {
+                        console.warn('Clipboard API falló, usando fallback textarea:', err);
+                    }
+                }
+
+                // Intento 2: fallback textarea (sin límite de tamaño)
+                if (!copiado) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = prompt;
+                    textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        copiado = true;
+                    } catch (err2) {
+                        console.error('Fallback textarea también falló:', err2);
+                    }
+                    document.body.removeChild(textarea);
+                }
+
+                if (copiado) {
                     // Toast de confirmación
                     const toast = document.createElement('div');
                     toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
@@ -5961,9 +6078,8 @@ ${textoActaLimpio}`;
                     // Abrir NotebookLM en una pestaña nueva
                     window.open('https://notebooklm.google.com/', '_blank', 'noopener,noreferrer');
                     modal.remove();
-                } catch (err) {
-                    console.error('Error al copiar el prompt:', err);
-                    alert('Error al copiar el prompt al portapapeles. Por favor, intenta de nuevo.');
+                } else {
+                    alert('No se pudo copiar automáticamente. Por favor, copia el texto manualmente.');
                 }
             };
             
@@ -7901,7 +8017,7 @@ ${textoActaLimpio}`;
         // Service Worker - Registro mejorado
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                navigator.serviceWorker.register('/teletrabajo/sw.js', { scope: '/teletrabajo/' })
                     .then(registration => {
                         console.log('✅ Service Worker registrado:', registration.scope);
                         
