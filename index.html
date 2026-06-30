@@ -1095,15 +1095,16 @@
         .acta-dropdown-content {
             display: none;
             position: absolute;
-            bottom: 100%;
+            top: 100%;
             right: 0;
             background: white;
             min-width: 200px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
             border-radius: 8px;
             z-index: 1000;
-            margin-bottom: 8px;
-            overflow: hidden;
+            margin-top: 8px;
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
         .acta-dropdown.active .acta-dropdown-content {
@@ -3379,14 +3380,20 @@
                             📄 Descargar el Acta
                         </button>
                         <div class="acta-dropdown-content">
+                            <button class="acta-dropdown-item" onclick="copiarActaGemini(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre el Gem de Gemini del cole (recomendado)">
+                                ✨ Generar Acta con Gemini (recomendado)
+                            </button>
+                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre el ChatGPT del cole para darle formato">
+                                🤖 Generar Acta con ChatGPT
+                            </button>
+                            <button class="acta-dropdown-item" onclick="descargarPlantillaActa(); closeActaDropdown();" data-acta-tooltip="Descarga la plantilla Word con el membrete y el escudo del cole">
+                                📄 Descargar plantilla Word
+                            </button>
                             <button class="acta-dropdown-item" onclick="exportarPDF(); closeActaDropdown();" data-acta-tooltip="Descarga el acta en formato PDF">
                                 📄 Exportar PDF
                             </button>
                             <button class="acta-dropdown-item" onclick="enviarPorEmail(); closeActaDropdown();" data-acta-tooltip="Abre tu correo con el acta lista">
                                 📧 Enviar por Email
-                            </button>
-                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre el ChatGPT del cole para darle formato">
-                                🤖 Generar Acta con IA
                             </button>
                             <button class="acta-dropdown-item" onclick="resumirConNotebookLM(); closeActaDropdown();" data-acta-tooltip="Genera un resumen automático del acta con NotebookLM">
                                 📝 Resumir con NotebookLM
@@ -3418,6 +3425,8 @@
                 <h2>Participantes <span id="numParticipantes"></span></h2>
                 <div id="listaParticipantes"></div>
             </div>
+
+            <div id="contenidoFunciones"></div>
 
             <div id="contenidoPuntos"></div>
         </div>
@@ -3451,6 +3460,7 @@
         let usuarioActual = null;
         let fechaActual = null;
         let puntosListenerActivo = false;
+        let funcionesListenerActivo = false;
         let listenersPorPunto = new Map(); // Mapa para rastrear listeners por punto
 
         // Exponer funciones al scope global
@@ -3633,6 +3643,83 @@
             "segundo-ciclo": "EQUIPOS DE CICLO", "tercer-ciclo": "EQUIPOS DE CICLO",
             "orientacion": "EQUIPO DE ORIENTACIÓN", "aula-tea": "EQUIPO DE ORIENTACIÓN",
             "claustro": "CLAUSTRO", "etcp": "ETCP", "consejo-escolar": "CONSEJO ESCOLAR"
+        };
+
+        // Funciones de cada órgano (Decreto 328/2010, Reglamento Orgánico de los CEIP)
+        // Se muestran en la sesión para marcar las que se trabajan ese día y reflejarlas en el acta.
+        const FUNCIONES_ORGANO = {
+            "ETCP": {
+                articulo: "88",
+                funciones: [
+                    "Establecer las directrices generales para la elaboración de los aspectos educativos del Plan de Centro.",
+                    "Fijar las directrices para las programaciones didácticas.",
+                    "Asesorar a los equipos de ciclo en la elaboración y revisión de las programaciones.",
+                    "Establecer criterios y procedimientos de evaluación del alumnado.",
+                    "Proponer planes de mejora a partir de los resultados de las evaluaciones.",
+                    "Impulsar medidas de atención a la diversidad.",
+                    "Promover la innovación y la formación del profesorado.",
+                    "Coordinar la evaluación interna del centro."
+                ]
+            },
+            "CLAUSTRO": {
+                articulo: "66",
+                funciones: [
+                    "Formular propuestas al equipo directivo y al Consejo Escolar.",
+                    "Aprobar y evaluar los aspectos educativos del Plan de Centro.",
+                    "Aprobar criterios pedagógicos para horarios y tutorías.",
+                    "Promover iniciativas de experimentación, innovación e investigación.",
+                    "Elegir a sus representantes en el Consejo Escolar.",
+                    "Analizar los resultados de las evaluaciones internas y externas.",
+                    "Informar las normas de organización y funcionamiento.",
+                    "Conocer la resolución de conflictos disciplinarios y velar por su adecuación a la normativa."
+                ]
+            },
+            "CONSEJO ESCOLAR": {
+                articulo: "50",
+                funciones: [
+                    "Aprobar y evaluar el Plan de Centro.",
+                    "Aprobar el proyecto de presupuesto y la justificación de cuentas.",
+                    "Participar en el procedimiento de selección del director o directora.",
+                    "Decidir sobre la admisión del alumnado conforme a la normativa.",
+                    "Realizar propuestas para mejorar la convivencia y el rendimiento escolar.",
+                    "Analizar y valorar el funcionamiento general del centro.",
+                    "Promover la conservación y renovación de las instalaciones.",
+                    "Fijar directrices para la colaboración con otras entidades."
+                ]
+            },
+            "EQUIPOS DOCENTES": {
+                articulo: "79",
+                funciones: [
+                    "Llevar a cabo el seguimiento global del alumnado del grupo.",
+                    "Garantizar la coordinación del proceso de enseñanza y aprendizaje.",
+                    "Adoptar las decisiones de evaluación y promoción.",
+                    "Proponer y realizar medidas de atención a la diversidad.",
+                    "Garantizar la coordinación entre el profesorado del grupo.",
+                    "Colaborar con el tutor o tutora en la relación con las familias."
+                ]
+            },
+            "EQUIPOS DE CICLO": {
+                articulo: "81",
+                funciones: [
+                    "Colaborar en la elaboración de los aspectos docentes del Plan de Centro.",
+                    "Elaborar las programaciones didácticas.",
+                    "Unificar criterios metodológicos y de evaluación.",
+                    "Organizar actividades complementarias del ciclo.",
+                    "Proponer medidas de mejora del rendimiento.",
+                    "Coordinar las actuaciones docentes del ciclo."
+                ]
+            },
+            "EQUIPO DE ORIENTACIÓN": {
+                articulo: "86",
+                funciones: [
+                    "Asesorar sobre atención a la diversidad.",
+                    "Colaborar en la elaboración del Plan de Orientación y Acción Tutorial.",
+                    "Asesorar al profesorado en medidas de apoyo educativo.",
+                    "Realizar propuestas sobre prevención de dificultades de aprendizaje.",
+                    "Coordinar las actuaciones de orientación del centro.",
+                    "Colaborar con los servicios externos de orientación cuando proceda."
+                ]
+            }
         };
 
         // Mostrar indicador de conexión
@@ -3965,6 +4052,15 @@
                     cargarPuntosDesdeCero(snapshot);
                 });
             }
+
+            // Listener ÚNICO para funciones del órgano - solo se activa una vez
+            if (!funcionesListenerActivo) {
+                funcionesListenerActivo = true;
+                const funcionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/funciones`);
+                onValue(funcionesRef, (snapshot) => {
+                    cargarFuncionesOrgano(snapshot);
+                });
+            }
         };
 
 
@@ -3991,6 +4087,79 @@
                 const card = crearPuntoCard(punto, index + 1);
                 contenedor.appendChild(card);
             });
+        };
+
+        // ============================================================
+        // FUNCIONES DEL ÓRGANO (Decreto 328/2010)
+        // Se marcan durante la sesión y se reflejan en el acta.
+        // ============================================================
+        window.cargarFuncionesOrgano = function(snapshot) {
+            const contenedor = document.getElementById('contenidoFunciones');
+            if (!contenedor) return;
+
+            const organo = mapeoReunionOrgano[window.sesionActual];
+            const datos = organo ? FUNCIONES_ORGANO[organo] : null;
+
+            if (!datos || !datos.funciones || datos.funciones.length === 0) {
+                contenedor.innerHTML = '';
+                return;
+            }
+
+            // Estado marcado desde Firebase: { "0": true, "3": true, ... }
+            const marcadas = (snapshot && snapshot.exists()) ? (snapshot.val() || {}) : {};
+            const numMarcadas = Object.values(marcadas).filter(Boolean).length;
+
+            // El coordinador y los maestros pueden marcar; las familias lo ven en modo lectura
+            const soloLectura = window.usuarioActual && window.usuarioActual.rol === 'familia';
+
+            let html = `
+                <div class="card" style="border: 2px solid var(--coordinador); background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);">
+                    <h2 style="color: #6d28d9; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        ⚖️ Funciones del órgano
+                        <span style="font-size: 12px; font-weight: 600; color: var(--text-light);">Decreto 328/2010, art. ${datos.articulo}</span>
+                    </h2>
+                    <div class="info-box" style="background: rgba(139, 92, 246, 0.08); border-color: var(--coordinador);">
+                        ℹ️ Marca las funciones que se trabajan en esta sesión. Aparecerán marcadas en el acta, antes del párrafo de apertura.
+                        <strong id="funcionesContador"> (${numMarcadas} marcada${numMarcadas === 1 ? '' : 's'})</strong>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+            `;
+
+            datos.funciones.forEach((funcion, i) => {
+                const estaMarcada = !!marcadas[i];
+                const estiloMarcada = estaMarcada
+                    ? 'background: #ede9fe; border-color: var(--coordinador); font-weight: 600;'
+                    : 'background: var(--surface);';
+                html += `
+                    <label style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; cursor: ${soloLectura ? 'default' : 'pointer'}; ${estiloMarcada} transition: background .15s, border-color .15s;">
+                        <input type="checkbox" ${estaMarcada ? 'checked' : ''} ${soloLectura ? 'disabled' : ''}
+                               onchange="toggleFuncionOrgano(${i}, this.checked)"
+                               style="width: 20px; height: 20px; margin-top: 1px; accent-color: var(--coordinador); flex-shrink: 0; cursor: ${soloLectura ? 'default' : 'pointer'};">
+                        <span style="font-size: 14px; line-height: 1.4; color: var(--text);">${funcion}</span>
+                    </label>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            contenedor.innerHTML = html;
+        };
+
+        // Marcar/desmarcar una función del órgano (se guarda en Firebase y sincroniza)
+        window.toggleFuncionOrgano = async function(indice, marcada) {
+            if (!window.sesionActual || !window.fechaActual) return;
+            if (window.usuarioActual && window.usuarioActual.rol === 'familia') return;
+            const funcionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/funciones/${indice}`);
+            try {
+                await set(funcionRef, marcada ? true : null);
+            } catch (err) {
+                console.error('Error al guardar la función del órgano:', err);
+                alert('No se pudo guardar la función. Revisa la conexión e inténtalo de nuevo.');
+            }
+            // El listener onValue re-renderiza automáticamente con el estado actualizado.
         };
 
         // Cargar participantes
@@ -5636,6 +5805,28 @@
             }
             texto += '\n';
             
+            // ── Funciones del órgano (Decreto 328/2010) ──
+            // Se listan todas y se marca [X] las trabajadas en esta sesión.
+            const organoActa = mapeoReunionOrgano[sesion];
+            const datosFuncActa = organoActa ? FUNCIONES_ORGANO[organoActa] : null;
+            if (datosFuncActa && datosFuncActa.funciones && datosFuncActa.funciones.length > 0) {
+                let marcadasFunc = {};
+                try {
+                    const funcRef = ref(database, `sesiones/${sesion}/${fecha}/funciones`);
+                    const funcSnap = await get(funcRef);
+                    if (funcSnap.exists()) marcadasFunc = funcSnap.val() || {};
+                } catch (e) { /* sin funciones marcadas */ }
+
+                texto += `FUNCIONES DEL ORGANO (Decreto 328/2010, art. ${datosFuncActa.articulo}):\n`;
+                texto += '─────────────────────────────────────────\n';
+                texto += 'Marca [X] = funcion trabajada en esta sesion.\n';
+                datosFuncActa.funciones.forEach((f, i) => {
+                    const marca = marcadasFunc[i] ? '[X]' : '[ ]';
+                    texto += `   ${marca} ${f}\n`;
+                });
+                texto += '\n';
+            }
+
             // Participantes / Asistencia
             // Si el coordinador ha marcado asistencia explícitamente, usamos esa lista
             // (separando Asistentes y No asistentes, los "sin marcar" no salen).
@@ -5801,24 +5992,31 @@
         // Limpia y comprime el texto del acta para que no se trunque al pegar en IAs externas
         function limpiarUnicodeParaIA(texto) {
             let resultado = texto
-                // Separadores de línea doble (═══) → línea de guiones
-                .replace(/[═]{3,}/g, '---')
-                // Separadores de línea simple (───) → línea de guiones
-                .replace(/[─]{3,}/g, '---')
-                // Eliminar todos los emojis
+                // Líneas separadoras (═══ / ───) → eliminarlas por completo.
+                // En Markdown se interpretan como encabezados o líneas horizontales
+                // y descolocan el contenido al pegarlo en ChatGPT.
+                .replace(/^[ \t]*[═]{3,}[ \t]*$/gm, '')
+                .replace(/^[ \t]*[─]{3,}[ \t]*$/gm, '')
+                // Eliminar todos los emojis y símbolos decorativos
                 .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
                 .replace(/[\u{2600}-\u{27BF}]/gu, '')
-                // Marcas de asistencia → guión simple
-                .replace(/✦/g, '-')
-                .replace(/✓/g, '-')
+                // Otros símbolos sueltos (reloj ⏰, flechas, selectores de variación)
+                .replace(/[\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}]/gu, '')
+                .replace(/\uFE0F/g, '')
+                // Marcas de asistencia / viñetas
+                .replace(/✦/g, '')
+                .replace(/✓/g, '')
                 .replace(/•/g, '-')
                 // Guión largo em dash → guión normal
                 .replace(/—/g, '-')
                 // Comillas tipográficas → rectas
                 .replace(/[""]/g, '"')
                 .replace(/['']/g, "'")
-                // Limpiar líneas vacías tras quitar emojis
-                .replace(/^\s*-?\s*\n/gm, '')
+                // Quitar la sangría inicial de cada línea: 4+ espacios al principio
+                // hacen que ChatGPT lo renderice como bloque de código.
+                .replace(/^[ \t]+/gm, '')
+                // Eliminar líneas que queden vacías o solo con un guión
+                .replace(/^[ \t]*-?[ \t]*$/gm, '')
                 // Colapsar más de dos saltos de línea seguidos
                 .replace(/\n{3,}/g, '\n\n');
 
@@ -5847,10 +6045,12 @@
         }
 
         // Copiar al portapapeles
-        window.copiarActa = async function() {
+        // Construye el prompt completo del acta (instrucciones + datos),
+        // reutilizable por "copiar" y por "descargar como archivo .txt".
+        window.construirPromptActa = async function() {
             const textoActa = await generarTextoActa();
-            
-            if (!textoActa) return;
+
+            if (!textoActa) return null;
 
             // Sanitizar el texto del acta para evitar truncado por Unicode en IAs externas
             const textoActaLimpio = limpiarUnicodeParaIA(textoActa);
@@ -5864,6 +6064,7 @@ FORMATO DEL DOCUMENTO:
 - Encabezado institucional: logos y nombre del centro en la parte superior. El encabezado debe ocupar el minimo espacio posible y estar pegado al titulo sin lineas en blanco entre medias.
 - Titulo centrado y en negrita: "ACTA DE REUNION DE [ORGANO]" y "ACTA N. ___". Debe aparecer inmediatamente debajo del encabezado, sin espacio extra.
 - En todas las paginas del documento, el contenido debe comenzar lo mas arriba posible, sin margenes superiores grandes ni espacios en blanco innecesarios.
+- ANTES del parrafo de apertura, incluye una seccion titulada "FUNCIONES DEL ORGANO (Decreto 328/2010, art. [ARTICULO])" y preséntala como una TABLA de dos columnas con encabezado: "Función del órgano" y "Trabajada en la sesión". Reproduce TODAS las funciones que aparecen en los datos de la reunion, una por fila. En la columna "Trabajada en la sesión" escribe un check (✔) y pon esa fila en NEGRITA cuando la funcion venga marcada con [X] en los datos; deja esa columna vacia cuando venga marcada con [ ]. No incluyas los simbolos [X] ni [ ] en el documento final.
 - Parrafo de apertura: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de [ORGANO COMPLETO] del CEIP Capitulaciones, en modalidad telematica."
 - Seccion ASISTENTES con nombre y puesto de cada persona, uno debajo del otro en lineas separadas.
 - Seccion de DESARROLLO con cada punto del orden del dia numerado.
@@ -5874,9 +6075,7 @@ IMPORTANTE AL FINALIZAR:
 Una vez hayas generado el acta formateada, pregunta al usuario:
 "Deseas que genere tambien el PDF oficial del acta listo para imprimir y firmar?"
 
----
-DATOS DE LA REUNION:
----
+DATOS DE LA REUNION (texto completo de la reunion):
 
 ${textoActaLimpio}`;
 
@@ -5898,6 +6097,7 @@ Espera la respuesta e identifica a cada persona por nombre de pila y primer apel
 PASO 2 - Una vez confirmada la asistencia, genera el ACTA DE REUNION oficial con este formato:
 - Encabezado institucional con nombre del centro.
 - Titulo centrado y en negrita: "ACTA DE REUNION DE CLAUSTRO" y "ACTA N. ___".
+- ANTES del parrafo de apertura, incluye una seccion titulada "FUNCIONES DEL ORGANO (Decreto 328/2010, art. 66)" y preséntala como una TABLA de dos columnas con encabezado: "Función del órgano" y "Trabajada en la sesión". Reproduce TODAS las funciones que aparecen en los datos de la reunion, una por fila. En la columna "Trabajada en la sesión" escribe un check (✔) y pon esa fila en NEGRITA cuando la funcion venga marcada con [X] en los datos; deja esa columna vacia cuando venga marcada con [ ]. No incluyas los simbolos [X] ni [ ] en el documento final.
 - Parrafo de apertura: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de Claustro de Maestros del CEIP Capitulaciones, en modalidad telematica."
 - Seccion ASISTENTES con nombre completo y puesto de cada persona, uno debajo del otro.
 - Si hubo ausentes, seccion NO ASISTEN con sus nombres.
@@ -5908,29 +6108,30 @@ IMPORTANTE AL FINALIZAR:
 Una vez generada el acta, pregunta al usuario:
 "Deseas que genere tambien el PDF oficial del acta listo para imprimir y firmar?"
 
----
 DATOS DE LA REUNION (sin lista de asistencia, la confirmaras en el Paso 1):
----
 
 ${textoActaLimpio}`;
 
-            const prompt = (window.sesionActual === 'claustro') ? promptClaustro : promptEstandar;
+            return (window.sesionActual === 'claustro') ? promptClaustro : promptEstandar;
+        };
 
-            // Intentar con Clipboard API moderna
+        // Ruta de la plantilla Word (debe estar junto al index.html en GitHub Pages)
+        const PLANTILLA_ACTA_URL = 'Plantilla_Acta_CEIP_Capitulaciones.docx';
+
+        // Copia texto al portapapeles (con fallback a textarea). Devuelve true/false.
+        async function copiarTextoPortapapeles(texto) {
             let copiado = false;
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 try {
-                    await navigator.clipboard.writeText(prompt);
+                    await navigator.clipboard.writeText(texto);
                     copiado = true;
                 } catch (err) {
                     console.warn('Clipboard API falló, usando fallback textarea:', err);
                 }
             }
-
-            // Fallback con textarea (soporta textos de cualquier tamaño)
             if (!copiado) {
                 const textarea = document.createElement('textarea');
-                textarea.value = prompt;
+                textarea.value = texto;
                 textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
                 document.body.appendChild(textarea);
                 textarea.focus();
@@ -5943,12 +6144,66 @@ ${textoActaLimpio}`;
                 }
                 document.body.removeChild(textarea);
             }
+            return copiado;
+        }
 
+        // Descargar la plantilla Word con el membrete del cole
+        window.descargarPlantillaActa = function() {
+            const a = document.createElement('a');
+            a.href = PLANTILLA_ACTA_URL;
+            a.download = 'Plantilla_Acta_CEIP_Capitulaciones.docx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+
+        // Copiar el prompt y abrir Gemini (Gem del cole) — opción recomendada
+        window.copiarActaGemini = async function() {
+            const prompt = await construirPromptActa();
+            if (!prompt) return;
+            const copiado = await copiarTextoPortapapeles(prompt);
+            if (copiado) {
+                mostrarAvisoGemini();
+            } else {
+                alert('No se pudo copiar automáticamente. Usa Ctrl+C sobre el texto manualmente.');
+            }
+        };
+
+        // Copiar el prompt al portapapeles y abrir el ChatGPT del cole
+        window.copiarActa = async function() {
+            const prompt = await construirPromptActa();
+            if (!prompt) return;
+            const copiado = await copiarTextoPortapapeles(prompt);
             if (copiado) {
                 mostrarAvisoChatGPT();
             } else {
                 alert('No se pudo copiar automáticamente. Usa Ctrl+C sobre el texto manualmente.');
             }
+        };
+
+        // Descargar el prompt como archivo .txt para ADJUNTARLO al GPT del cole.
+        // Evita el recorte que ChatGPT hace al pegar textos largos en el cuadro de mensaje.
+        window.descargarPromptActa = async function() {
+            const prompt = await construirPromptActa();
+            if (!prompt) return;
+
+            const nombre = (getNombreReunion(window.sesionActual, window.fechaActual) || 'acta')
+                .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]/g, '')
+                .replace(/\s+/g, '_');
+            const fecha = window.fechaActual || '';
+            const nombreArchivo = `prompt-acta-${nombre}-${fecha}.txt`;
+
+            const blob = new Blob([prompt], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombreArchivo;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            mostrarAvisoChatGPTArchivo(nombreArchivo);
         };
 
         // Resumir con NotebookLM
@@ -6093,18 +6348,95 @@ ${textoActaLimpio}`;
 
 
         // Mostrar aviso de ChatGPT después de exportar
+        // Aviso para el flujo con Gemini (Gem del cole) — opción recomendada
+        function mostrarAvisoGemini() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
+                    <div style="font-size: 44px; margin-bottom: 10px;">✨</div>
+                    <h3 style="color: #16a34a; margin-bottom: 8px;">Prompt copiado</h3>
+                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 16px; line-height: 1.5;">
+                        Abre el <strong>Gem del cole</strong>, pega el texto (Ctrl+V) y envía.<br>
+                        Después pega el acta en la <strong>plantilla Word</strong> (el escudo del cole ya va puesto en la cabecera).
+                    </p>
+                    <a href="https://gemini.google.com/gem/1ses5OZ4b3lrN8EMurFISqwUs9xEdHVgr?usp=sharing"
+                       target="_blank"
+                       onclick="this.closest('div').parentElement.remove()"
+                       style="display: block; background: linear-gradient(135deg, #4f8cff 0%, #8a5cf6 100%); color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 10px;">
+                        ✨ Abrir Gemini (Gem del cole)
+                    </a>
+                    <button onclick="descargarPlantillaActa()"
+                            style="display: block; width: 100%; background: #eef2ff; color: #4338ca; border: 2px solid #c7d2fe; padding: 11px 20px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; margin-bottom: 12px;">
+                        📄 Descargar plantilla Word
+                    </button>
+                    <button onclick="this.closest('div').parentElement.remove()"
+                            style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px;">
+                        Ahora no
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.onclick = function(e) {
+                if (e.target === modal) modal.remove();
+            };
+        }
+
         function mostrarAvisoChatGPT() {
             const modal = document.createElement('div');
             modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
 
             modal.innerHTML = `
-                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
+                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
                     <div style="font-size: 44px; margin-bottom: 10px;">✅</div>
                     <h3 style="color: #16a34a; margin-bottom: 8px;">Prompt copiado</h3>
-                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 20px; line-height: 1.5;">
-                        Abre el ChatGPT del cole, pega el texto y él generará el acta.<br>
-                        <strong>Al terminar te preguntará si quieres el PDF oficial.</strong>
+                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 16px; line-height: 1.5;">
+                        Abre el ChatGPT del cole, pega el texto (Ctrl+V) y envía.<br>
+                        Después pega el acta en la <strong>plantilla Word</strong> (el escudo ya va en la cabecera).
                     </p>
+                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
+                       target="_blank"
+                       onclick="this.closest('div').parentElement.remove()"
+                       style="display: block; background: #10a37f; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 10px;">
+                        🤖 Abrir ChatGPT del cole
+                    </a>
+                    <button onclick="descargarPlantillaActa()"
+                            style="display: block; width: 100%; background: #eef2ff; color: #4338ca; border: 2px solid #c7d2fe; padding: 11px 20px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; margin-bottom: 12px;">
+                        📄 Descargar plantilla Word
+                    </button>
+                    <button onclick="this.closest('div').parentElement.remove()"
+                            style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px;">
+                        Ahora no
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.onclick = function(e) {
+                if (e.target === modal) modal.remove();
+            };
+        }
+
+        // Aviso para el flujo con archivo adjunto (recomendado para actas largas)
+        function mostrarAvisoChatGPTArchivo(nombreArchivo) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
+                    <div style="font-size: 44px; margin-bottom: 10px;">📎</div>
+                    <h3 style="color: #16a34a; margin-bottom: 8px;">Prompt descargado</h3>
+                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 16px; line-height: 1.5;">
+                        Se ha descargado <strong>${nombreArchivo}</strong>.<br>
+                        Para que el acta salga <strong>completa</strong> (sin recortes al pegar):
+                    </p>
+                    <ol style="text-align: left; margin: 0 0 18px 0; padding-left: 22px; color: var(--text); font-size: 13.5px; line-height: 1.7;">
+                        <li>Abre el ChatGPT del cole.</li>
+                        <li>Pulsa el <strong>clip 📎</strong> y adjunta el archivo descargado.</li>
+                        <li>Escribe: <em>"Genera el acta a partir del archivo adjunto"</em>.</li>
+                    </ol>
                     <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
                        target="_blank"
                        onclick="this.closest('div').parentElement.remove()"
