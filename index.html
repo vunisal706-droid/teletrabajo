@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2563eb">
     <meta name="description" content="App para reuniones telemáticas con orden del día y votaciones">
     
@@ -2563,6 +2563,49 @@
                 0 8px 24px rgba(15, 23, 42, 0.18),
                 0 16px 40px rgba(15, 23, 42, 0.10);
         }
+        /* ===== MEJORAS v2: interacción y accesibilidad ===== */
+        button:not(:disabled):active { transform: scale(0.97); }
+        :focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+
+        /* Toasts (sustituyen a los alert() nativos) */
+        #toastContainer {
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            z-index: 20000; display: flex; flex-direction: column; gap: 10px;
+            width: min(480px, calc(100vw - 32px)); pointer-events: none;
+        }
+        .toast {
+            pointer-events: auto; display: flex; align-items: flex-start; gap: 10px;
+            background: #ffffff; color: var(--text);
+            border: 1px solid var(--border); border-left: 5px solid var(--primary);
+            border-radius: 12px; padding: 13px 14px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+            font-size: 14.5px; line-height: 1.45; white-space: pre-line;
+            animation: toastIn 0.25s ease;
+        }
+        .toast.toast-error   { border-left-color: var(--danger); background: #fef2f2; }
+        .toast.toast-success { border-left-color: var(--secondary); background: #f0fdf4; }
+        .toast.toast-warning { border-left-color: var(--warning); background: #fffbeb; }
+        .toast .toast-icon { font-size: 18px; line-height: 1.2; flex-shrink: 0; }
+        .toast .toast-msg { flex: 1; }
+        .toast .toast-close {
+            flex-shrink: 0; background: transparent; border: none; cursor: pointer;
+            font-size: 16px; line-height: 1; color: var(--text-light); padding: 2px 4px;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+        .toast.toast-out { opacity: 0; transform: translateY(-10px); transition: opacity 0.25s, transform 0.25s; }
+
+        /* Banner de conexión perdida */
+        #offlineBanner {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 19000;
+            background: #fffbeb; color: #92400e; border-top: 2px solid #f59e0b;
+            padding: 10px 16px; text-align: center; font-size: 14px; font-weight: 600;
+            display: none; box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+        }
+        #offlineBanner.visible { display: block; }
+
     </style>
 </head>
 <body>
@@ -3438,6 +3481,79 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- Firebase SDK -->
+    <script>
+        // ===== UTILIDADES v2: seguridad, toasts y accesibilidad =====
+
+        // Escapa HTML para insertar texto de usuario en innerHTML sin riesgo
+        window.escapeHTML = function(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+
+        // Solo permite URLs http/https (evita javascript: y similares)
+        window.safeURL = function(url) {
+            try {
+                const u = new URL(String(url), location.href);
+                if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+            } catch (e) { /* URL inválida */ }
+            return '#';
+        };
+
+        // ----- Sistema de toasts (no bloqueante) -----
+        window.mostrarToast = function(mensaje, tipo) {
+            let cont = document.getElementById('toastContainer');
+            if (!cont) {
+                cont = document.createElement('div');
+                cont.id = 'toastContainer';
+                document.body.appendChild(cont);
+            }
+            const texto = String(mensaje ?? '');
+            if (!tipo) {
+                const t = texto.toLowerCase();
+                if (/^(✅|✓)/.test(texto) || /guardad|copiad|enviad|creado|correctamente/.test(t)) tipo = 'success';
+                else if (/^⚠️/.test(texto) || /no se pudo|no se puede|error|inválid|no valido|no válido|no existe|no encontrad/.test(t)) tipo = 'error';
+                else if (/solo el coordinador|solo puedes|ya existe|debes|por favor|escribe|introduce|selecciona|completa/.test(t)) tipo = 'warning';
+                else tipo = 'info';
+            }
+            const iconos = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + tipo;
+            toast.setAttribute('role', tipo === 'error' ? 'alert' : 'status');
+            const limpio = texto.replace(/^([✅✓❌⚠️ℹ️]\s*)+/, '');
+            toast.innerHTML = '<span class="toast-icon">' + iconos[tipo] + '</span>' +
+                '<span class="toast-msg">' + escapeHTML(limpio) + '</span>' +
+                '<button class="toast-close" aria-label="Cerrar aviso">✕</button>';
+            const cerrar = () => {
+                toast.classList.add('toast-out');
+                setTimeout(() => toast.remove(), 260);
+            };
+            toast.querySelector('.toast-close').addEventListener('click', cerrar);
+            cont.appendChild(toast);
+            const duracion = Math.min(3500 + limpio.length * 35, 9000);
+            setTimeout(cerrar, duracion);
+        };
+
+        // Los alert() existentes pasan a ser toasts elegantes y no bloqueantes
+        window.alert = function(msg) { window.mostrarToast(msg); };
+
+        // ----- Escape cierra los modales dinámicos -----
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Escape') return;
+            const modales = Array.from(document.body.children).filter(el =>
+                el.tagName === 'DIV' &&
+                el.style.position === 'fixed' &&
+                parseInt(el.style.zIndex || '0', 10) >= 9000
+            );
+            if (modales.length > 0) {
+                modales[modales.length - 1].remove();
+            }
+        });
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove, get, update, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -3454,6 +3570,28 @@
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+
+        // ===== Monitor de conexión con Firebase (v2) =====
+        (function monitorConexion() {
+            const banner = document.createElement('div');
+            banner.id = 'offlineBanner';
+            banner.innerHTML = '📡 Sin conexión — los cambios se enviarán al reconectar';
+            document.body.appendChild(banner);
+            let timeoutAviso = null;
+            try {
+                onValue(ref(database, '.info/connected'), (snap) => {
+                    const conectado = snap.val() === true;
+                    if (conectado) {
+                        clearTimeout(timeoutAviso);
+                        banner.classList.remove('visible');
+                    } else {
+                        // Espera 3s antes de avisar (evita parpadeo en la carga inicial)
+                        clearTimeout(timeoutAviso);
+                        timeoutAviso = setTimeout(() => banner.classList.add('visible'), 3000);
+                    }
+                });
+            } catch (e) { console.warn('Monitor de conexión no disponible', e); }
+        })();
 
         // Variables globales
         let sesionActual = null;
@@ -4190,7 +4328,7 @@
                 if (p.rol === 'coordinador') icono = '👑';
                 else if (p.rol === 'familia') icono = '👨‍👩‍👧';
                 
-                badge.innerHTML = `${icono} ${p.nombre}`;
+                badge.innerHTML = `${icono} ${escapeHTML(p.nombre)}`;
                 container.appendChild(badge);
                 
                 // Botón de eliminar solo para coordinador y solo si el participante no es coordinador
@@ -4258,7 +4396,7 @@
             card.innerHTML = `
                 <div class="punto-header">
                     <div class="punto-numero">${numero}</div>
-                    <div class="punto-titulo">${punto.texto}</div>
+                    <div class="punto-titulo">${escapeHTML(punto.texto)}</div>
                 </div>
 
                 ${window.usuarioActual.rol === 'coordinador' ? `
@@ -4390,7 +4528,7 @@
                     div.innerHTML = `
                         <div class="aportacion-header">
                             <span class="aportacion-autor">
-                                ${aport.rol === 'coordinador' ? '👑' : '👤'} <strong>${aport.autor}</strong>
+                                ${aport.rol === 'coordinador' ? '👑' : '👤'} <strong>${escapeHTML(aport.autor)}</strong>
                             </span>
                             <span class="aportacion-hora">${new Date(aport.timestamp).toLocaleString('es-ES', { 
                                 day: '2-digit', 
@@ -4399,7 +4537,7 @@
                                 minute: '2-digit' 
                             })}</span>
                         </div>
-                        <div class="aportacion-texto">${aport.texto}</div>
+                        <div class="aportacion-texto">${escapeHTML(aport.texto)}</div>
                         ${puedeEditar ? `
                             <div style="margin-top: 8px; display: flex; gap: 8px;">
                                 <button onclick="editarAportacion('${puntoId}', '${Object.keys(aportaciones)[index]}')" 
@@ -4453,7 +4591,7 @@
             modal.innerHTML = `
                 <div style="background: white; border-radius: 12px; padding: 25px; max-width: 600px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
                     <h3 style="margin-bottom: 15px; color: var(--primary);">✏️ Editar aportación</h3>
-                    <textarea id="textareaEditarAportacion" style="width: 100%; min-height: 150px; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical;">${aportacion.texto}</textarea>
+                    <textarea id="textareaEditarAportacion" style="width: 100%; min-height: 150px; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical;">${escapeHTML(aportacion.texto)}</textarea>
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
                         <button onclick="this.closest('div').parentElement.parentElement.remove()" style="flex: 1; padding: 12px; background: transparent; border: 2px solid var(--primary); color: var(--primary); border-radius: 8px; font-weight: 600; cursor: pointer;">
                             Cancelar
@@ -4598,10 +4736,10 @@
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
                             <div style="flex: 1;">
-                                <strong style="display: block; color: var(--primary); margin-bottom: 4px;">${doc.nombre}</strong>
-                                <a href="${doc.link}" target="_blank" style="color: var(--secondary); font-size: 13px; word-break: break-all;">🔗 Abrir enlace</a>
+                                <strong style="display: block; color: var(--primary); margin-bottom: 4px;">${escapeHTML(doc.nombre)}</strong>
+                                <a href="${escapeHTML(safeURL(doc.link))}" target="_blank" rel="noopener" style="color: var(--secondary); font-size: 13px; word-break: break-all;">🔗 Abrir enlace</a>
                                 <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">
-                                    Subido por ${doc.autor} • ${new Date(doc.timestamp).toLocaleString('es-ES', { 
+                                    Subido por ${escapeHTML(doc.autor)} • ${new Date(doc.timestamp).toLocaleString('es-ES', { 
                                         day: '2-digit', 
                                         month: '2-digit', 
                                         hour: '2-digit', 
@@ -4610,7 +4748,7 @@
                                 </div>
                             </div>
                             <div style="display: flex; gap: 5px; flex-shrink: 0;">
-                                <button onclick="shareLinksManager.shareLink('${doc.link}', '${doc.nombre.replace(/'/g, "\\'")}', '', '')" 
+                                <button onclick="shareLinksManager.shareLink('${safeURL(doc.link).replace(/'/g, '%27')}', '${escapeHTML(doc.nombre).replace(/'/g, "\\'")}', '', '')" 
                                         style="background: #4CAF50; color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 8px;" 
                                         title="Compartir documento">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -4638,12 +4776,16 @@
         // Crear votación
         window.crearVotacion = async function(puntoId, conNombres) {
             const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
-            
-            await set(votacionRef, {
-                activa: true,
-                conNombres: conNombres,
-                timestamp: Date.now()
-            });
+            try {
+                await set(votacionRef, {
+                    activa: true,
+                    conNombres: conNombres,
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.error('Error creando votación:', error);
+                mostrarToast('No se pudo abrir la votación. Comprueba la conexión.', 'error');
+            }
         };
 
         // Cargar votación
@@ -4668,7 +4810,7 @@
                 // Contar votos
                 const conteo = { si: 0, no: 0, abstencion: 0 };
                 Object.values(votos).forEach(v => {
-                    conteo[v.voto]++;
+                    if (conteo[v.voto] !== undefined) conteo[v.voto]++;
                 });
                 const total = Object.keys(votos).length;
 
@@ -4710,7 +4852,7 @@
                                         .filter(([_, v]) => v.voto === tipo)
                                         .map(([nombre, _]) => nombre);
                                     if (votantes.length > 0) {
-                                        nombres = `<div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">${votantes.join(', ')}</div>`;
+                                        nombres = `<div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">${votantes.map(escapeHTML).join(', ')}</div>`;
                                     }
                                 }
                                 
@@ -4738,13 +4880,19 @@
 
         // Votar
         window.votar = async function(puntoId, voto) {
-            const votoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion/votos/${window.usuarioActual.nombre}`);
-            
-            await set(votoRef, {
-                nombre: window.usuarioActual.nombre,
-                voto: voto,
-                timestamp: Date.now()
-            });
+            // Clave segura para Firebase (sin . # $ [ ] /)
+            const claveVotante = String(window.usuarioActual.nombre).replace(/[.#$\[\]\/]/g, '');
+            const votoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion/votos/${claveVotante}`);
+            try {
+                await set(votoRef, {
+                    nombre: window.usuarioActual.nombre,
+                    voto: voto,
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.error('Error registrando voto:', error);
+                mostrarToast('No se pudo registrar tu voto. Comprueba la conexión e inténtalo de nuevo.', 'error');
+            }
         };
 
         // Cerrar votación
@@ -4754,7 +4902,13 @@
             }
             
             const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
-            await update(votacionRef, { activa: false });
+            try {
+                await update(votacionRef, { activa: false });
+                mostrarToast('Votación cerrada', 'success');
+            } catch (error) {
+                console.error('Error cerrando votación:', error);
+                mostrarToast('No se pudo cerrar la votación. Comprueba la conexión.', 'error');
+            }
         };
 
         // Gestión de videollamada
@@ -5454,10 +5608,10 @@
                     : '';
 
                 return `
-                    <div class="asistencia-row" data-nombre="${p.nombre.toLowerCase()}">
+                    <div class="asistencia-row" data-nombre="${escapeHTML(p.nombre.toLowerCase())}">
                         <div class="asistencia-row-info">
-                            <div class="asistencia-row-nombre">${p.nombre}</div>
-                            <div class="asistencia-row-puesto">${badgesHtml}${p.puesto}</div>
+                            <div class="asistencia-row-nombre">${escapeHTML(p.nombre)}</div>
+                            <div class="asistencia-row-puesto">${badgesHtml}${escapeHTML(p.puesto)}</div>
                         </div>
                         <div class="asistencia-pills">
                             <button class="asistencia-pill ${p.estado === 'asistente' ? 'activo-asiste' : ''}"
@@ -6520,7 +6674,7 @@ ${textoActaLimpio}`;
                     div.className = 'punto-item';
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600;">${punto.texto}</span>
+                            <span style="font-weight: 600;">${escapeHTML(punto.texto)}</span>
                             <button class="btn btn-danger btn-small" onclick="eliminarPunto('${punto.id}')">❌</button>
                         </div>
                     `;
