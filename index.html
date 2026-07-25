@@ -2719,8 +2719,9 @@
         padding: 11px; border-radius: 10px; font-size: 13px; margin-bottom: 12px; line-height: 1.45;
     }
     .tt-err.show { display: block; }
-    .tt-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; margin-top: 12px; }
-    .tt-check input { width: 17px; height: 17px; flex-shrink: 0; }
+    .tt-check { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #64748b;
+                margin-top: 12px; line-height: 1.45; }
+    .tt-check input[type="checkbox"] { width: 17px !important; height: 17px; flex-shrink: 0; margin: 1px 0 0; padding: 0; }
     .tt-foot { text-align: center; font-size: 11px; color: #94a3b8; padding: 0 20px 18px; line-height: 1.6; }
 
     /* Barra de usuario en la cabecera */
@@ -2777,7 +2778,7 @@
                    border-radius:999px; padding:6px 12px; font-size:13px; margin:0 6px 6px 0; cursor:pointer; color:#1e293b; }
     .tt-add-chip:hover { border-color:#2563eb; color:#1e40af; }
     .tt-alta h4 { margin: 0 0 10px; font-size: 14px; color: #1e293b; }
-    .tt-alta input { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;
+    .tt-alta input[type="text"] { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;
                      font-size: 14px; margin-bottom: 8px; box-sizing: border-box; }
 </style>
 
@@ -2813,7 +2814,7 @@
 
             <label class="tt-check">
                 <input type="checkbox" id="ttRecordar" checked>
-                Recordarme en este dispositivo
+                <span>Recordarme en este dispositivo</span>
             </label>
         </div>
         <div class="tt-foot">
@@ -2833,7 +2834,7 @@
             <p style="font-size:13px;color:#64748b;margin:0 0 14px;line-height:1.5">
                 Aquí se da de alta y de baja al personal que puede entrar en la app.
                 El <strong>usuario IdEA</strong> es el usuario de Séneca de cada persona (nunca su contraseña).
-                Quien no lo tenga registrado podrá escribirlo la primera vez que entre.
+                Quien no lo tenga registrado podrá escribirlo la primera vez que entre. Todo el personal de la lista cuenta como claustro.
             </p>
             <div id="ttAvisoDB" class="tt-warn" style="display:none"></div>
             <div id="ttListaPersonal"></div>
@@ -2853,10 +2854,6 @@
                 <input type="text" id="ttNuevoPuesto" placeholder="Puesto (ej.: Educación Primaria)">
                 <input type="text" id="ttNuevoIdea" placeholder="Usuario IdEA de Séneca (opcional)"
                        autocapitalize="none" autocorrect="off" spellcheck="false">
-                <label class="tt-check" style="margin:4px 0 10px">
-                    <input type="checkbox" id="ttNuevoClaustro" checked>
-                    Es miembro del claustro (aparecerá en las listas de asistencia)
-                </label>
                 <button class="tt-btn" onclick="ttAltaPersona()">Añadir al personal</button>
             </div>
 
@@ -8814,7 +8811,7 @@ ${textoActaLimpio}`;
                         "nombre": "Ballesteros González, Ana del Rosario",
                         "puesto": "Personal del centro",
                         "idea": "abalgon066",
-                        "claustro": false
+                        "claustro": true
             },
             {
                         "nombre": "Castilla Alcalde, Eva María",
@@ -8862,7 +8859,7 @@ ${textoActaLimpio}`;
                         "nombre": "Márquez Fernández, María Francisca",
                         "puesto": "Personal del centro",
                         "idea": "mmarfer089",
-                        "claustro": false
+                        "claustro": true
             },
             {
                         "nombre": "Rodríguez Rodríguez, María",
@@ -8874,7 +8871,7 @@ ${textoActaLimpio}`;
                         "nombre": "Salas González, Patricia",
                         "puesto": "Personal del centro",
                         "idea": "psalgon227",
-                        "claustro": false
+                        "claustro": true
             },
             {
                         "nombre": "Sáez Guerrero, María Noelia",
@@ -9035,7 +9032,7 @@ ${textoActaLimpio}`;
                     ttPersonal = PERSONAL_SEED.map(p => Object.assign({ key: ttClave(p.nombre) }, p));
                     const paquete = {};
                     ttPersonal.forEach(p => {
-                        paquete[p.key] = { nombre: p.nombre, puesto: p.puesto, idea: p.idea || '', claustro: p.claustro !== false };
+                        paquete[p.key] = { nombre: p.nombre, puesto: p.puesto, idea: p.idea || '', claustro: true };
                     });
                     await window.set(window.ref(window.database, 'personal'), paquete);
                     ttDesdeFirebase = true;
@@ -9060,7 +9057,7 @@ ${textoActaLimpio}`;
             const listo = await esperarFirebase(8000);
             if (!listo) throw new Error('Sin conexión con la base de datos.');
             await window.set(window.ref(window.database, 'personal/' + p.key), {
-                nombre: p.nombre, puesto: p.puesto || '', idea: p.idea || '', claustro: p.claustro !== false
+                nombre: p.nombre, puesto: p.puesto || '', idea: p.idea || '', claustro: true
             });
             ttDesdeFirebase = true;
         }
@@ -9077,8 +9074,8 @@ ${textoActaLimpio}`;
         // Mantiene sincronizado el listado que usa el módulo de asistencia y actas
         function ttSincronizarClaustro() {
             if (!Array.isArray(window.CLAUSTRO_CAPITULACIONES)) return;
+            // Todo el personal dado de alta es claustro: entra entero en asistencia y actas.
             const claustro = ttPersonal
-                .filter(p => p.claustro !== false)
                 .map(p => ({ nombre: p.nombre, puesto: p.puesto || '' }))
                 .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
             window.CLAUSTRO_CAPITULACIONES.length = 0;
@@ -9316,7 +9313,6 @@ ${textoActaLimpio}`;
                     '<div class="tt-persona' + (p.idea ? '' : ' sin-idea') + '">' +
                         '<div class="info">' +
                             '<div class="nom">' + p.nombre +
-                                (p.claustro === false ? '<span class="tt-badge no-claustro">no claustro</span>' : '') +
                                 (p.idea ? '' : '<span class="tt-badge">sin IdEA</span>') +
                             '</div>' +
                             '<div class="det">' + (p.puesto || 'Sin puesto') +
@@ -9350,10 +9346,9 @@ ${textoActaLimpio}`;
                 alert('Ese usuario IdEA ya está asignado a otra persona.');
                 return;
             }
-            const claustro = confirm('¿' + p.nombre + ' es miembro del CLAUSTRO?\n\nAceptar = sí (aparece en asistencia)\nCancelar = no');
             p.puesto = puesto.trim();
             p.idea = ideaNorm;
-            p.claustro = claustro;
+            p.claustro = true;
             try { await ttGuardarPersona(p); } catch (e) { ttFalloGuardado(e); return; }
             ttSincronizarClaustro();
             ttRenderPersonal();
@@ -9374,7 +9369,6 @@ ${textoActaLimpio}`;
             const nombre = document.getElementById('ttNuevoNombre').value.trim();
             const puesto = document.getElementById('ttNuevoPuesto').value.trim();
             const idea = ttNormIdea(document.getElementById('ttNuevoIdea').value);
-            const claustro = document.getElementById('ttNuevoClaustro').checked;
 
             if (!nombre) return alert('Escribe el nombre en formato «Apellidos, Nombre».');
             if (nombre.indexOf(',') === -1 &&
@@ -9385,7 +9379,7 @@ ${textoActaLimpio}`;
             const key = ttClave(nombre);
             if (ttPersonal.some(p => p.key === key)) return alert('Ya existe alguien con ese nombre en la lista.');
 
-            const p = { key: key, nombre: nombre, puesto: puesto, idea: idea, claustro: claustro };
+            const p = { key: key, nombre: nombre, puesto: puesto, idea: idea, claustro: true };
             try { await ttGuardarPersona(p); } catch (e) { ttFalloGuardado(e); return; }
             ttPersonal.push(p);
             ttSincronizarClaustro();
@@ -9393,7 +9387,6 @@ ${textoActaLimpio}`;
             document.getElementById('ttNuevoNombre').value = '';
             document.getElementById('ttNuevoPuesto').value = '';
             document.getElementById('ttNuevoIdea').value = '';
-            document.getElementById('ttNuevoClaustro').checked = true;
         };
 
         // ---------- acceso por QR / enlace ----------
