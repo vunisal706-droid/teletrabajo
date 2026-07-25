@@ -2609,6 +2609,263 @@
     </style>
 </head>
 <body>
+
+<!-- ============================================================
+     FONDO AURORA (colores en movimiento, siempre claro)
+     ============================================================ -->
+<style id="ttAuroraStyle">
+    body {
+        background: linear-gradient(180deg, #f8fbff 0%, #f6fdf9 45%, #fffdf6 100%);
+        background-attachment: fixed;
+    }
+    body::before, body::after {
+        content: ''; position: fixed; inset: -30%; z-index: -1;
+        pointer-events: none; will-change: transform;
+    }
+    body::before {
+        background:
+            radial-gradient(30% 30% at 18% 22%, rgba(37, 99, 235, .28), transparent 62%),
+            radial-gradient(28% 28% at 82% 16%, rgba(16, 185, 129, .26), transparent 62%);
+        animation: ttAuroraA 30s ease-in-out infinite alternate;
+    }
+    body::after {
+        background:
+            radial-gradient(32% 32% at 78% 76%, rgba(139, 92, 246, .24), transparent 62%),
+            radial-gradient(30% 30% at 20% 86%, rgba(245, 158, 11, .22), transparent 62%);
+        animation: ttAuroraB 38s ease-in-out infinite alternate;
+    }
+    @keyframes ttAuroraA {
+        from { transform: translate3d(-2%, -1%, 0) scale(1); }
+        to   { transform: translate3d(4%, 3%, 0) scale(1.12); }
+    }
+    @keyframes ttAuroraB {
+        from { transform: translate3d(2%, 2%, 0) scale(1.06); }
+        to   { transform: translate3d(-3%, -2%, 0) scale(1); }
+    }
+    /* Las tarjetas dejan pasar un poco de color del fondo */
+    .card { background: rgba(255, 255, 255, .88); }
+    .container > .card { backdrop-filter: saturate(1.2); -webkit-backdrop-filter: saturate(1.2); }
+    /* La cabecera y el pie del portal de acceso también respiran */
+    #ttGate { background: rgba(248, 250, 252, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+    /* Accesibilidad: si el sistema pide menos movimiento, el fondo se queda quieto */
+    @media (prefers-reduced-motion: reduce) {
+        body::before, body::after { animation: none; }
+    }
+    /* Al imprimir actas y convocatorias, fondo blanco */
+    @media print {
+        body { background: #fff; }
+        body::before, body::after { display: none !important; }
+    }
+</style>
+
+<!-- Aviso de versión nueva -->
+<div id="ttUpdateBar" style="display:none; position:fixed; left:50%; bottom:16px; transform:translateX(-50%);
+     z-index:100002; background:#1e293b; color:#fff; padding:12px 16px; border-radius:12px;
+     box-shadow:0 10px 30px rgba(15,23,42,.3); font-size:14px; align-items:center; gap:12px;
+     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <span>Hay una versión nueva de la app</span>
+    <button onclick="ttActualizarApp()" style="background:#22c55e;color:#fff;border:none;padding:8px 14px;
+            border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">Actualizar</button>
+</div>
+
+<!-- ============================================================
+     PORTAL DE ACCESO (usuario IdEA de Séneca)
+     ============================================================ -->
+<style>
+    html.tt-lock, body.tt-lock { overflow: hidden !important; }
+    #ttGate {
+        position: fixed; inset: 0; z-index: 100000; display: none;
+        align-items: center; justify-content: center; padding: 16px;
+        background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 55%, #fefce8 100%);
+        overflow-y: auto;
+    }
+    #ttGate.show { display: flex; }
+    .tt-card {
+        background: #fff; width: 100%; max-width: 430px; border-radius: 20px;
+        box-shadow: 0 18px 45px rgba(15,23,42,.16); overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: auto;
+    }
+    .tt-card-head {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: #fff; padding: 22px 20px; text-align: center;
+    }
+    .tt-card-head h2 { margin: 0 0 4px; font-size: 20px; }
+    .tt-card-head p { margin: 0; font-size: 13px; opacity: .9; }
+    .tt-card-body { padding: 20px; }
+    .tt-field { margin-bottom: 16px; }
+    .tt-field label { display: block; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+    .tt-field select, .tt-field input {
+        width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px;
+        font-size: 15px; background: #fff; color: #1e293b; box-sizing: border-box;
+    }
+    .tt-field select:focus, .tt-field input:focus { outline: none; border-color: #2563eb; }
+    #ttIdea { font-family: 'Courier New', monospace; letter-spacing: .5px; text-transform: lowercase; }
+    .tt-aviso {
+        background: #fef9c3; border: 2px solid #fde047; border-radius: 10px;
+        padding: 12px; font-size: 13px; line-height: 1.5; color: #713f12; margin-bottom: 10px;
+    }
+    .tt-aviso strong { color: #854d0e; }
+    .tt-aviso code { background: #fff; padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+    .tt-btn {
+        width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 16px;
+        font-weight: 700; cursor: pointer; background: #2563eb; color: #fff;
+    }
+    .tt-btn:hover { background: #1e40af; }
+    .tt-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .tt-err {
+        display: none; background: #fee2e2; border: 2px solid #fca5a5; color: #991b1b;
+        padding: 11px; border-radius: 10px; font-size: 13px; margin-bottom: 12px; line-height: 1.45;
+    }
+    .tt-err.show { display: block; }
+    .tt-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; margin-top: 12px; }
+    .tt-check input { width: 17px; height: 17px; flex-shrink: 0; }
+    .tt-foot { text-align: center; font-size: 11px; color: #94a3b8; padding: 0 20px 18px; line-height: 1.6; }
+
+    /* Barra de usuario en la cabecera */
+    .tt-userbar {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        flex-wrap: wrap; margin-top: 12px;
+    }
+    .tt-chip {
+        background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
+        color: #fff; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    }
+    .tt-mini {
+        background: rgba(255,255,255,.92); color: #1e40af; border: none; padding: 6px 12px;
+        border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .tt-mini:hover { background: #fff; }
+
+    /* Panel de personal (solo dirección) */
+    #ttPersonalModal {
+        position: fixed; inset: 0; z-index: 100001; display: none;
+        background: rgba(15,23,42,.5); padding: 16px; overflow-y: auto;
+    }
+    #ttPersonalModal.show { display: flex; align-items: flex-start; justify-content: center; }
+    .tt-panel {
+        background: #fff; width: 100%; max-width: 720px; border-radius: 18px; margin: 20px auto;
+        overflow: hidden; box-shadow: 0 18px 45px rgba(15,23,42,.25);
+    }
+    .tt-panel-head {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: #fff;
+        padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .tt-panel-head h3 { margin: 0; font-size: 17px; }
+    .tt-panel-body { padding: 18px 20px 22px; }
+    .tt-persona {
+        display: flex; align-items: center; gap: 10px; padding: 10px;
+        border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; background: #fff;
+    }
+    .tt-persona.sin-idea { border-color: #fdba74; background: #fff7ed; }
+    .tt-persona .info { flex: 1; min-width: 0; }
+    .tt-persona .nom { font-weight: 700; font-size: 14px; color: #1e293b; }
+    .tt-persona .det { font-size: 12px; color: #64748b; margin-top: 2px; word-break: break-word; }
+    .tt-persona .det code { background: #f1f5f9; padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+    .tt-badge { display: inline-block; background: #fed7aa; color: #9a3412; font-size: 11px;
+                font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-left: 4px; }
+    .tt-badge.no-claustro { background: #e0e7ff; color: #3730a3; }
+    .tt-icon-btn { border: none; background: #f1f5f9; border-radius: 8px; padding: 8px 10px;
+                   cursor: pointer; font-size: 15px; }
+    .tt-icon-btn:hover { background: #e2e8f0; }
+    .tt-alta { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 14px; margin-top: 18px; }
+    .tt-warn { background:#fee2e2; border:2px solid #fca5a5; color:#991b1b; border-radius:10px;
+               padding:12px; font-size:13px; line-height:1.5; margin-bottom:14px; }
+    .tt-alta summary { font-size:14px; font-weight:700; color:#1e293b; cursor:pointer; }
+    .tt-add-chip { display:inline-flex; align-items:center; gap:6px; background:#fff; border:2px solid #cbd5e1;
+                   border-radius:999px; padding:6px 12px; font-size:13px; margin:0 6px 6px 0; cursor:pointer; color:#1e293b; }
+    .tt-add-chip:hover { border-color:#2563eb; color:#1e40af; }
+    .tt-alta h4 { margin: 0 0 10px; font-size: 14px; color: #1e293b; }
+    .tt-alta input { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;
+                     font-size: 14px; margin-bottom: 8px; box-sizing: border-box; }
+</style>
+
+<div id="ttGate">
+    <div class="tt-card">
+        <div class="tt-card-head">
+            <h2>🔐 Acceso del claustro</h2>
+            <p>Teletrabajo · CEIP Capitulaciones de Santa Fe</p>
+        </div>
+        <div class="tt-card-body">
+            <div id="ttError" class="tt-err"></div>
+
+            <div class="tt-field">
+                <label for="ttNombre">1. ¿Quién eres?</label>
+                <select id="ttNombre">
+                    <option value="">— Cargando personal… —</option>
+                </select>
+            </div>
+
+            <div class="tt-field">
+                <label for="ttIdea">2. Tu <u>usuario</u> de Séneca (IdEA)</label>
+                <div class="tt-aviso">
+                    ⚠️ <strong>Escribe tu USUARIO de Séneca, NO tu contraseña.</strong><br>
+                    Es el nombre con el que entras en Séneca: letras y números seguidos,
+                    tipo <code>abcdef123</code>. La contraseña de Séneca no se pide aquí
+                    nunca y esta app no la puede ver.
+                </div>
+                <input type="text" id="ttIdea" placeholder="ejemplo: abcdef123"
+                       autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+            </div>
+
+            <button class="tt-btn" id="ttBtnEntrar" onclick="ttEntrar()">Entrar →</button>
+
+            <label class="tt-check">
+                <input type="checkbox" id="ttRecordar" checked>
+                Recordarme en este dispositivo
+            </label>
+        </div>
+        <div class="tt-foot">
+            ¿No apareces en la lista o no te deja entrar?<br>
+            Habla con la dirección del centro para que te dé de alta.
+        </div>
+    </div>
+</div>
+
+<div id="ttPersonalModal">
+    <div class="tt-panel">
+        <div class="tt-panel-head">
+            <h3>👥 Personal del centro</h3>
+            <button class="tt-mini" onclick="ttCerrarPersonal()">✕ Cerrar</button>
+        </div>
+        <div class="tt-panel-body">
+            <p style="font-size:13px;color:#64748b;margin:0 0 14px;line-height:1.5">
+                Aquí se da de alta y de baja al personal que puede entrar en la app.
+                El <strong>usuario IdEA</strong> es el usuario de Séneca de cada persona (nunca su contraseña).
+                Quien no lo tenga registrado podrá escribirlo la primera vez que entre.
+            </p>
+            <div id="ttAvisoDB" class="tt-warn" style="display:none"></div>
+            <div id="ttListaPersonal"></div>
+
+            <details class="tt-alta" id="ttDetAnteriores">
+                <summary>🕘 Recuperar personal del curso pasado</summary>
+                <p style="font-size:12px;color:#64748b;margin:8px 0 10px;line-height:1.5">
+                    Estas personas estaban en el claustro del curso anterior y no aparecen en el listado
+                    de Séneca que has subido. Añade solo a quien siga en el centro.
+                </p>
+                <div id="ttAnteriores"></div>
+            </details>
+
+            <div class="tt-alta">
+                <h4>➕ Dar de alta a alguien nuevo (interinos, sustituciones…)</h4>
+                <input type="text" id="ttNuevoNombre" placeholder="Apellidos, Nombre  (ej.: Pérez Gómez, Ana)">
+                <input type="text" id="ttNuevoPuesto" placeholder="Puesto (ej.: Educación Primaria)">
+                <input type="text" id="ttNuevoIdea" placeholder="Usuario IdEA de Séneca (opcional)"
+                       autocapitalize="none" autocorrect="off" spellcheck="false">
+                <label class="tt-check" style="margin:4px 0 10px">
+                    <input type="checkbox" id="ttNuevoClaustro" checked>
+                    Es miembro del claustro (aparecerá en las listas de asistencia)
+                </label>
+                <button class="tt-btn" onclick="ttAltaPersona()">Añadir al personal</button>
+            </div>
+
+            <button class="tt-btn" style="background:#fff;color:#b91c1c;border:2px solid #fca5a5;margin-top:14px"
+                    onclick="ttVaciarPersonal()">🧹 Vaciar la lista y empezar de cero</button>
+        </div>
+    </div>
+</div>
+
     <div class="header">
         <h1>📋 Teletrabajo Capitulaciones</h1>
         <div class="subtitle">CEIP Capitulaciones de Santa Fe</div>
@@ -3619,9 +3876,10 @@
         window.ordenDia = []; // Array con los textos de los puntos del orden del día
 
         // ============================================================
-        // CLAUSTRO DEL CEIP CAPITULACIONES (Séneca, curso 2025-26)
-        // Listado precargado para el módulo de Asistencia.
-        // Si hay altas/bajas, se edita aquí.
+        // CLAUSTRO DEL CEIP CAPITULACIONES
+        // OJO: esta lista se sobrescribe automáticamente con el personal dado
+        // de alta en Firebase (nodo personal/) desde el panel de dirección.
+        // Solo sirve de reserva si la base de datos no responde.
         // ============================================================
         window.CLAUSTRO_CAPITULACIONES = [
             { nombre: "Castilla Alcalde, Eva María", puesto: "Educación Física" },
@@ -8500,6 +8758,12 @@ ${textoActaLimpio}`;
     </script>
 
     <script>
+        window.ttActualizarApp = function () {
+            try {
+                if (window.ttNuevoWorker) window.ttNuevoWorker.postMessage({ type: 'SKIP_WAITING' });
+            } catch (e) {}
+            setTimeout(() => location.reload(), 300);
+        };
         // Service Worker - Registro mejorado
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -8513,6 +8777,9 @@ ${textoActaLimpio}`;
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                     console.log('🔄 Nueva versión disponible');
+                                    window.ttNuevoWorker = newWorker;
+                                    const barra = document.getElementById('ttUpdateBar');
+                                    if (barra) barra.style.display = 'flex';
                                 }
                             });
                         });
@@ -8527,6 +8794,672 @@ ${textoActaLimpio}`;
     <!-- ============================================ -->
     <!-- MÓDULO DE COMPARTIR ENLACES DE VIDEOLLAMADAS -->
     <!-- ============================================ -->
+    <!-- ============================================================
+         CONTROL DE ACCESO POR USUARIO IdEA DE SÉNECA
+         - Cada persona entra con su USUARIO de Séneca (nunca la contraseña)
+         - La lista de personal vive en Firebase: nodo  personal/
+         - Administración (altas/bajas): usuario IdEA vunisal706
+         ============================================================ -->
+    <script>
+    (function () {
+        'use strict';
+
+        const ADMIN_IDEA = 'vunisal706';
+        const CLAVE_SESION = 'tt_sesion_v1';
+
+        // Personal tal cual sale del listado de Séneca (RelPerCen.xls).
+        // Solo se usa la primera vez; a partir de ahí manda Firebase (nodo personal/).
+        const PERSONAL_SEED = [
+            {
+                        "nombre": "Ballesteros González, Ana del Rosario",
+                        "puesto": "Personal del centro",
+                        "idea": "abalgon066",
+                        "claustro": false
+            },
+            {
+                        "nombre": "Castilla Alcalde, Eva María",
+                        "puesto": "Educación Física",
+                        "idea": "ecasalc349",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Desviat García, María Lorena",
+                        "puesto": "Audición y Lenguaje",
+                        "idea": "mdesgar302",
+                        "claustro": true
+            },
+            {
+                        "nombre": "García Sánchez, Magdalena",
+                        "puesto": "Educación Primaria",
+                        "idea": "mgarsan782",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Lucena González, María Noelia",
+                        "puesto": "Educación Infantil",
+                        "idea": "mlucgon910",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Lupión Puente, Manuel",
+                        "puesto": "Educación Primaria",
+                        "idea": "mluppue584",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Moreno Castro, Belén",
+                        "puesto": "Música",
+                        "idea": "bmorcas601",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Muñoz Romero, Encarnación",
+                        "puesto": "Francés y Pedagogía Terapéutica",
+                        "idea": "emunrom369",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Márquez Fernández, María Francisca",
+                        "puesto": "Personal del centro",
+                        "idea": "mmarfer089",
+                        "claustro": false
+            },
+            {
+                        "nombre": "Rodríguez Rodríguez, María",
+                        "puesto": "Educación Primaria",
+                        "idea": "mrodrod323",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Salas González, Patricia",
+                        "puesto": "Personal del centro",
+                        "idea": "psalgon227",
+                        "claustro": false
+            },
+            {
+                        "nombre": "Sáez Guerrero, María Noelia",
+                        "puesto": "Pedagogía Terapéutica T.E.A.",
+                        "idea": "nsaegue077",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Tortosa Espínola, Silvia Tatiana",
+                        "puesto": "Primaria-Bilingüe Inglés",
+                        "idea": "storesp740",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Única Salas, Víctor Manuel",
+                        "puesto": "Pedagogía Terapéutica",
+                        "idea": "vunisal706",
+                        "claustro": true
+            }
+        ];
+
+        // Personal del curso pasado que no aparece en el listado de Séneca.
+        // No se carga: dirección lo añade a mano si esa persona sigue en el centro.
+        const PERSONAL_ANTERIOR = [
+            {
+                        "nombre": "Flores Maldonado, Isabel Rosa",
+                        "puesto": "Primaria-Bilingüe Inglés",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Marfil Álvarez, Estefanía",
+                        "puesto": "Educación Infantil",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Martín Pérez, María Silvia",
+                        "puesto": "Educación Infantil",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Pachón Pérez, Lucía",
+                        "puesto": "Educación Primaria",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Paniza Ortiz, Marisol",
+                        "puesto": "Religión",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Peláez Martínez, María Encarnación",
+                        "puesto": "Interculturalidad",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Reyes Amate, Saray",
+                        "puesto": "Religión Evangélica",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Rodríguez Ruiz, Virginia",
+                        "puesto": "Primaria (Z. Transf.Social)",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Roldán Rosales, María Esmeralda",
+                        "puesto": "Religión",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Romero Rodríguez, Miriam Noemi",
+                        "puesto": "Primaria (Z. Transf.Social)",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Ruiz Muñoz, Bianca",
+                        "puesto": "Orientadora",
+                        "idea": "",
+                        "claustro": true
+            },
+            {
+                        "nombre": "Sojo Cabello, Desiree",
+                        "puesto": "Lengua Extranjera-Inglés",
+                        "idea": "",
+                        "claustro": true
+            }
+        ];
+
+        let ttDesdeFirebase = false;
+
+        let ttPersonal = [];
+        window.ttUsuario = null;
+
+        // ---------- utilidades ----------
+        function ttClave(nombre) {
+            return (nombre || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[.#$\[\]\/]/g, '')
+                .replace(/,/g, '')
+                .replace(/\s+/g, '_')
+                .toLowerCase();
+        }
+        function ttNormIdea(s) {
+            return (s || '').toString().trim().toLowerCase().replace(/\s+/g, '');
+        }
+        function ttNombrePila(nombre) {
+            const partes = (nombre || '').split(',');
+            const pila = (partes[1] || partes[0] || '').trim();
+            return pila.split(' ')[0] || 'compañero/a';
+        }
+        function ttError(msg) {
+            const el = document.getElementById('ttError');
+            if (!el) return;
+            el.innerHTML = msg;
+            el.classList.add('show');
+        }
+        function ttLimpiarError() {
+            const el = document.getElementById('ttError');
+            if (el) el.classList.remove('show');
+        }
+        function esperarFirebase(ms) {
+            return new Promise((resolve) => {
+                const limite = Date.now() + (ms || 10000);
+                (function comprobar() {
+                    if (window.database && window.ref && window.get && window.set) return resolve(true);
+                    if (Date.now() > limite) return resolve(false);
+                    setTimeout(comprobar, 150);
+                })();
+            });
+        }
+
+        // ---------- datos de personal ----------
+        async function ttCargarPersonal() {
+            ttDesdeFirebase = false;
+            const listo = await esperarFirebase(10000);
+            if (!listo) {
+                ttPersonal = PERSONAL_SEED.map(p => Object.assign({ key: ttClave(p.nombre) }, p));
+                ttSincronizarClaustro();
+                return ttPersonal;
+            }
+            try {
+                const snap = await window.get(window.ref(window.database, 'personal'));
+                if (snap.exists() && snap.val()) {
+                    const obj = snap.val();
+                    ttPersonal = Object.keys(obj).map(k => Object.assign({ key: k }, obj[k]));
+                    ttDesdeFirebase = true;
+                } else {
+                    ttPersonal = PERSONAL_SEED.map(p => Object.assign({ key: ttClave(p.nombre) }, p));
+                    const paquete = {};
+                    ttPersonal.forEach(p => {
+                        paquete[p.key] = { nombre: p.nombre, puesto: p.puesto, idea: p.idea || '', claustro: p.claustro !== false };
+                    });
+                    await window.set(window.ref(window.database, 'personal'), paquete);
+                    ttDesdeFirebase = true;
+                }
+            } catch (e) {
+                console.warn('No se pudo leer el personal de Firebase, uso la lista local:', e);
+                ttPersonal = PERSONAL_SEED.map(p => Object.assign({ key: ttClave(p.nombre) }, p));
+            }
+            ttPersonal.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+            ttSincronizarClaustro();
+            return ttPersonal;
+        }
+
+        const AYUDA_REGLAS =
+            'No se ha podido guardar en Firebase.\n\n' +
+            'Casi seguro que es por las reglas de la base de datos: hay que permitir ' +
+            'lectura y escritura en el nodo "personal".\n\n' +
+            'Realtime Database → Reglas → añade:\n\n' +
+            '"personal": { ".read": true, ".write": true }';
+
+        async function ttGuardarPersona(p) {
+            const listo = await esperarFirebase(8000);
+            if (!listo) throw new Error('Sin conexión con la base de datos.');
+            await window.set(window.ref(window.database, 'personal/' + p.key), {
+                nombre: p.nombre, puesto: p.puesto || '', idea: p.idea || '', claustro: p.claustro !== false
+            });
+            ttDesdeFirebase = true;
+        }
+        async function ttBorrarPersonaDB(key) {
+            const listo = await esperarFirebase(8000);
+            if (!listo) throw new Error('Sin conexión con la base de datos.');
+            await window.remove(window.ref(window.database, 'personal/' + key));
+        }
+        function ttFalloGuardado(e) {
+            console.error(e);
+            alert(AYUDA_REGLAS + '\n\n(Detalle técnico: ' + (e && e.message ? e.message : e) + ')');
+        }
+
+        // Mantiene sincronizado el listado que usa el módulo de asistencia y actas
+        function ttSincronizarClaustro() {
+            if (!Array.isArray(window.CLAUSTRO_CAPITULACIONES)) return;
+            const claustro = ttPersonal
+                .filter(p => p.claustro !== false)
+                .map(p => ({ nombre: p.nombre, puesto: p.puesto || '' }))
+                .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+            window.CLAUSTRO_CAPITULACIONES.length = 0;
+            claustro.forEach(p => window.CLAUSTRO_CAPITULACIONES.push(p));
+            ttRepoblarSelectNombre();
+        }
+
+        function ttRepoblarSelectNombre() {
+            const sel = document.getElementById('selectNombre');
+            if (!sel) return;
+            const previo = sel.value;
+            sel.innerHTML = '<option value="">— Selecciona tu nombre —</option>';
+            ttPersonal.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.nombre;
+                opt.textContent = p.puesto ? (p.nombre + ' — ' + p.puesto) : p.nombre;
+                sel.appendChild(opt);
+            });
+            const otro = document.createElement('option');
+            otro.value = '__externo__';
+            otro.textContent = '✏️ Otro / Externo (escribir nombre)';
+            sel.appendChild(otro);
+            if (previo) sel.value = previo;
+        }
+
+        function ttRellenarSelectAcceso() {
+            const sel = document.getElementById('ttNombre');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">— Selecciona tu nombre —</option>';
+            ttPersonal.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.key;
+                opt.textContent = p.puesto ? (p.nombre + ' — ' + p.puesto) : p.nombre;
+                sel.appendChild(opt);
+            });
+        }
+
+        // ---------- sesión ----------
+        function ttLeerCookie() {
+            const m = document.cookie.match(new RegExp('(?:^|; )' + CLAVE_SESION + '=([^;]*)'));
+            return m ? decodeURIComponent(m[1]) : null;
+        }
+        function ttLeerSesion() {
+            let raw = null;
+            try { raw = localStorage.getItem(CLAVE_SESION); } catch (e) {}
+            if (!raw) { try { raw = sessionStorage.getItem(CLAVE_SESION); } catch (e) {} }
+            if (!raw) { try { raw = ttLeerCookie(); } catch (e) {} }
+            try { return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+        }
+        function ttEscribirSesion(sesion, recordar) {
+            const raw = JSON.stringify(sesion);
+            // Se guarda por triplicado: algunos navegadores (iOS en modo app) pierden
+            // el localStorage, así que la cookie hace de red de seguridad.
+            try { sessionStorage.setItem(CLAVE_SESION, raw); } catch (e) {}
+            if (recordar) {
+                try { localStorage.setItem(CLAVE_SESION, raw); } catch (e) {}
+                try {
+                    document.cookie = CLAVE_SESION + '=' + encodeURIComponent(raw) +
+                        ';path=/;max-age=' + (60 * 60 * 24 * 365) + ';SameSite=Lax';
+                } catch (e) {}
+            }
+        }
+        window.ttSalir = function () {
+            try { localStorage.removeItem(CLAVE_SESION); } catch (e) {}
+            try { sessionStorage.removeItem(CLAVE_SESION); } catch (e) {}
+            try { document.cookie = CLAVE_SESION + '=;path=/;max-age=0;SameSite=Lax'; } catch (e) {}
+            location.href = location.pathname;
+        };
+
+        function ttMostrarGate(mostrar) {
+            const gate = document.getElementById('ttGate');
+            if (!gate) return;
+            gate.classList.toggle('show', !!mostrar);
+            document.documentElement.classList.toggle('tt-lock', !!mostrar);
+            document.body.classList.toggle('tt-lock', !!mostrar);
+        }
+
+        function ttBarraUsuario() {
+            const header = document.querySelector('.header');
+            if (!header || document.getElementById('ttUserbar')) return;
+            const u = window.ttUsuario;
+            const barra = document.createElement('div');
+            barra.className = 'tt-userbar';
+            barra.id = 'ttUserbar';
+            barra.innerHTML =
+                '<span class="tt-chip">👋 Hola, ' + ttNombrePila(u.nombre) + '</span>' +
+                (u.admin ? '<button class="tt-mini" onclick="ttAbrirPersonal()">👥 Personal</button>' : '') +
+                '<button class="tt-mini" onclick="ttSalir()">Salir</button>';
+            const banner = document.getElementById('meetingTitleBanner');
+            if (banner) header.insertBefore(barra, banner); else header.appendChild(barra);
+        }
+
+        function ttAplicarSesion(sesion) {
+            window.ttUsuario = sesion;
+            ttMostrarGate(false);
+            ttBarraUsuario();
+            // Preseleccionar su nombre en la pantalla de inicio
+            const sel = document.getElementById('selectNombre');
+            if (sel) {
+                const fijar = () => {
+                    if ([].some.call(sel.options, o => o.value === sesion.nombre)) sel.value = sesion.nombre;
+                    else setTimeout(fijar, 300);
+                };
+                fijar();
+            }
+        }
+
+        // ---------- entrada ----------
+        window.ttEntrar = async function () {
+            ttLimpiarError();
+            const btn = document.getElementById('ttBtnEntrar');
+            const key = document.getElementById('ttNombre').value;
+            const escrito = document.getElementById('ttIdea').value;
+            const idea = ttNormIdea(escrito);
+            const recordar = document.getElementById('ttRecordar').checked;
+
+            if (!key) return ttError('Selecciona tu nombre en la lista.');
+            if (!idea) return ttError('Escribe tu <strong>usuario</strong> de Séneca (IdEA). No la contraseña.');
+            if (!/^[a-z0-9._-]{4,30}$/.test(idea)) {
+                return ttError('Eso no parece un usuario de Séneca. El usuario IdEA son solo letras y números seguidos (tipo <code>abcdef123</code>). Recuerda: <strong>usuario, no contraseña</strong>.');
+            }
+
+            const persona = ttPersonal.find(p => p.key === key);
+            if (!persona) return ttError('No encuentro a esa persona. Recarga la página e inténtalo de nuevo.');
+
+            btn.disabled = true;
+            try {
+                if (!persona.idea) {
+                    // Primer acceso: se registra el usuario IdEA que escriba
+                    const repetido = ttPersonal.find(p => p.key !== key && ttNormIdea(p.idea) === idea);
+                    if (repetido) {
+                        btn.disabled = false;
+                        return ttError('Ese usuario IdEA ya está asignado a otra persona. Revísalo o avisa a dirección.');
+                    }
+                    const ok = confirm(
+                        'PRIMER ACCESO\n\n' + persona.nombre + '\n\n' +
+                        'Se va a guardar «' + idea + '» como tu USUARIO de Séneca (IdEA).\n\n' +
+                        '⚠️ Asegúrate de que es tu usuario, NO tu contraseña.\n\n¿Es correcto?'
+                    );
+                    if (!ok) { btn.disabled = false; return; }
+                    persona.idea = idea;
+                    try { await ttGuardarPersona(persona); } catch (e) { console.warn('No se pudo guardar el IdEA:', e); }
+                } else if (ttNormIdea(persona.idea) !== idea) {
+                    btn.disabled = false;
+                    return ttError('El usuario no coincide. Escribe tu <strong>usuario de Séneca (IdEA)</strong>, no la contraseña. Si crees que hay un error, avisa a dirección.');
+                }
+
+                const sesion = {
+                    nombre: persona.nombre,
+                    puesto: persona.puesto || '',
+                    idea: idea,
+                    admin: idea === ADMIN_IDEA,
+                    ts: Date.now()
+                };
+                ttEscribirSesion(sesion, recordar);
+                ttAplicarSesion(sesion);
+                if (window.__ttPendiente) ttContinuarQR(sesion.nombre);
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        // ---------- panel de personal (solo dirección) ----------
+        window.ttAbrirPersonal = function () {
+            if (!window.ttUsuario || !window.ttUsuario.admin) return;
+            document.getElementById('ttPersonalModal').classList.add('show');
+            document.documentElement.classList.add('tt-lock');
+            ttRenderPersonal();
+        };
+        window.ttCerrarPersonal = function () {
+            document.getElementById('ttPersonalModal').classList.remove('show');
+            document.documentElement.classList.remove('tt-lock');
+        };
+
+        function ttRenderAviso() {
+            const av = document.getElementById('ttAvisoDB');
+            if (!av) return;
+            if (ttDesdeFirebase) { av.style.display = 'none'; return; }
+            av.style.display = 'block';
+            av.innerHTML = '⚠️ <strong>No estoy leyendo el personal desde Firebase</strong>, ' +
+                'así que los cambios no se guardarán. Revisa las reglas de Realtime Database: ' +
+                'el nodo <code>personal</code> necesita <code>".read": true</code> y <code>".write": true</code>.';
+        }
+
+        function ttRenderAnteriores() {
+            const cont = document.getElementById('ttAnteriores');
+            if (!cont) return;
+            const pendientes = PERSONAL_ANTERIOR.filter(a => !ttPersonal.some(p => p.key === ttClave(a.nombre)));
+            if (!pendientes.length) {
+                cont.innerHTML = '<p style="font-size:13px;color:#64748b;margin:0">No queda nadie por recuperar.</p>';
+                return;
+            }
+            cont.innerHTML = pendientes.map(a =>
+                '<button class="tt-add-chip" onclick="ttRecuperarAnterior(\'' +
+                a.nombre.replace(/'/g, "\\'") + '\')">➕ ' + a.nombre + '</button>'
+            ).join('');
+        }
+
+        window.ttRecuperarAnterior = async function (nombre) {
+            const a = PERSONAL_ANTERIOR.find(x => x.nombre === nombre);
+            if (!a) return;
+            const p = { key: ttClave(a.nombre), nombre: a.nombre, puesto: a.puesto, idea: '', claustro: true };
+            if (ttPersonal.some(x => x.key === p.key)) return;
+            try { await ttGuardarPersona(p); } catch (e) { ttFalloGuardado(e); return; }
+            ttPersonal.push(p);
+            ttSincronizarClaustro();
+            ttRenderPersonal();
+        };
+
+        window.ttVaciarPersonal = async function () {
+            if (!window.ttUsuario || !window.ttUsuario.admin) return;
+            if (!confirm('Vas a BORRAR a todo el personal salvo a ti.\n\n' +
+                         'Después tendrás que ir dando de alta a quien corresponda al curso actual.\n\n¿Seguimos?')) return;
+            if (!confirm('Confirma otra vez: se borra la lista completa de personal.')) return;
+            const míos = ttPersonal.filter(p => ttNormIdea(p.idea) !== ADMIN_IDEA);
+            try {
+                for (const p of míos) await ttBorrarPersonaDB(p.key);
+            } catch (e) { ttFalloGuardado(e); return; }
+            ttPersonal = ttPersonal.filter(p => ttNormIdea(p.idea) === ADMIN_IDEA);
+            ttSincronizarClaustro();
+            ttRenderPersonal();
+        };
+
+        function ttRenderPersonal() {
+            ttRenderAviso();
+            ttRenderAnteriores();
+            const cont = document.getElementById('ttListaPersonal');
+            if (!cont) return;
+            const conIdea = ttPersonal.filter(p => p.idea).length;
+            cont.innerHTML =
+                '<div style="font-size:12px;color:#64748b;margin-bottom:10px">' +
+                ttPersonal.length + ' personas · ' + conIdea + ' con IdEA registrado · ' +
+                (ttPersonal.length - conIdea) + ' pendientes</div>' +
+                ttPersonal.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map(p =>
+                    '<div class="tt-persona' + (p.idea ? '' : ' sin-idea') + '">' +
+                        '<div class="info">' +
+                            '<div class="nom">' + p.nombre +
+                                (p.claustro === false ? '<span class="tt-badge no-claustro">no claustro</span>' : '') +
+                                (p.idea ? '' : '<span class="tt-badge">sin IdEA</span>') +
+                            '</div>' +
+                            '<div class="det">' + (p.puesto || 'Sin puesto') +
+                                (p.idea ? ' · <code>' + p.idea + '</code>' : ' · lo registrará en su primer acceso') +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="tt-icon-btn" title="Editar" onclick="ttEditarPersona(\'' + p.key + '\')">✏️</button>' +
+                        (p.idea === ADMIN_IDEA ? '' :
+                            '<button class="tt-icon-btn" title="Dar de baja" onclick="ttBajaPersona(\'' + p.key + '\')">🗑️</button>') +
+                    '</div>'
+                ).join('');
+        }
+
+        window.ttEditarPersona = async function (key) {
+            const p = ttPersonal.find(x => x.key === key);
+            if (!p) return;
+            const puesto = prompt('Puesto de ' + p.nombre + ':', p.puesto || '');
+            if (puesto === null) return;
+            const idea = prompt(
+                'USUARIO de Séneca (IdEA) de ' + p.nombre + '.\n' +
+                'Es el usuario, nunca la contraseña. Déjalo vacío para que lo registre en su primer acceso:',
+                p.idea || ''
+            );
+            if (idea === null) return;
+            const ideaNorm = ttNormIdea(idea);
+            if (ideaNorm && !/^[a-z0-9._-]{4,30}$/.test(ideaNorm)) {
+                alert('Ese usuario IdEA no tiene un formato válido (solo letras y números).');
+                return;
+            }
+            if (ideaNorm && ttPersonal.some(x => x.key !== key && ttNormIdea(x.idea) === ideaNorm)) {
+                alert('Ese usuario IdEA ya está asignado a otra persona.');
+                return;
+            }
+            const claustro = confirm('¿' + p.nombre + ' es miembro del CLAUSTRO?\n\nAceptar = sí (aparece en asistencia)\nCancelar = no');
+            p.puesto = puesto.trim();
+            p.idea = ideaNorm;
+            p.claustro = claustro;
+            try { await ttGuardarPersona(p); } catch (e) { ttFalloGuardado(e); return; }
+            ttSincronizarClaustro();
+            ttRenderPersonal();
+        };
+
+        window.ttBajaPersona = async function (key) {
+            const p = ttPersonal.find(x => x.key === key);
+            if (!p) return;
+            if (ttNormIdea(p.idea) === ADMIN_IDEA) return;
+            if (!confirm('¿Dar de baja a ' + p.nombre + '?\n\nDejará de poder entrar en la app y desaparecerá de las listas de asistencia.')) return;
+            try { await ttBorrarPersonaDB(key); } catch (e) { ttFalloGuardado(e); return; }
+            ttPersonal = ttPersonal.filter(x => x.key !== key);
+            ttSincronizarClaustro();
+            ttRenderPersonal();
+        };
+
+        window.ttAltaPersona = async function () {
+            const nombre = document.getElementById('ttNuevoNombre').value.trim();
+            const puesto = document.getElementById('ttNuevoPuesto').value.trim();
+            const idea = ttNormIdea(document.getElementById('ttNuevoIdea').value);
+            const claustro = document.getElementById('ttNuevoClaustro').checked;
+
+            if (!nombre) return alert('Escribe el nombre en formato «Apellidos, Nombre».');
+            if (nombre.indexOf(',') === -1 &&
+                !confirm('El nombre no lleva coma. Lo recomendable es «Apellidos, Nombre» para que las actas salgan bien.\n\n¿Lo guardo igualmente?')) return;
+            if (idea && !/^[a-z0-9._-]{4,30}$/.test(idea)) return alert('Ese usuario IdEA no tiene formato válido (solo letras y números).');
+            if (idea && ttPersonal.some(p => ttNormIdea(p.idea) === idea)) return alert('Ese usuario IdEA ya está asignado a otra persona.');
+
+            const key = ttClave(nombre);
+            if (ttPersonal.some(p => p.key === key)) return alert('Ya existe alguien con ese nombre en la lista.');
+
+            const p = { key: key, nombre: nombre, puesto: puesto, idea: idea, claustro: claustro };
+            try { await ttGuardarPersona(p); } catch (e) { ttFalloGuardado(e); return; }
+            ttPersonal.push(p);
+            ttSincronizarClaustro();
+            ttRenderPersonal();
+            document.getElementById('ttNuevoNombre').value = '';
+            document.getElementById('ttNuevoPuesto').value = '';
+            document.getElementById('ttNuevoIdea').value = '';
+            document.getElementById('ttNuevoClaustro').checked = true;
+        };
+
+        // ---------- acceso por QR / enlace ----------
+        // Las familias del Consejo Escolar entran por enlace especial y NO pasan por el acceso.
+        // El profesorado que llega por QR sí se identifica antes; luego se une automáticamente.
+        const params = new URLSearchParams(window.location.search);
+        const pReunion = params.get('reunion');
+        const pFecha = params.get('fecha');
+        const esFamilia = params.get('invitado') === 'familia';
+        window.__ttPendiente = null;
+        if (pReunion && pFecha && !esFamilia) {
+            window.__ttPendiente = { reunion: pReunion, fecha: pFecha };
+            // Quitamos los parámetros para que la auto-unión no salte antes de identificarse
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        async function ttContinuarQR(nombre) {
+            const pend = window.__ttPendiente;
+            window.__ttPendiente = null;
+            if (!pend) return;
+            await esperarFirebase(10000);
+            const promptOriginal = window.prompt;
+            window.prompt = function () { return nombre; };
+            try {
+                await window.autoUnirseDesdeQR(pend.reunion, pend.fecha, false);
+            } catch (e) {
+                console.error('Error al unirse desde el enlace:', e);
+            } finally {
+                window.prompt = promptOriginal;
+            }
+        }
+
+        // ---------- arranque ----------
+        function ttInit() {
+            const campo = document.getElementById('ttIdea');
+            if (campo) {
+                campo.addEventListener('input', ttLimpiarError);
+                campo.addEventListener('keydown', e => { if (e.key === 'Enter') window.ttEntrar(); });
+            }
+
+            if (esFamilia) { ttCargarPersonal(); return; }   // acceso de familias sin identificación
+
+            const sesion = ttLeerSesion();
+            if (sesion && sesion.nombre) {
+                ttAplicarSesion(sesion);
+                ttCargarPersonal().then(() => {
+                    // Solo se cierra la sesión si Firebase confirma que ya no está de alta.
+                    // Si no se ha podido leer, se mantiene la sesión (no molestamos al usuario).
+                    const p = ttPersonal.find(x => ttNormIdea(x.idea) === ttNormIdea(sesion.idea));
+                    if (ttDesdeFirebase && !p) { window.ttSalir(); return; }
+                    ttRepoblarSelectNombre();
+                    const sel = document.getElementById('selectNombre');
+                    if (sel) sel.value = sesion.nombre;
+                    if (window.__ttPendiente) ttContinuarQR(sesion.nombre);
+                });
+            } else {
+                ttMostrarGate(true);
+                ttCargarPersonal().then(ttRellenarSelectAcceso);
+            }
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ttInit);
+        else ttInit();
+    })();
+    </script>
+
     <script>
         class ShareLinksManager {
             constructor() {

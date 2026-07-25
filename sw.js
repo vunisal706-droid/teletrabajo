@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teletrabajo-capitulaciones-v23';
+const CACHE_NAME = 'teletrabajo-capitulaciones-v24';
 
 // Obtener la ruta base de la app
 const getBaseUrl = () => {
@@ -21,13 +21,12 @@ const urlsToCache = [
 
 // Instalar service worker y cachear archivos
 self.addEventListener('install', event => {
-  console.log('Service Worker v23: Installing...');
+  console.log('Service Worker v24: Installing...');
   console.log('Base URL:', baseUrl);
-  console.log('URLs to cache:', urlsToCache);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker v23: Caching files');
+        console.log('Service Worker v24: Caching files');
         return cache.addAll(urlsToCache).catch(err => {
           console.error('Error caching files:', err);
           // Intentar cachear uno por uno
@@ -41,7 +40,7 @@ self.addEventListener('install', event => {
         });
       })
       .then(() => {
-        console.log('Service Worker v23: Skip waiting');
+        console.log('Service Worker v24: Skip waiting');
         return self.skipWaiting();
       })
   );
@@ -49,47 +48,86 @@ self.addEventListener('install', event => {
 
 // Activar service worker y limpiar cachés antiguas
 self.addEventListener('activate', event => {
-  console.log('Service Worker v23: Activating...');
+  console.log('Service Worker v24: Activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker v23: Deleting old cache:', cacheName);
+            console.log('Service Worker v24: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker v23: Claiming clients');
+      console.log('Service Worker v24: Claiming clients');
       return self.clients.claim();
     })
   );
 });
 
-// Interceptar peticiones y servir desde caché
+// Permite que la página fuerce la actualización inmediata
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// ¿La petición es del propio index.html?
+function esDocumentoApp(request) {
+  if (request.mode === 'navigate') return true;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return false;
+  return url.pathname === baseUrl || url.pathname === baseUrl + 'index.html';
+}
+
+// Interceptar peticiones
 self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
+  // EL HTML VA SIEMPRE A LA RED PRIMERO.
+  // Así, en cuanto se sube una versión nueva a GitHub Pages, el claustro la recibe
+  // sin tener que borrar la caché. Si no hay conexión, tira de la copia guardada.
+  if (esDocumentoApp(request)) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const copia = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copia));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then(r => r || caches.match(baseUrl + 'index.html'))
+        )
+    );
+    return;
+  }
+
+  // El resto (iconos, manifest, librerías): caché primero, más rápido
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then(response => {
         if (response) {
           return response;
         }
-        return fetch(event.request).then(
+        return fetch(request).then(
           response => {
             // Verificar si es una respuesta válida
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-            
+
             // Clonar la respuesta
             const responseToCache = response.clone();
-            
+
             caches.open(CACHE_NAME)
               .then(cache => {
-                cache.put(event.request, responseToCache);
+                cache.put(request, responseToCache);
               });
-            
+
             return response;
           }
         );
