@@ -3959,72 +3959,613 @@
 
         // ÓRDENES DEL DÍA PREDEFINIDOS POR ÓRGANO Y MES
         const ordenDelDiaPredefinido = {
-            "EQUIPOS DOCENTES": {
-                "09": ["Lectura y aprobación del acta anterior", "Constitución del equipo docente", "Coordinación vertical con miembros de otros equipos docentes si fuera necesario", "Elaboración de la información para familias (normas del centro, objetivos, criterios de evaluación)", "Evaluación inicial", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "10": ["Lectura y aprobación del acta anterior", "Detección de dificultades de aprendizaje", "Propuesta de alumnado para refuerzo educativo", "Análisis del clima inicial de convivencia", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "11": ["Lectura y aprobación del acta anterior", "Seguimiento del alumnado y de los planes de refuerzo", "Tratamiento de conflictos y estrategias de resolución", "Evaluación global del proceso de enseñanza-aprendizaje", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "12": ["Lectura y aprobación del acta anterior", "Evaluación del alumnado en todas las áreas", "Evaluación de programas de refuerzo aplicados", "Evaluación del clima de convivencia", "Análisis del grado de adecuación curricular", "Evaluación del funcionamiento del equipo docente", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "01": ["Lectura y aprobación del acta anterior", "Revisión de propuestas de alumnado con refuerzo según 1ª evaluación", "Seguimiento global del grupo", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "02": ["Lectura y aprobación del acta anterior", "Seguimiento global del grupo", "Revisión de alumnado en refuerzo", "Revisión del clima de convivencia", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "03": ["Lectura y aprobación del acta anterior", "Evaluación de alumnado en todas las áreas", "Evaluación de programas de refuerzo y medidas pertinentes", "Evaluación del clima de convivencia", "Previsión de repetidores para comunicar a familias", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "04": ["Lectura y aprobación del acta anterior", "Evaluación del grupo aula", "Seguimiento de planes de refuerzo según segunda evaluación", "Remisión de nuevas propuestas al equipo de orientación", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "05": ["Lectura y aprobación del acta anterior", "Revisión del rendimiento del alumnado en refuerzo", "Revisión del clima de convivencia", "Propuesta de alumnado que no promociona al finalizar ciclo", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"],
-                "06": ["Lectura y aprobación del acta anterior", "Evaluación final del alumnado y competencias clave", "Análisis de adecuación curricular", "Propuestas de mejora de los distintos aspectos evaluados", "Coordinación vertical con otros equipos docentes", "Seguimiento del alumnado y medidas propuestas", "Ruegos y preguntas"]
-            },
-            "EQUIPOS DE CICLO": {
-                "09": ["Lectura y aprobación del acta anterior", "Revisión y actualización de criterios de evaluación y promoción", "Unificación de criterios en lectoescritura y coordinación con ETCP", "Organización de actividades complementarias con criterios pedagógicos", "Planificación de reuniones con familias", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "10": ["Lectura y aprobación del acta anterior", "Colaborar con el equipo directivo en la actualización del Proyecto Educativo", "Elaborar programaciones didácticas o propuestas pedagógicas", "Organizar actividades complementarias y extraescolares", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "11": ["Lectura y aprobación del acta anterior", "Revisión metodológica y mejora de la acción tutorial", "Planificación de actividades del Día de los Derechos de la Infancia y Día contra la Violencia Machista", "Planificación del Día de la Constitución y Navidad", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "12": ["Lectura y aprobación del acta anterior", "Evaluación de la práctica docente y ajuste metodológico", "Evaluación del rendimiento del alumnado", "Evaluación de las medidas de atención a la diversidad", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "01": ["Lectura y aprobación del acta anterior", "Revisión de actividades complementarias del segundo trimestre", "Planificación del Día de la Paz y la No Violencia", "Valoración del clima de aula por ciclo", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "02": ["Lectura y aprobación del acta anterior", "Planificación de actividades del Día de Andalucía y Carnaval", "Actividades del Día de la Mujer Trabajadora", "Seguimiento del alumnado con dificultades", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "03": ["Lectura y aprobación del acta anterior", "Evaluación del rendimiento en el segundo trimestre", "Revisión de medidas de atención a la diversidad", "Planificación del Día del Libro", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "04": ["Lectura y aprobación del acta anterior", "Análisis de resultados de la segunda evaluación", "Propuestas de mejora del rendimiento académico", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "05": ["Lectura y aprobación del acta anterior", "Seguimiento de posibles repetidores", "Planificación de actividades de fin de curso", "Seguimiento de las programaciones", "Ruegos y preguntas"],
-                "06": ["Lectura y aprobación del acta anterior", "Evaluación final y propuestas de mejora para el siguiente curso", "Seguimiento de las programaciones", "Ruegos y preguntas"]
-            },
-            "ETCP": {
-                "09": ["Lectura y aprobación del acta anterior", "Información sobre calendario de reuniones", "Establecer criterios para revisión de programaciones y propuestas pedagógicas", "Informar sobre medidas y programas de atención a la diversidad (Protocolo NEAE)", "Ruegos y preguntas"],
-                "10": ["Lectura y aprobación del acta anterior", "Organizar el Plan de Formación en Centros (CEP)", "Elaboración del Plan de Mejora", "Propuesta de actividades para Halloween y Día contra la Violencia Machista", "Informar sobre criterios de evaluación y promoción", "Ruegos y preguntas"],
-                "11": ["Lectura y aprobación del acta anterior", "Seguimiento del Plan de Refuerzo con el Equipo de Orientación", "Coordinación con el Plan de Formación en Centros", "Planificación de actividades del Día de la Constitución", "Elaboración del calendario de sesiones de evaluación", "Ruegos y preguntas"],
-                "12": ["Lectura y aprobación del acta anterior", "Supervisión de la aplicación del Plan de Convivencia", "Revisión de medidas de atención a la diversidad y refuerzo educativo", "Evaluación del trimestre", "Ruegos y preguntas"],
-                "01": ["Lectura y aprobación del acta anterior", "Planificación del Día de la Paz y la No Violencia", "Planificación de actividades de febrero (Carnaval, Día de Andalucía)", "Análisis de resultados de la primera evaluación", "Seguimiento del Plan de Mejora", "Ruegos y preguntas"],
-                "02": ["Lectura y aprobación del acta anterior", "Planificación del Día de la Mujer Trabajadora", "Coordinación de actividades del Día de Andalucía", "Seguimiento del alumnado con dificultades de aprendizaje", "Ruegos y preguntas"],
-                "03": ["Lectura y aprobación del acta anterior", "Elaborar calendario de sesiones de evaluación", "Revisión del Plan de Convivencia y propuestas de mejora", "Planificación del Día del Libro con la biblioteca", "Ruegos y preguntas"],
-                "04": ["Lectura y aprobación del acta anterior", "Seguimiento del plan de lectoescritura", "Coordinación de actividades del Día del Libro", "Análisis de la segunda evaluación y protocolo de repetidores", "Ruegos y preguntas"],
-                "05": ["Lectura y aprobación del acta anterior", "Propuesta de alumnado que no promociona", "Planificación de calendario final de curso", "Gestión del proceso de libros de texto", "Ruegos y preguntas"],
-                "06": ["Lectura y aprobación del acta anterior", "Análisis de la evaluación final", "Evaluación final del Plan de Mejora", "Elaboración de la memoria final", "Ruegos y preguntas"]
-            },
-            "CLAUSTRO": {
-                "09": ["Lectura y aprobación del acta anterior", "Información general inicio curso", "Constitución equipos de ciclo", "Aprobación criterios programaciones", "Presentación planes y programas educativos", "Propuesta actividades complementarias", "Proceso evaluación inicial", "Ruegos y preguntas"],
-                "10": ["Lectura y aprobación del acta anterior", "Evaluación inicial: conclusiones", "Análisis medidas atención diversidad", "Propuesta Bienestar Emocional", "Formación profesorado", "Ruegos y preguntas"],
-                "11": ["Lectura y aprobación del acta anterior", "Aprobación Plan de Centro", "Seguimiento programaciones", "Información tutorías y convivencia", "Revisión prevención violencia y acoso", "Ruegos y preguntas"],
-                "01": ["Lectura y aprobación del acta anterior", "Valoración 1ª evaluación", "Ajustes metodológicos", "Seguimiento planes y programas institucionales", "Ruegos y preguntas"],
-                "03": ["Lectura y aprobación del acta anterior", "Valoración 2ª evaluación", "Análisis progreso alumnado", "Evaluación intermedia PGA", "Ruegos y preguntas"],
-                "05": ["Lectura y aprobación del acta anterior", "Preparación evaluación final", "Criterios promoción LOMLOE", "Organización curso siguiente", "Ruegos y preguntas"],
-                "06": ["Lectura y aprobación del acta anterior", "Evaluación final del curso", "Aprobación memoria final", "Valoración planes y programas", "Propuestas mejora próximo curso", "Ruegos y preguntas"]
-            },
-            "CONSEJO ESCOLAR": {
-                "09": ["Lectura y aprobación del acta anterior", "Constitución Consejo Escolar", "Información inicio curso", "Aprobación calendario escolar", "Constitución comisiones", "Ruegos y preguntas"],
-                "10": ["Lectura y aprobación del acta anterior", "Información desarrollo inicial", "Presentación borrador PGA", "Aprobación Plan Convivencia", "Ruegos y preguntas"],
-                "11": ["Lectura y aprobación del acta anterior", "Aprobación PGA y presupuesto", "Informe organización docente", "Seguimiento Bienestar Emocional", "Ruegos y preguntas"],
-                "01": ["Lectura y aprobación del acta anterior", "Información económica trimestre", "Evaluación convivencia", "Informe actividad lectiva", "Ruegos y preguntas"],
-                "03": ["Lectura y aprobación del acta anterior", "Modificaciones presupuestarias", "Seguimiento PGA y resultados", "Informe comisiones", "Ruegos y preguntas"],
-                "05": ["Lectura y aprobación del acta anterior", "Información escolarización", "Previsión plantilla", "Planificación fin curso", "Ruegos y preguntas"],
-                "06": ["Lectura y aprobación del acta anterior", "Aprobación memoria final", "Valoración general del curso", "Propuestas mejora próximo curso", "Ruegos y preguntas"]
-            },
-            "EQUIPO DE ORIENTACIÓN": {
-                "09": ["Lectura y aprobación del acta anterior", "Constitución del equipo de orientación", "Valoración inicial del alumnado NEAE. Revisión de informes previos, nuevas detecciones y planificación de intervenciones", "Plan de acogida y adaptación: estrategias para facilitar la integración del alumnado, especialmente el de TEA", "Ruegos y preguntas"],
-                "10": ["Lectura y aprobación del acta anterior", "Seguimiento de la adaptación del alumnado: evaluación de dificultades iniciales y ajuste de medidas de apoyo", "Coordinación con los tutores y especialistas: trabajo conjunto para garantizar coherencia en la intervención educativa", "Estrategias para fomentar la inclusión: metodología y recursos para mejorar la participación del alumnado NEAE en el aula", "Propuestas de mejora", "Ruegos y preguntas"],
-                "11": ["Lectura y aprobación del acta anterior", "Revisión de la evolución del alumnado: análisis de avances y detección de posibles ajustes en la intervención", "Estrategias de apoyo emocional y convivencia: actuaciones para prevenir conflictos y promover el bienestar del alumnado", "Preparación de las evaluaciones adaptadas: revisión de medidas para garantizar la accesibilidad en la primera evaluación", "Ruegos y preguntas"],
-                "12": ["Lectura y aprobación del acta anterior", "Balance del trimestre y ajustes en la intervención: reflexión sobre las medidas aplicadas y propuestas de mejora", "Coordinación con familias: preparación de las reuniones para informar sobre los avances y necesidades", "Actividades inclusivas de Navidad: organización de eventos en los que todo el alumnado pueda participar", "Ruegos y preguntas"],
-                "01": ["Lectura y aprobación del acta anterior", "Análisis del primer trimestre: revisión de logros y dificultades detectadas en las evaluaciones", "Refuerzo educativo y adaptación de estrategias: planificación de nuevas medidas de apoyo en el aula TEA y alumnado NEAE", "Atención a la diversidad en el aula: estrategias para potenciar la autonomía y el aprendizaje significativo", "Ruegos y preguntas"],
-                "02": ["Lectura y aprobación del acta anterior", "Seguimiento de casos y ajuste de medidas – Evaluación de la evolución del alumnado con NEAE y propuestas de intervención", "Estrategias para la inclusión en actividades escolares – Adaptación de proyectos, salidas y celebraciones", "Apoyo emocional y conducta – Intervención en casos de ansiedad, dificultades sociales o problemas de conducta", "Ruegos y preguntas"],
-                "03": ["Lectura y aprobación del acta anterior", "Revisión de la evolución del alumnado – Análisis de avances antes de la segunda evaluación", "Pruebas de diagnóstico (alumnado con NEE)", "Planificación de medidas para la recta final del curso – Ajuste de apoyos y preparación para la transición de etapa", "Ruegos y preguntas"],
-                "04": ["Lectura y aprobación del acta anterior", "Seguimiento del alumnado en riesgo de repetición o con dificultades – Evaluación de medidas y alternativas de refuerzo", "Transición entre etapas – Plan de actuación para alumnado que pasará a secundaria o a un nuevo ciclo", "Actividades de concienciación y sensibilización – Proyectos inclusivos para fomentar la convivencia", "Ruegos y preguntas"],
-                "05": ["Lectura y aprobación del acta anterior", "Evaluación de la respuesta del alumnado a las medidas implantadas – Valoración del impacto de las estrategias aplicadas", "Preparación del cierre de curso – Revisión de informes y orientaciones para el próximo año", "Inclusión en actividades de fin de curso – Adaptación de celebraciones para garantizar la participación de todos", "Ruegos y preguntas"],
-                "06": ["Lectura y aprobación del acta anterior", "Balance del curso y propuestas de mejora – Reflexión sobre los puntos fuertes y débiles del trabajo del equipo", "Elaboración de informes finales – Registro de orientaciones para el próximo curso y recomendaciones a tutores y familias", "Planificación del inicio del próximo curso – Estrategias para la acogida de nuevo alumnado y puesta en marcha de protocolos", "Ruegos y preguntas"]
-            }
+                  "EQUIPOS DOCENTES": {
+                            "10": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Detección de dificultades de aprendizaje",
+                                      "Propuesta de alumnado para refuerzo educativo",
+                                      "Análisis del clima inicial de convivencia",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      {
+                                                "t": "Acta competencial de la evaluación inicial: grado de desarrollo por competencia específica",
+                                                "base": "Art. 11 de la Orden de 30 de mayo de 2023 y apartado E.5 del Proyecto educativo.",
+                                                "ayuda": "El acta no lleva listados de calificaciones. Lleva, por grupo: el grado de desarrollo de las competencias específicas de cada área, los descriptores operativos menos consolidados y el alumnado que precisa medida, con la medida concreta."
+                                      },
+                                      {
+                                                "t": "Ajustes que cada docente introduce en su programación tras la evaluación inicial",
+                                                "base": "Art. 11 de la Orden de 30 de mayo de 2023 y apartado E.5 del Proyecto educativo.",
+                                                "ayuda": "Este punto es el que la Inspección busca. Cada docente dice qué saberes refuerza, qué criterios retoma, qué cambia de metodología y qué agrupamientos modifica. Se traslada como anexo a la programación del nivel."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "11": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Seguimiento del alumnado y de los planes de refuerzo",
+                                      "Tratamiento de conflictos y estrategias de resolución",
+                                      "Evaluación global del proceso de enseñanza-aprendizaje",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      {
+                                                "t": "Análisis del sociograma y medidas de agrupamiento y acompañamiento",
+                                                "base": "Objetivo 4.2 del apartado A y apartado J.2 del Proyecto educativo.",
+                                                "ayuda": "Con el asesoramiento del orientador de referencia. Se decide la distribución en el aula, la composición de los equipos cooperativos y los grupos de las salidas. Se anota en el acta: es la evidencia del objetivo 4.2."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "12": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación del alumnado en todas las áreas",
+                                      "Evaluación de programas de refuerzo aplicados",
+                                      "Evaluación del clima de convivencia",
+                                      "Análisis del grado de adecuación curricular",
+                                      "Evaluación del funcionamiento del equipo docente",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      "Ruegos y preguntas"
+                            ],
+                            "09": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Constitución del equipo docente",
+                                      "Coordinación vertical con miembros de otros equipos docentes si fuera necesario",
+                                      "Elaboración de la información para familias (normas del centro, objetivos, criterios de evaluación)",
+                                      "Evaluación inicial",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      "Ruegos y preguntas"
+                            ],
+                            "01": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Revisión de propuestas de alumnado con refuerzo según 1ª evaluación",
+                                      "Seguimiento global del grupo",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      "Ruegos y preguntas"
+                            ],
+                            "02": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Seguimiento global del grupo",
+                                      "Revisión de alumnado en refuerzo",
+                                      "Revisión del clima de convivencia",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      "Ruegos y preguntas"
+                            ],
+                            "03": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación de alumnado en todas las áreas",
+                                      "Evaluación de programas de refuerzo y medidas pertinentes",
+                                      "Evaluación del clima de convivencia",
+                                      "Previsión de repetidores para comunicar a familias",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      "Ruegos y preguntas"
+                            ],
+                            "04": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación del grupo aula",
+                                      "Seguimiento de planes de refuerzo según segunda evaluación",
+                                      "Remisión de nuevas propuestas al equipo de orientación",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      {
+                                                "t": "Segunda aplicación del sociograma: comparación con noviembre",
+                                                "base": "Objetivo 4.2 del apartado A y apartado J.2 del Proyecto educativo.",
+                                                "ayuda": "Si un alumno sigue aislado en abril, la medida de noviembre no ha funcionado. Se cambia, no se repite."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "05": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Revisión del rendimiento del alumnado en refuerzo",
+                                      "Revisión del clima de convivencia",
+                                      "Propuesta de alumnado que no promociona al finalizar ciclo",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      "Ruegos y preguntas"
+                            ],
+                            "06": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación final del alumnado y competencias clave",
+                                      "Análisis de adecuación curricular",
+                                      "Propuestas de mejora de los distintos aspectos evaluados",
+                                      "Coordinación vertical con otros equipos docentes",
+                                      "Seguimiento del alumnado y medidas propuestas",
+                                      {
+                                                "t": "Decisión de promoción motivada según la regla de los tres pasos",
+                                                "base": "Art. 16 de la Orden de 30 de mayo de 2023 y apartado E.7 del Proyecto educativo.",
+                                                "ayuda": "Paso 1: promociona si alcanza nivel 2 o superior en los descriptores del ciclo. Paso 2: si no, se comprueban las dos condiciones del art. 16.2 de forma conjunta; si se cumplen, promociona con refuerzo. Paso 3: solo entonces se valora la permanencia, que es excepcional y única en la etapa. Antes hay que haber oído a la familia en junio y dejar constancia escrita."
+                                      },
+                                      {
+                                                "t": "Propuestas de Mención Honorífica en sexto curso",
+                                                "base": "Apartado E.8 del Proyecto educativo.",
+                                                "ayuda": "La propone el maestro del área, se acuerda en equipo docente y se hace constar en el informe final de etapa, en el expediente y en el historial académico."
+                                      },
+                                      "Ruegos y preguntas"
+                            ]
+                  },
+                  "EQUIPOS DE CICLO": {
+                            "10": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Colaborar con el equipo directivo en la actualización del Proyecto Educativo",
+                                      "Elaborar programaciones didácticas o propuestas pedagógicas",
+                                      "Organizar actividades complementarias y extraescolares",
+                                      "Seguimiento de las programaciones",
+                                      {
+                                                "t": "Anexo de revisión de las programaciones derivado de la evaluación inicial",
+                                                "base": "Apartado Ñ.5 del Proyecto educativo.",
+                                                "ayuda": "Plazo: antes del 15 de octubre. Se anota qué saberes se refuerzan, qué criterios se retoman de cursos anteriores, qué situaciones de aprendizaje se reordenan y qué alumnado inicia refuerzo o profundización."
+                                      },
+                                      {
+                                                "t": "Prueba común de comprensión lectora: aplicación y corrección con rúbrica de ciclo",
+                                                "base": "Objetivo 2.1 del apartado A del Proyecto educativo.",
+                                                "ayuda": "Se aplica la misma prueba en todos los grupos del ciclo y se corrige con la rúbrica común, para que los datos de octubre y de junio sean comparables."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "11": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Revisión metodológica y mejora de la acción tutorial",
+                                      "Planificación de actividades del Día de los Derechos de la Infancia y Día contra la Violencia Machista",
+                                      "Planificación del Día de la Constitución y Navidad",
+                                      "Seguimiento de las programaciones",
+                                      "Ruegos y preguntas"
+                            ],
+                            "12": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación de la práctica docente y ajuste metodológico",
+                                      "Evaluación del rendimiento del alumnado",
+                                      "Evaluación de las medidas de atención a la diversidad",
+                                      "Seguimiento de las programaciones",
+                                      {
+                                                "t": "Revisión de las rúbricas de la producción escrita del trimestre",
+                                                "base": "Objetivo 2.3 del apartado A del Proyecto educativo.",
+                                                "ayuda": "Una producción escrita completa por alumno y trimestre, revisada con la rúbrica común de centro. Se archivan las rúbricas y una muestra de textos."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "09": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Revisión y actualización de criterios de evaluación y promoción",
+                                      "Unificación de criterios en lectoescritura y coordinación con ETCP",
+                                      "Organización de actividades complementarias con criterios pedagógicos",
+                                      "Planificación de reuniones con familias",
+                                      "Seguimiento de las programaciones",
+                                      {
+                                                "t": "Acuerdo sobre la estructura común de comprensión lectora y de resolución de problemas",
+                                                "base": "Objetivos 2.2 y 3.2 del apartado A del Proyecto educativo.",
+                                                "ayuda": "El acuerdo se escribe y se aplica en todos los niveles del ciclo, con el mismo vocabulario y los mismos pasos, para que el alumnado no tenga que reaprender el método al cambiar de curso."
+                                      },
+                                      {
+                                                "t": "Designación del ciclo responsable de cada efeméride asignada y del proyecto interdisciplinar",
+                                                "base": "Apartado L del Proyecto educativo.",
+                                                "ayuda": "Un proyecto interdisciplinar por ciclo y curso, situado preferentemente en el segundo trimestre y ligado a una efeméride. Integra criterios de dos o más áreas en un producto final común."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "01": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Revisión de actividades complementarias del segundo trimestre",
+                                      "Planificación del Día de la Paz y la No Violencia",
+                                      "Valoración del clima de aula por ciclo",
+                                      "Seguimiento de las programaciones",
+                                      "Ruegos y preguntas"
+                            ],
+                            "02": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Planificación de actividades del Día de Andalucía y Carnaval",
+                                      "Actividades del Día de la Mujer Trabajadora",
+                                      "Seguimiento del alumnado con dificultades",
+                                      "Seguimiento de las programaciones",
+                                      "Ruegos y preguntas"
+                            ],
+                            "03": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación del rendimiento en el segundo trimestre",
+                                      "Revisión de medidas de atención a la diversidad",
+                                      "Planificación del Día del Libro",
+                                      "Seguimiento de las programaciones",
+                                      "Ruegos y preguntas"
+                            ],
+                            "04": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Análisis de resultados de la segunda evaluación",
+                                      "Propuestas de mejora del rendimiento académico",
+                                      "Seguimiento de las programaciones",
+                                      "Ruegos y preguntas"
+                            ],
+                            "05": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Seguimiento de posibles repetidores",
+                                      "Planificación de actividades de fin de curso",
+                                      "Seguimiento de las programaciones",
+                                      "Ruegos y preguntas"
+                            ],
+                            "06": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación final y propuestas de mejora para el siguiente curso",
+                                      "Seguimiento de las programaciones",
+                                      {
+                                                "t": "Comparativa de la prueba de comprensión lectora de octubre y de junio",
+                                                "base": "Objetivo 2.1 del apartado A del Proyecto educativo.",
+                                                "ayuda": "La comparación es individual: cada alumno respecto a su propio punto de partida, no respecto a la media. Ese dato es el indicador del objetivo 2."
+                                      },
+                                      {
+                                                "t": "Informes finales de ciclo y traspaso al siguiente tutor o tutora",
+                                                "base": "Art. 23 de la Orden de 30 de mayo de 2023 y apartado P.1 del Proyecto educativo.",
+                                                "ayuda": "El traspaso incluye expresamente las medidas aplicadas y su resultado, para que la respuesta educativa no se interrumpa en septiembre."
+                                      },
+                                      "Ruegos y preguntas"
+                            ]
+                  },
+                  "ETCP": {
+                            "10": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Organizar el Plan de Formación en Centros (CEP)",
+                                      "Elaboración del Plan de Mejora",
+                                      "Propuesta de actividades para Halloween y Día contra la Violencia Machista",
+                                      "Informar sobre criterios de evaluación y promoción",
+                                      {
+                                                "t": "Repercusión de la evaluación inicial en las programaciones didácticas",
+                                                "base": "Art. 11 de la Orden de 30 de mayo de 2023 y apartado M.3 del Proyecto educativo.",
+                                                "ayuda": "No se trata de repasar resultados de alumnado, eso es del equipo docente. Aquí se recoge qué ajustes ha introducido cada ciclo en su programación: saberes que se refuerzan, criterios que se retoman y cambios metodológicos."
+                                      },
+                                      {
+                                                "t": "Informe de las programaciones didácticas para su elevación al Claustro",
+                                                "base": "Art. 88 del Decreto 328/2010 y apartado Ñ.5 del Proyecto educativo.",
+                                                "ayuda": "Hay plazo: el Claustro debe aprobarlas antes de que acabe octubre. Se comprueba que cada programación lleva el anexo de revisión de la evaluación inicial y los nueve elementos del art. 27 del Decreto 328/2010."
+                                      },
+                                      {
+                                                "t": "Resultados del cribado de fluidez y comprensión lectora",
+                                                "base": "Apartado C.6 del Proyecto educativo.",
+                                                "ayuda": "Cada tutor ha pasado la prueba común en octubre. Aquí se ve el cuadro del centro por niveles y se decide dónde hace falta lectura guiada diaria en pequeño grupo."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "11": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Seguimiento del Plan de Refuerzo con el Equipo de Orientación",
+                                      "Coordinación con el Plan de Formación en Centros",
+                                      "Planificación de actividades del Día de la Constitución",
+                                      "Elaboración del calendario de sesiones de evaluación",
+                                      {
+                                                "t": "Resultados del sociograma de noviembre y medidas adoptadas",
+                                                "base": "Objetivo 4.2 del apartado A y apartado J.2 del Proyecto educativo.",
+                                                "ayuda": "Los tutores ya han pasado el sociograma. Aquí se ve el panorama del centro: cuántos casos de aislamiento o rechazo hay por grupo y qué medidas de agrupamiento se han acordado en cada equipo docente."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "12": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Supervisión de la aplicación del Plan de Convivencia",
+                                      "Revisión de medidas de atención a la diversidad y refuerzo educativo",
+                                      "Evaluación del trimestre",
+                                      "Ruegos y preguntas"
+                            ],
+                            "09": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Información sobre calendario de reuniones",
+                                      "Establecer criterios para revisión de programaciones y propuestas pedagógicas",
+                                      "Informar sobre medidas y programas de atención a la diversidad (Protocolo NEAE)",
+                                      {
+                                                "t": "Aprobación de los indicadores de calidad del centro para el curso",
+                                                "base": "Art. 26 del Decreto 328/2010 y apartado M.2 del Proyecto educativo.",
+                                                "ayuda": "El ETCP fija los indicadores propios que se suman a los homologados de la AGAEVE. Se aprueban ahora y se revisan en junio. Deben cubrir resultados, programaciones, convivencia, equipo directivo, implicación en planes, cuaderno del POAT y memoria."
+                                      },
+                                      {
+                                                "t": "Reparto por ciclos de las efemérides del curso",
+                                                "base": "Instrucción de 12 de septiembre de 2025 y apartado L del Proyecto educativo.",
+                                                "ayuda": "Cada efeméride del Anexo I tiene un ciclo responsable de la actividad de centro, para que la carga no recaiga siempre en los mismos. Se anota el ciclo asignado a cada fecha."
+                                      },
+                                      {
+                                                "t": "Encaje en el calendario de las actuaciones de los planes y programas",
+                                                "base": "Apartado O.1 del Proyecto educativo.",
+                                                "ayuda": "Asisten los coordinadores de planes. Cada uno trae su programación anual con un máximo de tres actuaciones y dice a cuál de los cuatro objetivos del apartado A contribuye. Se comprueba que no se solapan entre sí ni con las efemérides."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "01": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Planificación del Día de la Paz y la No Violencia",
+                                      "Planificación de actividades de febrero (Carnaval, Día de Andalucía)",
+                                      "Análisis de resultados de la primera evaluación",
+                                      "Seguimiento del Plan de Mejora",
+                                      {
+                                                "t": "Valoración del cuaderno del POAT y de los programas de refuerzo",
+                                                "base": "Apartado M.3 del Proyecto educativo.",
+                                                "ayuda": "Se comprueba que todos los programas de refuerzo están registrados en Séneca y que se han revisado en la sesión de evaluación de diciembre."
+                                      },
+                                      {
+                                                "t": "Indicadores de impacto del Plan de Lectura",
+                                                "base": "Apartado C.6 del Proyecto educativo.",
+                                                "ayuda": "Seis indicadores: cumplimiento de la sesión diaria, progreso en fluidez, progreso en comprensión, alumnado con dificultades atendido, uso efectivo de la estructura común y préstamo de biblioteca."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "02": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Planificación del Día de la Mujer Trabajadora",
+                                      "Coordinación de actividades del Día de Andalucía",
+                                      "Seguimiento del alumnado con dificultades de aprendizaje",
+                                      "Ruegos y preguntas"
+                            ],
+                            "03": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Elaborar calendario de sesiones de evaluación",
+                                      "Revisión del Plan de Convivencia y propuestas de mejora",
+                                      "Planificación del Día del Libro con la biblioteca",
+                                      "Ruegos y preguntas"
+                            ],
+                            "04": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Seguimiento del plan de lectoescritura",
+                                      "Coordinación de actividades del Día del Libro",
+                                      "Análisis de la segunda evaluación y protocolo de repetidores",
+                                      {
+                                                "t": "Resultados del sociograma de abril y comparación con el de noviembre",
+                                                "base": "Objetivo 4.2 del apartado A y apartado M.3 del Proyecto educativo.",
+                                                "ayuda": "Lo relevante es la comparación: si el alumnado que estaba aislado en noviembre lo sigue estando en abril, la medida no ha funcionado y hay que cambiarla."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "05": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Propuesta de alumnado que no promociona",
+                                      "Planificación de calendario final de curso",
+                                      "Gestión del proceso de libros de texto",
+                                      {
+                                                "t": "Detección de necesidades formativas para el plan de formación del curso siguiente",
+                                                "base": "Art. 88 del Decreto 328/2010 y apartado K del Proyecto educativo.",
+                                                "ayuda": "Los equipos de ciclo traen su informe de la primera quincena de mayo. Al menos la mitad de las actuaciones debe dirigirse a absentismo, lengua, matemáticas o convivencia, y cada una tiene que terminar en un producto aplicable en el aula."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "06": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Análisis de la evaluación final",
+                                      "Evaluación final del Plan de Mejora",
+                                      "Elaboración de la memoria final",
+                                      {
+                                                "t": "Memoria de los planes y programas: una página por plan",
+                                                "base": "Apartado O.1 del Proyecto educativo.",
+                                                "ayuda": "Cada coordinador entrega una sola página: actuaciones realizadas, evidencia y propuesta de mejora. Se incorpora a la memoria de autoevaluación."
+                                      },
+                                      {
+                                                "t": "Coordinación con el EOE para la evaluación del programa de tránsito",
+                                                "base": "Apartado P.1 del Proyecto educativo.",
+                                                "ayuda": "Segunda de las dos sesiones anuales con el orientador de referencia. Se evalúa cómo ha ido el tránsito en los tres ámbitos: curricular, acción tutorial y acogida de familias. Se levanta acta."
+                                      },
+                                      "Ruegos y preguntas"
+                            ]
+                  },
+                  "CLAUSTRO": {
+                            "10": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación inicial: conclusiones",
+                                      "Análisis medidas atención diversidad",
+                                      "Propuesta Bienestar Emocional",
+                                      "Formación profesorado",
+                                      {
+                                                "t": "Aprobación de las programaciones didácticas y de la propuesta pedagógica de Infantil",
+                                                "base": "Art. 20.3 y art. 21.3.ñ del Decreto 328/2010, y apartado Ñ.5 del Proyecto educativo.",
+                                                "ayuda": "Plazo: antes de que finalice octubre, con el informe previo del ETCP. Son veinte programaciones más la propuesta pedagógica; se aprueban en bloque salvo que alguna requiera debate."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "11": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Aprobación Plan de Centro",
+                                      "Seguimiento programaciones",
+                                      "Información tutorías y convivencia",
+                                      "Revisión prevención violencia y acoso",
+                                      "Ruegos y preguntas"
+                            ],
+                            "12": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Análisis de los resultados del primer trimestre",
+                                      {
+                                                "t": "Seguimiento de la autoevaluación: valoración de los indicadores del primer trimestre",
+                                                "base": "Art. 26 del Decreto 328/2010 y apartado M.4 del Proyecto educativo.",
+                                                "ayuda": "El Proyecto educativo fija el seguimiento de la autoevaluación como punto fijo del Claustro en septiembre, diciembre, marzo, mayo y junio. Se revisa qué dicen los indicadores tras el primer trimestre y qué se ajusta."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "09": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Información general inicio curso",
+                                      "Constitución equipos de ciclo",
+                                      "Aprobación criterios programaciones",
+                                      "Presentación planes y programas educativos",
+                                      "Propuesta actividades complementarias",
+                                      "Proceso evaluación inicial",
+                                      "Ruegos y preguntas"
+                            ],
+                            "01": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Valoración 1ª evaluación",
+                                      "Ajustes metodológicos",
+                                      "Seguimiento planes y programas institucionales",
+                                      "Ruegos y preguntas"
+                            ],
+                            "03": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Valoración 2ª evaluación",
+                                      "Análisis progreso alumnado",
+                                      "Evaluación intermedia PGA",
+                                      "Ruegos y preguntas"
+                            ],
+                            "05": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Preparación evaluación final",
+                                      "Criterios promoción LOMLOE",
+                                      "Organización curso siguiente",
+                                      {
+                                                "t": "Aprobación de la propuesta del plan de formación del profesorado",
+                                                "base": "Art. 88 del Decreto 328/2010 y apartado K del Proyecto educativo.",
+                                                "ayuda": "Se eleva al CEP en junio. Al menos la mitad de las actuaciones debe dirigirse a los cuatro objetivos del apartado A."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "06": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación final del curso",
+                                      "Aprobación memoria final",
+                                      "Valoración planes y programas",
+                                      "Propuestas mejora próximo curso",
+                                      "Ruegos y preguntas"
+                            ]
+                  },
+                  "CONSEJO ESCOLAR": {
+                            "10": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Información desarrollo inicial",
+                                      "Presentación borrador PGA",
+                                      "Aprobación Plan Convivencia",
+                                      {
+                                                "t": "Elección de los representantes del equipo de evaluación",
+                                                "base": "Art. 26.5 del Decreto 328/2010 y apartado M.1 del Proyecto educativo.",
+                                                "ayuda": "Sin esta elección, la memoria de autoevaluación de junio no tiene quién la firme. Se eligen de entre los miembros del Consejo: un representante del profesorado, uno de las familias y uno del personal de administración y servicios, que se suman al equipo directivo."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "11": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Aprobación PGA y presupuesto",
+                                      "Informe organización docente",
+                                      "Seguimiento Bienestar Emocional",
+                                      "Ruegos y preguntas"
+                            ],
+                            "09": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Constitución Consejo Escolar",
+                                      "Información inicio curso",
+                                      "Aprobación calendario escolar",
+                                      "Constitución comisiones",
+                                      "Ruegos y preguntas"
+                            ],
+                            "01": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Información económica trimestre",
+                                      "Evaluación convivencia",
+                                      "Informe actividad lectiva",
+                                      "Ruegos y preguntas"
+                            ],
+                            "03": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Modificaciones presupuestarias",
+                                      "Seguimiento PGA y resultados",
+                                      "Informe comisiones",
+                                      "Ruegos y preguntas"
+                            ],
+                            "05": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Información escolarización",
+                                      "Previsión plantilla",
+                                      "Planificación fin curso",
+                                      "Ruegos y preguntas"
+                            ],
+                            "06": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Aprobación memoria final",
+                                      "Valoración general del curso",
+                                      "Propuestas mejora próximo curso",
+                                      "Ruegos y preguntas"
+                            ],
+                            "02": [
+                                      "Lectura y aprobación del acta anterior",
+                                      {
+                                                "t": "Valoración de la organización y del funcionamiento del equipo directivo y del uso de los espacios y tiempos",
+                                                "base": "Art. 26 del Decreto 328/2010 y apartado M.3 del Proyecto educativo.",
+                                                "ayuda": "Es la sesión que el Proyecto educativo reserva al Consejo Escolar para esta valoración, a propuesta del equipo de evaluación. Si en el centro esta sesión se celebra en marzo y no en febrero, conviene corregir el mes en el apartado M.3 para que documento y práctica coincidan."
+                                      },
+                                      "Información económica del segundo trimestre",
+                                      "Ruegos y preguntas"
+                            ]
+                  },
+                  "EQUIPO DE ORIENTACIÓN": {
+                            "10": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Seguimiento de la adaptación del alumnado: evaluación de dificultades iniciales y ajuste de medidas de apoyo",
+                                      "Coordinación con los tutores y especialistas: trabajo conjunto para garantizar coherencia en la intervención educativa",
+                                      "Estrategias para fomentar la inclusión: metodología y recursos para mejorar la participación del alumnado NEAE en el aula",
+                                      "Propuestas de mejora",
+                                      {
+                                                "t": "Coordinación con el EOE: revisión del programa de tránsito y reparto de responsabilidades",
+                                                "base": "Apartado P.1 del Proyecto educativo.",
+                                                "ayuda": "Primera de las dos sesiones anuales. Se revisan los tres ámbitos del programa único de tránsito y se reparte quién hace qué. Se levanta acta."
+                                      },
+                                      {
+                                                "t": "Cuestionarios de detección de altas capacidades del alumnado de segundo curso",
+                                                "base": "Instrucciones de 8 de marzo de 2017 y punto 4.c del Plan de Atención a la Diversidad.",
+                                                "ayuda": "Se cumplimentan los cuestionarios de profesorado y de familias de todo el alumnado de segundo y del de nueva incorporación. Los resultados se trasladan al orientador antes de que acabe el primer trimestre."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "11": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Revisión de la evolución del alumnado: análisis de avances y detección de posibles ajustes en la intervención",
+                                      "Estrategias de apoyo emocional y convivencia: actuaciones para prevenir conflictos y promover el bienestar del alumnado",
+                                      "Preparación de las evaluaciones adaptadas: revisión de medidas para garantizar la accesibilidad en la primera evaluación",
+                                      "Ruegos y preguntas"
+                            ],
+                            "12": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Balance del trimestre y ajustes en la intervención: reflexión sobre las medidas aplicadas y propuestas de mejora",
+                                      "Coordinación con familias: preparación de las reuniones para informar sobre los avances y necesidades",
+                                      "Actividades inclusivas de Navidad: organización de eventos en los que todo el alumnado pueda participar",
+                                      "Ruegos y preguntas"
+                            ],
+                            "09": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Constitución del equipo de orientación",
+                                      "Valoración inicial del alumnado NEAE. Revisión de informes previos, nuevas detecciones y planificación de intervenciones",
+                                      "Plan de acogida y adaptación: estrategias para facilitar la integración del alumnado, especialmente el de TEA",
+                                      {
+                                                "t": "Horario de participación del alumnado del aula específica en su grupo de referencia",
+                                                "base": "Punto 14.2 del Plan de Atención a la Diversidad.",
+                                                "ayuda": "Se acuerda ahora y se comunica a todo el profesorado del grupo de referencia, incluidos los especialistas. Sin horario escrito, la inclusión depende de la improvisación."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "01": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Análisis del primer trimestre: revisión de logros y dificultades detectadas en las evaluaciones",
+                                      "Refuerzo educativo y adaptación de estrategias: planificación de nuevas medidas de apoyo en el aula TEA y alumnado NEAE",
+                                      "Atención a la diversidad en el aula: estrategias para potenciar la autonomía y el aprendizaje significativo",
+                                      "Ruegos y preguntas"
+                            ],
+                            "02": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Seguimiento de casos y ajuste de medidas – Evaluación de la evolución del alumnado con NEAE y propuestas de intervención",
+                                      "Estrategias para la inclusión en actividades escolares – Adaptación de proyectos, salidas y celebraciones",
+                                      "Apoyo emocional y conducta – Intervención en casos de ansiedad, dificultades sociales o problemas de conducta",
+                                      "Ruegos y preguntas"
+                            ],
+                            "03": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Revisión de la evolución del alumnado – Análisis de avances antes de la segunda evaluación",
+                                      "Pruebas de diagnóstico (alumnado con NEE)",
+                                      "Planificación de medidas para la recta final del curso – Ajuste de apoyos y preparación para la transición de etapa",
+                                      "Ruegos y preguntas"
+                            ],
+                            "04": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Seguimiento del alumnado en riesgo de repetición o con dificultades – Evaluación de medidas y alternativas de refuerzo",
+                                      "Transición entre etapas – Plan de actuación para alumnado que pasará a secundaria o a un nuevo ciclo",
+                                      "Actividades de concienciación y sensibilización – Proyectos inclusivos para fomentar la convivencia",
+                                      "Ruegos y preguntas"
+                            ],
+                            "05": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Evaluación de la respuesta del alumnado a las medidas implantadas – Valoración del impacto de las estrategias aplicadas",
+                                      "Preparación del cierre de curso – Revisión de informes y orientaciones para el próximo año",
+                                      "Inclusión en actividades de fin de curso – Adaptación de celebraciones para garantizar la participación de todos",
+                                      {
+                                                "t": "Valoración del lenguaje del alumnado de cinco años para el tránsito",
+                                                "base": "Punto 14.5 del Plan de Atención a la Diversidad.",
+                                                "ayuda": "Sirve para prever la atención directa de Audición y Lenguaje del curso siguiente. Se traslada al equipo de tránsito de Infantil a Primaria."
+                                      },
+                                      "Ruegos y preguntas"
+                            ],
+                            "06": [
+                                      "Lectura y aprobación del acta anterior",
+                                      "Balance del curso y propuestas de mejora – Reflexión sobre los puntos fuertes y débiles del trabajo del equipo",
+                                      "Elaboración de informes finales – Registro de orientaciones para el próximo curso y recomendaciones a tutores y familias",
+                                      "Planificación del inicio del próximo curso – Estrategias para la acogida de nuevo alumnado y puesta en marcha de protocolos",
+                                      "Ruegos y preguntas"
+                            ]
+                  }
         };
 
         // Mapeo de tipos de reunión a órganos
@@ -4235,6 +4776,72 @@
             }
         };
 
+
+        // ==========================================================
+        // AYUDA CONTEXTUAL DE LOS PUNTOS DEL ORDEN DEL DÍA
+        // Devuelve la base normativa y la explicación de un punto.
+        // No se guarda en Firebase: no aparece en las actas.
+        // ==========================================================
+        window.infoPunto = function(texto) {
+            if (!texto) return null;
+            const limpio = String(texto).trim().toLowerCase();
+            for (const organo of Object.keys(ordenDelDiaPredefinido)) {
+                for (const mes of Object.keys(ordenDelDiaPredefinido[organo])) {
+                    for (const p of ordenDelDiaPredefinido[organo][mes]) {
+                        if (typeof p === 'object' && p.t && p.t.trim().toLowerCase() === limpio) {
+                            return { base: p.base || '', ayuda: p.ayuda || '' };
+                        }
+                    }
+                }
+            }
+            return null;
+        };
+
+        window.mostrarAyudaPunto = function(texto) {
+            const info = window.infoPunto(texto);
+            if (!info) return;
+            let caja = document.getElementById('cajaAyudaPunto');
+            if (!caja) {
+                caja = document.createElement('div');
+                caja.id = 'cajaAyudaPunto';
+                caja.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+                    'max-width:520px;width:90%;background:#fff;border:1px solid #cfd8e3;border-radius:14px;' +
+                    'box-shadow:0 12px 40px rgba(20,40,80,.18);padding:22px 24px;z-index:9999;' +
+                    'font-size:15px;line-height:1.5;color:#243447';
+                document.body.appendChild(caja);
+            }
+            caja.innerHTML =
+                '<div style="font-weight:700;color:#1f4e79;margin-bottom:10px">' + texto + '</div>' +
+                '<div style="margin-bottom:12px">' + info.ayuda + '</div>' +
+                '<div style="font-size:13px;color:#5a6b80;border-top:1px solid #eef2f7;padding-top:10px">' +
+                '<strong>Base:</strong> ' + info.base + '</div>' +
+                '<div style="font-size:12px;color:#8a97a8;margin-top:10px">Esta explicación no se ' +
+                'guarda ni aparece en el acta.</div>' +
+                '<div style="text-align:right;margin-top:14px"><button onclick="document.getElementById(' +
+                "'cajaAyudaPunto'" + ').remove()" style="background:#1f4e79;color:#fff;border:0;' +
+                'border-radius:8px;padding:8px 18px;cursor:pointer">Cerrar</button></div>';
+            caja.style.display = 'block';
+        };
+
+        // Marca con un icono los puntos que tienen ayuda disponible
+        window.decorarPuntosConAyuda = function() {
+            document.querySelectorAll('[data-punto-texto]').forEach(el => {
+                if (el.dataset.ayudaPuesta) return;
+                const info = window.infoPunto(el.dataset.puntoTexto);
+                if (!info) return;
+                const b = document.createElement('button');
+                b.textContent = '?';
+                b.title = 'Qué hay que hacer en este punto';
+                b.style.cssText = 'margin-left:8px;border:1px solid #1f4e79;color:#1f4e79;' +
+                    'background:#eaf1f8;border-radius:50%;width:20px;height:20px;font-size:12px;' +
+                    'line-height:1;cursor:pointer;padding:0';
+                b.onclick = (ev) => { ev.stopPropagation();
+                    window.mostrarAyudaPunto(el.dataset.puntoTexto); };
+                el.appendChild(b);
+                el.dataset.ayudaPuesta = '1';
+            });
+        };
+
         // Función para cargar puntos predefinidos
         window.cargarPuntosPredefinidos = async function(tipoReunion, fecha) {
             // Obtener mes de la fecha (formato MM)
@@ -4261,8 +4868,11 @@
             
             for (let i = 0; i < puntosPredefinidos.length; i++) {
                 const nuevoPuntoRef = push(puntosRef);
+                const _p = puntosPredefinidos[i];
                 await set(nuevoPuntoRef, {
-                    texto: puntosPredefinidos[i],
+                    // Solo el texto llega al acta. La base normativa y la ayuda
+                    // se quedan en la app, en ordenDelDiaPredefinido.
+                    texto: (typeof _p === 'string') ? _p : _p.t,
                     orden: Date.now() + i // Asegurar orden correcto
                 });
             }
@@ -6927,9 +7537,13 @@ ${textoActaLimpio}`;
                 puntosArray.forEach(punto => {
                     const div = document.createElement('div');
                     div.className = 'punto-item';
+                    const _info = window.infoPunto ? window.infoPunto(punto.texto) : null;
+                    const _btnAyuda = _info
+                        ? `<button title="Qué hay que hacer en este punto" onclick="mostrarAyudaPunto(this.dataset.t)" data-t="${escapeHTML(punto.texto)}" style="margin-left:8px;border:1px solid #1f4e79;color:#1f4e79;background:#eaf1f8;border-radius:50%;width:22px;height:22px;font-size:13px;line-height:1;cursor:pointer;padding:0;flex:0 0 auto;">?</button>`
+                        : '';
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600;">${escapeHTML(punto.texto)}</span>
+                            <span style="font-weight: 600;">${escapeHTML(punto.texto)}${_btnAyuda}</span>
                             <button class="btn btn-danger btn-small" onclick="eliminarPunto('${punto.id}')">❌</button>
                         </div>
                     `;
