@@ -3811,6 +3811,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove, get, update, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserSessionPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDchcaSp2M8uRZxMbMG7sop_ypkZP7w8CI",
@@ -3824,6 +3825,7 @@
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        const auth = getAuth(app);
 
         // ===== Monitor de conexión con Firebase (v2) =====
         (function monitorConexion() {
@@ -3856,6 +3858,12 @@
         let listenersPorPunto = new Map(); // Mapa para rastrear listeners por punto
 
         // Exponer funciones al scope global
+        window.auth = auth;
+        window.fbSignIn = signInWithEmailAndPassword;
+        window.fbSignOut = signOut;
+        window.fbSetPersistence = setPersistence;
+        window.fbPersistSession = browserSessionPersistence;
+        window.fbPersistLocal = browserLocalPersistence;
         window.database = database;
         window.ref = ref;
         window.set = set;
@@ -9416,6 +9424,7 @@ ${textoActaLimpio}`;
         'use strict';
 
         const ADMIN_IDEA = 'vunisal706';
+        const TT_DOMINIO = '@capitulaciones.local';
         const CLAVE_SESION = 'tt_sesion_v1';
 
         // Personal tal cual sale del listado de Séneca (RelPerCen.xls).
@@ -9753,6 +9762,7 @@ ${textoActaLimpio}`;
             }
         }
         window.ttSalir = function () {
+            try { if (window.auth && window.fbSignOut) window.fbSignOut(window.auth); } catch (e) {}
             try { localStorage.removeItem(CLAVE_SESION); } catch (e) {}
             try { sessionStorage.removeItem(CLAVE_SESION); } catch (e) {}
             try { document.cookie = CLAVE_SESION + '=;path=/;max-age=0;SameSite=Lax'; } catch (e) {}
@@ -9815,33 +9825,61 @@ ${textoActaLimpio}`;
             const persona = ttPersonal.find(p => p.key === key);
             if (!persona) return ttError('No encuentro a esa persona. Recarga la página e inténtalo de nuevo.');
 
+            if (!window.auth || !window.fbSignIn) {
+                return ttError('No hay conexión con el servidor de acceso. Comprueba tu red e inténtalo de nuevo.');
+            }
+
             btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Comprobando…';
+
             try {
-                if (!persona.idea) {
-                    // Primer acceso: se registra el usuario IdEA que escriba
-                    const repetido = ttPersonal.find(p => p.key !== key && ttNormIdea(p.idea) === idea);
-                    if (repetido) {
-                        btn.disabled = false;
-                        return ttError('Ese usuario IdEA ya está asignado a otra persona. Revísalo o avisa a dirección.');
+                // La sesión dura lo que el navegador, salvo que pida recordarle
+                try {
+                    await window.fbSetPersistence(window.auth,
+                        recordar ? window.fbPersistLocal : window.fbPersistSession);
+                } catch (e) { /* si falla, se usa la persistencia por defecto */ }
+
+                // Autenticación real contra Firebase
+                let cred;
+                try {
+                    cred = await window.fbSignIn(window.auth, idea + TT_DOMINIO, idea);
+                } catch (e) {
+                    console.warn('Acceso rechazado:', e.code);
+                    if (e.code === 'auth/network-request-failed') {
+                        return ttError('Sin conexión. Comprueba tu red e inténtalo de nuevo.');
                     }
-                    const ok = confirm(
-                        'PRIMER ACCESO\n\n' + persona.nombre + '\n\n' +
-                        'Se va a guardar «' + idea + '» como tu USUARIO de Séneca (IdEA).\n\n' +
-                        '⚠️ Asegúrate de que es tu usuario, NO tu contraseña.\n\n¿Es correcto?'
-                    );
-                    if (!ok) { btn.disabled = false; return; }
-                    persona.idea = idea;
-                    try { await ttGuardarPersona(persona); } catch (e) { console.warn('No se pudo guardar el IdEA:', e); }
-                } else if (ttNormIdea(persona.idea) !== idea) {
-                    btn.disabled = false;
+                    if (e.code === 'auth/too-many-requests') {
+                        return ttError('Demasiados intentos fallidos. Espera unos minutos.');
+                    }
+                    if (e.code === 'auth/user-not-found') {
+                        return ttError('Tu acceso aún no está dado de alta. Habla con la dirección del centro.');
+                    }
                     return ttError('El usuario no coincide. Escribe tu <strong>usuario de Séneca (IdEA)</strong>, no la contraseña. Si crees que hay un error, avisa a dirección.');
+                }
+
+                // Comprobar que ese acceso corresponde al nombre elegido
+                let ficha = null;
+                try {
+                    const snap = await window.get(window.ref(window.database, 'acceso/' + cred.user.uid));
+                    if (snap.exists()) ficha = snap.val();
+                } catch (e) { console.warn('No se pudo leer el acceso:', e); }
+
+                if (!ficha) {
+                    await window.fbSignOut(window.auth).catch(() => {});
+                    return ttError('Tu acceso no está activo. Habla con la dirección del centro.');
+                }
+                if (ficha.key && ficha.key !== key) {
+                    await window.fbSignOut(window.auth).catch(() => {});
+                    return ttError('Ese usuario IdEA no corresponde al nombre seleccionado.');
                 }
 
                 const sesion = {
                     nombre: persona.nombre,
                     puesto: persona.puesto || '',
                     idea: idea,
-                    admin: idea === ADMIN_IDEA,
+                    uid: cred.user.uid,
+                    admin: ficha.admin === true,
                     ts: Date.now()
                 };
                 ttEscribirSesion(sesion, recordar);
@@ -9849,6 +9887,7 @@ ${textoActaLimpio}`;
                 if (window.__ttPendiente) ttContinuarQR(sesion.nombre);
             } finally {
                 btn.disabled = false;
+                btn.textContent = textoOriginal;
             }
         };
 
