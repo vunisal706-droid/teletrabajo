@@ -3811,7 +3811,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove, get, update, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserSessionPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, setPersistence, browserSessionPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDchcaSp2M8uRZxMbMG7sop_ypkZP7w8CI",
@@ -3859,6 +3859,10 @@
 
         // Exponer funciones al scope global
         window.auth = auth;
+        window.fbInitApp = initializeApp;
+        window.fbGetAuth = getAuth;
+        window.fbCreateUser = createUserWithEmailAndPassword;
+        window.fbConfig = firebaseConfig;
         window.fbSignIn = signInWithEmailAndPassword;
         window.fbSignOut = signOut;
         window.fbSetPersistence = setPersistence;
@@ -9969,7 +9973,7 @@ ${textoActaLimpio}`;
                                 (p.idea ? '' : '<span class="tt-badge">sin IdEA</span>') +
                             '</div>' +
                             '<div class="det">' + (p.puesto || 'Sin puesto') +
-                                (p.idea ? ' · <code>' + p.idea + '</code>' : ' · lo registrará en su primer acceso') +
+                                (p.idea ? ' · <code>' + p.idea + '</code>' : ' · sin IdEA: no puede entrar') +
                             '</div>' +
                         '</div>' +
                         '<button class="tt-icon-btn" title="Editar" onclick="ttEditarPersona(\'' + p.key + '\')">✏️</button>' +
@@ -9979,6 +9983,77 @@ ${textoActaLimpio}`;
                 ).join('');
         }
 
+        // ---------- cuentas de acceso (Firebase Auth) ----------
+        // Crear una cuenta con la instancia principal cerraria la sesion de
+        // direccion. Se usa una instancia secundaria para evitarlo.
+        let _appAlta = null;
+        function ttAuthAlta() {
+            if (!_appAlta) _appAlta = window.fbInitApp(window.fbConfig, 'alta');
+            return window.fbGetAuth(_appAlta);
+        }
+
+        // Devuelve el uid, creando la cuenta si no existia
+        async function ttAsegurarCuenta(idea) {
+            const email = idea + TT_DOMINIO;
+            const a = ttAuthAlta();
+            let uid;
+            try {
+                const cred = await window.fbCreateUser(a, email, idea);
+                uid = cred.user.uid;
+            } catch (e) {
+                if (e.code === 'auth/email-already-in-use') {
+                    const cred = await window.fbSignIn(a, email, idea);
+                    uid = cred.user.uid;
+                } else { throw e; }
+            }
+            try { await window.fbSignOut(a); } catch (e) {}
+            return uid;
+        }
+
+        // Busca en /acceso la entrada de una persona por su clave
+        async function ttUidDePersona(key) {
+            try {
+                const snap = await window.get(window.ref(window.database, 'acceso'));
+                if (!snap.exists()) return null;
+                const v = snap.val();
+                const encontrado = Object.keys(v).filter(function (u) { return v[u] && v[u].key === key; });
+                return encontrado.length ? encontrado[0] : null;
+            } catch (e) { console.warn('No se pudo leer acceso:', e); return null; }
+        }
+
+        // Da de alta el acceso de una persona: cuenta + nodo /acceso
+        async function ttConcederAcceso(p) {
+            if (!p.idea) return;
+            const uid = await ttAsegurarCuenta(p.idea);
+            await window.set(window.ref(window.database, 'acceso/' + uid), {
+                nombre: p.nombre,
+                key: p.key,
+                admin: ttNormIdea(p.idea) === ADMIN_IDEA,
+                creado: new Date().toISOString()
+            });
+            return uid;
+        }
+
+        async function ttRetirarAcceso(key) {
+            const uid = await ttUidDePersona(key);
+            if (!uid) return;
+            try { await window.remove(window.ref(window.database, 'acceso/' + uid)); }
+            catch (e) { console.warn('No se pudo retirar el acceso:', e); }
+        }
+
+        function ttErrorCuenta(e) {
+            const c = (e && e.code) || '';
+            if (c === 'auth/operation-not-allowed')
+                return 'Habilita Correo/contrase\u00f1a en la consola de Firebase (Authentication).';
+            if (c === 'auth/weak-password')
+                return 'El IdEA es demasiado corto: Firebase exige al menos 6 caracteres.';
+            if (c === 'auth/wrong-password')
+                return 'Ya existe una cuenta con ese IdEA pero con otra contrase\u00f1a. Rev\u00edsala en la consola.';
+            if (c === 'auth/network-request-failed')
+                return 'Sin conexi\u00f3n. Int\u00e9ntalo de nuevo.';
+            return 'No se pudo crear el acceso: ' + (c || e.message || e);
+        }
+
         window.ttEditarPersona = async function (key) {
             const p = ttPersonal.find(x => x.key === key);
             if (!p) return;
@@ -9986,7 +10061,7 @@ ${textoActaLimpio}`;
             if (puesto === null) return;
             const idea = prompt(
                 'USUARIO de Séneca (IdEA) de ' + p.nombre + '.\n' +
-                'Es el usuario, nunca la contraseña. Déjalo vacío para que lo registre en su primer acceso:',
+                'Es el usuario, nunca la contraseña. Si lo dejas vacío, esta persona no podrá entrar:',
                 p.idea || ''
             );
             if (idea === null) return;
@@ -9999,10 +10074,25 @@ ${textoActaLimpio}`;
                 alert('Ese usuario IdEA ya está asignado a otra persona.');
                 return;
             }
+            const ideaAntes = ttNormIdea(p.idea);
             p.puesto = puesto.trim();
             p.idea = ideaNorm;
             p.claustro = true;
             try { await ttGuardarPersona(p); } catch (e) { ttFalloGuardado(e); return; }
+
+            if (ideaNorm !== ideaAntes) {
+                try {
+                    if (ideaAntes) await ttRetirarAcceso(key);
+                    if (ideaNorm) {
+                        await ttConcederAcceso(p);
+                        alert('Acceso actualizado. ' + p.nombre + ' entrar\u00e1 con \u00ab' + ideaNorm + '\u00bb.');
+                    } else {
+                        alert(p.nombre + ' se queda sin IdEA y ya no podr\u00e1 entrar.');
+                    }
+                } catch (e) {
+                    alert('La ficha se ha guardado, pero el acceso no.\n\n' + ttErrorCuenta(e));
+                }
+            }
             ttSincronizarClaustro();
             ttRenderPersonal();
         };
@@ -10013,6 +10103,7 @@ ${textoActaLimpio}`;
             if (ttNormIdea(p.idea) === ADMIN_IDEA) return;
             if (!confirm('¿Dar de baja a ' + p.nombre + '?\n\nDejará de poder entrar en la app y desaparecerá de las listas de asistencia.')) return;
             try { await ttBorrarPersonaDB(key); } catch (e) { ttFalloGuardado(e); return; }
+            try { await ttRetirarAcceso(key); } catch (e) { console.warn(e); }
             ttPersonal = ttPersonal.filter(x => x.key !== key);
             ttSincronizarClaustro();
             ttRenderPersonal();
@@ -10034,6 +10125,16 @@ ${textoActaLimpio}`;
 
             const p = { key: key, nombre: nombre, puesto: puesto, idea: idea, claustro: true };
             try { await ttGuardarPersona(p); } catch (e) { ttFalloGuardado(e); return; }
+
+            if (idea) {
+                try {
+                    await ttConcederAcceso(p);
+                } catch (e) {
+                    alert(nombre + ' se ha a\u00f1adido a la lista, pero NO ha podido entrar todav\u00eda.\n\n' +
+                          ttErrorCuenta(e) + '\n\nCorrige el problema y edita su ficha para reintentarlo.');
+                }
+            }
+
             ttPersonal.push(p);
             ttSincronizarClaustro();
             ttRenderPersonal();
