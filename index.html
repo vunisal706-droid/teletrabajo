@@ -9768,6 +9768,12 @@ ${textoActaLimpio}`;
         }
         window.ttSalir = function () {
             try { if (window.auth && window.fbSignOut) window.fbSignOut(window.auth); } catch (e) {}
+            try {
+                const sel = document.getElementById('selectNombre');
+                if (sel) { sel.disabled = false; sel.style.background = ''; sel.style.cursor = ''; }
+                const nota = document.getElementById('ttNombreFijoAviso');
+                if (nota) nota.remove();
+            } catch (e) {}
             try { localStorage.removeItem(CLAVE_SESION); } catch (e) {}
             try { sessionStorage.removeItem(CLAVE_SESION); } catch (e) {}
             try { document.cookie = CLAVE_SESION + '=;path=/;max-age=0;SameSite=Lax'; } catch (e) {}
@@ -9801,14 +9807,52 @@ ${textoActaLimpio}`;
             window.ttUsuario = sesion;
             ttMostrarGate(false);
             ttBarraUsuario();
-            // Preseleccionar su nombre en la pantalla de inicio
+            // La identidad la fija el acceso: no se puede participar con otro nombre.
             const sel = document.getElementById('selectNombre');
             if (sel) {
                 const fijar = () => {
-                    if ([].some.call(sel.options, o => o.value === sesion.nombre)) sel.value = sesion.nombre;
-                    else setTimeout(fijar, 300);
+                    if ([].some.call(sel.options, o => o.value === sesion.nombre)) {
+                        sel.value = sesion.nombre;
+                        ttBloquearNombre(sesion.nombre);
+                    } else {
+                        setTimeout(fijar, 300);
+                    }
                 };
                 fijar();
+            }
+        }
+
+        // Deja el nombre fijado al de la sesion y lo protege de cambios
+        function ttBloquearNombre(nombre) {
+            const sel = document.getElementById('selectNombre');
+            if (!sel) return;
+
+            sel.value = nombre;
+            sel.disabled = true;
+            sel.style.background = '#F1F5F9';
+            sel.style.color = '#334155';
+            sel.style.cursor = 'not-allowed';
+            sel.title = 'Tu nombre viene de tu acceso y no se puede cambiar';
+
+            const manual = document.getElementById('inputNombreManual');
+            if (manual) { manual.style.display = 'none'; manual.value = ''; }
+
+            if (!document.getElementById('ttNombreFijoAviso')) {
+                const nota = document.createElement('div');
+                nota.id = 'ttNombreFijoAviso';
+                nota.style.cssText = 'font-size:12px;color:#64748b;margin-top:6px;line-height:1.5';
+                nota.textContent = 'Participas como ' + nombre + '. Tu nombre viene de tu acceso.';
+                sel.parentNode.appendChild(nota);
+            }
+
+            // Si algo intenta cambiarlo por codigo, se revierte
+            if (!sel.dataset.ttVigilado) {
+                sel.dataset.ttVigilado = '1';
+                sel.addEventListener('change', function () {
+                    if (window.ttUsuario && sel.value !== window.ttUsuario.nombre) {
+                        sel.value = window.ttUsuario.nombre;
+                    }
+                });
             }
         }
 
