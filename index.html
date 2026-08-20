@@ -3811,7 +3811,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove, get, update, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, setPersistence, browserSessionPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDchcaSp2M8uRZxMbMG7sop_ypkZP7w8CI",
@@ -3862,6 +3862,7 @@
         window.fbInitApp = initializeApp;
         window.fbGetAuth = getAuth;
         window.fbCreateUser = createUserWithEmailAndPassword;
+        window.fbOnAuthState = onAuthStateChanged;
         window.fbConfig = firebaseConfig;
         window.fbSignIn = signInWithEmailAndPassword;
         window.fbSignOut = signOut;
@@ -10174,7 +10175,7 @@ ${textoActaLimpio}`;
         }
 
         // ---------- arranque ----------
-        function ttInit() {
+        async function ttInit() {
             const campo = document.getElementById('ttIdea');
             if (campo) {
                 campo.addEventListener('input', ttLimpiarError);
@@ -10183,7 +10184,37 @@ ${textoActaLimpio}`;
 
             if (esFamilia) { ttCargarPersonal(); return; }   // acceso de familias sin identificación
 
+            // Espera a que Firebase diga si hay sesion real. La sesion guardada
+            // en el navegador NO basta: sin sesion de Firebase las reglas rechazan
+            // cualquier escritura, asi que en ese caso se vuelve a pedir el acceso.
+            function ttEsperarAuth(ms) {
+                return new Promise(function (resolve) {
+                    if (!window.auth || !window.fbOnAuthState) return resolve(null);
+                    let resuelto = false;
+                    const corta = setTimeout(function () {
+                        if (!resuelto) { resuelto = true; resolve(window.auth.currentUser || null); }
+                    }, ms || 6000);
+                    window.fbOnAuthState(window.auth, function (u) {
+                        if (resuelto) return;
+                        resuelto = true; clearTimeout(corta); resolve(u || null);
+                    });
+                });
+            }
+
             const sesion = ttLeerSesion();
+            const usuarioFb = await ttEsperarAuth(6000);
+
+            if (sesion && sesion.nombre && !usuarioFb) {
+                // Sesion caducada: se limpia y se pide entrar de nuevo
+                try { localStorage.removeItem(CLAVE_SESION); } catch (e) {}
+                try { sessionStorage.removeItem(CLAVE_SESION); } catch (e) {}
+                try { document.cookie = CLAVE_SESION + '=;path=/;max-age=0;SameSite=Lax'; } catch (e) {}
+                await ttCargarPersonal();
+                ttRepoblarSelectNombre();
+                ttMostrarGate(true);
+                return;
+            }
+
             if (sesion && sesion.nombre) {
                 ttAplicarSesion(sesion);
                 ttCargarPersonal().then(() => {
