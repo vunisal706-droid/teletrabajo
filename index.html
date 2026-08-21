@@ -7614,27 +7614,47 @@ ${textoActaLimpio}`;
                 reunionLabel: ''
             };
 
-            // Rellenar el desplegable de nombres con el claustro
+            // Rellenar el desplegable de nombres.
+            // Si hay sesion iniciada, la identidad ya esta verificada: solo se
+            // ofrece ese nombre y no se puede cambiar ni escribir uno libre.
             const sel = document.getElementById('guiaSelNombre');
-            sel.innerHTML = '<option value="">— Elige tu nombre —</option>';
-            if (window.CLAUSTRO_CAPITULACIONES) {
-                window.CLAUSTRO_CAPITULACIONES.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.nombre;
-                    opt.textContent = p.nombre;
-                    sel.appendChild(opt);
-                });
+            const _yo = window.ttUsuario && window.ttUsuario.nombre ? window.ttUsuario.nombre : null;
+
+            if (_yo) {
+                sel.innerHTML = '<option value="' + _yo + '">' + _yo + '</option>';
+                sel.value = _yo;
+                sel.disabled = true;
+                sel.style.background = '#F1F5F9';
+                sel.style.cursor = 'not-allowed';
+                sel.title = 'Tu nombre viene de tu acceso y no se puede cambiar';
+                window.guiaEstado.nombre = _yo;
+
+                const desc = document.querySelector('.guia-paso[data-paso="2"] .guia-descripcion');
+                if (desc) desc.textContent = 'Participas como ' + _yo + '. Tu nombre viene de tu acceso.';
+            } else {
+                sel.disabled = false;
+                sel.style.background = '';
+                sel.style.cursor = '';
+                sel.innerHTML = '<option value="">— Elige tu nombre —</option>';
+                if (window.CLAUSTRO_CAPITULACIONES) {
+                    window.CLAUSTRO_CAPITULACIONES.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.nombre;
+                        opt.textContent = p.nombre;
+                        sel.appendChild(opt);
+                    });
+                }
+                const optOtro = document.createElement('option');
+                optOtro.value = '__otro__';
+                optOtro.textContent = '✏️ Mi nombre no está en la lista';
+                sel.appendChild(optOtro);
             }
-            const optOtro = document.createElement('option');
-            optOtro.value = '__otro__';
-            optOtro.textContent = '✏️ Mi nombre no está en la lista';
-            sel.appendChild(optOtro);
 
             // Limpiar inputs
             document.getElementById('guiaInputNombre').value = '';
             document.getElementById('guiaInputNombre').style.display = 'none';
             document.getElementById('guiaInputFecha').value = '';
-            document.getElementById('guiaBtnNombreOK').disabled = true;
+            document.getElementById('guiaBtnNombreOK').disabled = !_yo;
             document.getElementById('guiaBtnFechaOK').disabled = true;
             document.querySelectorAll('.guia-opcion-grid.activo').forEach(b => b.classList.remove('activo'));
 
@@ -7681,6 +7701,15 @@ ${textoActaLimpio}`;
             const sel = document.getElementById('guiaSelNombre');
             const input = document.getElementById('guiaInputNombre');
             const btn = document.getElementById('guiaBtnNombreOK');
+
+            // Con sesion iniciada la identidad no se negocia
+            if (window.ttUsuario && window.ttUsuario.nombre) {
+                sel.value = window.ttUsuario.nombre;
+                window.guiaEstado.nombre = window.ttUsuario.nombre;
+                if (input) { input.style.display = 'none'; input.value = ''; }
+                btn.disabled = false;
+                return;
+            }
 
             if (sel.value === '__otro__') {
                 input.style.display = 'block';
