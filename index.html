@@ -6900,8 +6900,18 @@
                 texto += '👥 PARTICIPANTES:\n';
                 texto += '─────────────────────────────────────────\n';
                 if (sesionData.participantes) {
+                    // Deduplicar por nombre: una misma persona puede quedar registrada
+                    // varias veces si se conecta desde dos dispositivos o recarga la sala.
+                    const unicos = new Map();
                     Object.values(sesionData.participantes).forEach(p => {
                         if (!p) return;
+                        const clave = (p.nombre || '(sin nombre)').trim().toLowerCase();
+                        const previo = unicos.get(clave);
+                        if (!previo || (p.rol === 'coordinador' && previo.rol !== 'coordinador')) {
+                            unicos.set(clave, p);
+                        }
+                    });
+                    unicos.forEach(p => {
                         const emoji = p.rol === 'coordinador' ? '👑' : '👤';
                         texto += `${emoji} ${p.nombre || '(sin nombre)'} (${p.rol || 'maestro'})\n`;
                     });
@@ -7087,21 +7097,41 @@
             // Sanitizar el texto del acta para evitar truncado por Unicode en IAs externas
             const textoActaLimpio = limpiarUnicodeParaIA(textoActa);
 
+            // ── Bloques comunes a todos los prompts de acta ──
+            // Tabla de funciones: compacta y sobria (antes salía enorme en Gemini).
+            const bloqueTablaFunciones = `TABLA DE FUNCIONES DEL ORGANO (compacta y sobria):
+- Dos columnas con encabezado: "Función del órgano" y "Trabajada".
+- Reproduce TODAS las funciones de los datos, una por fila, con su texto literal. No las numeres y no incluyas la linea de leyenda "Marca [X] = ...".
+- Columna "Función del órgano": aprox. 88% del ancho. Columna "Trabajada": estrecha, aprox. 12% del ancho, contenido centrado.
+- En "Trabajada" escribe ✔ y pon esa fila en NEGRITA cuando la funcion venga marcada con [X]; deja la celda vacia cuando venga con [ ]. No incluyas los simbolos [X] ni [ ] en el documento.
+- Letra de 9 pt, interlineado sencillo, sin espaciado antes ni despues de parrafo dentro de las celdas y con el relleno de celda minimo.
+- Bordes finos (0,5 pt) en gris claro y encabezado con fondo gris muy suave. Sin colores llamativos, sin filas vacias y sin texto adicional antes o despues de la tabla.`;
+
+            // Orden del día + Desarrollo: dos secciones distintas y obligatorias.
+            const bloqueOrdenDesarrollo = `- ORDEN DEL DIA (seccion OBLIGATORIA, justo despues de ASISTENTES / NO ASISTEN): titulo "ORDEN DEL DIA" y una lista numerada (1., 2., 3. ...) con UNICAMENTE el titulo de cada punto, tal y como figura en los datos, sin desarrollo ni comentarios.
+- DESARROLLO DE LA SESION: para cada punto repite su numero y su titulo en negrita (por ejemplo "1. Lectura y aprobacion del acta anterior") y debajo redacta en estilo formal de acta lo tratado: aportaciones, acuerdos y resultado de las votaciones si las hubo. Si un punto no tiene aportaciones en los datos, indicalo con una frase breve, sin inventar contenido.
+- CIERRE: "Y no habiendo mas asuntos que tratar, se levanta la sesion siendo las [HORA DE FINALIZACION] horas." (usa la hora de finalizacion de los datos).
+
+MUY IMPORTANTE: NO omitas la seccion ORDEN DEL DIA aunque despues los puntos se repitan en el DESARROLLO. En un acta formal son dos secciones distintas y ambas deben aparecer.`;
+
             // Prompt estándar (todos los órganos excepto Claustro)
             const promptEstandar = `INSTRUCCIONES PARA GENERAR EL ACTA:
 
-A partir del texto de reunion que encontraras al final, genera un ACTA DE REUNION oficial con el siguiente formato:
+A partir del texto de reunion que encontraras al final, genera un ACTA DE REUNION oficial respetando EXACTAMENTE estas secciones y en este orden:
 
-FORMATO DEL DOCUMENTO:
-- Encabezado institucional: logos y nombre del centro en la parte superior. El encabezado debe ocupar el minimo espacio posible y estar pegado al titulo sin lineas en blanco entre medias.
-- Titulo centrado y en negrita: "ACTA DE REUNION DE [ORGANO]" y "ACTA N. ___". Debe aparecer inmediatamente debajo del encabezado, sin espacio extra.
-- En todas las paginas del documento, el contenido debe comenzar lo mas arriba posible, sin margenes superiores grandes ni espacios en blanco innecesarios.
-- ANTES del parrafo de apertura, incluye una seccion titulada "FUNCIONES DEL ORGANO (Decreto 328/2010, art. [ARTICULO])" y preséntala como una TABLA de dos columnas con encabezado: "Función del órgano" y "Trabajada en la sesión". Reproduce TODAS las funciones que aparecen en los datos de la reunion, una por fila. En la columna "Trabajada en la sesión" escribe un check (✔) y pon esa fila en NEGRITA cuando la funcion venga marcada con [X] en los datos; deja esa columna vacia cuando venga marcada con [ ]. No incluyas los simbolos [X] ni [ ] en el documento final.
-- Parrafo de apertura: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de [ORGANO COMPLETO] del CEIP Capitulaciones, en modalidad telematica."
-- Seccion ASISTENTES con nombre y puesto de cada persona, uno debajo del otro en lineas separadas.
-- Seccion de DESARROLLO con cada punto del orden del dia numerado.
+- ENCABEZADO institucional: logos y nombre del centro en la parte superior, ocupando el minimo espacio posible y pegado al titulo sin lineas en blanco entre medias.
+- TITULO centrado y en negrita: "ACTA DE REUNION DE [ORGANO]" y "ACTA N. ___", inmediatamente debajo del encabezado, sin espacio extra.
+- FUNCIONES DEL ORGANO (Decreto 328/2010, art. [ARTICULO que figura en los datos]): tabla segun las instrucciones de mas abajo.
+- PARRAFO DE APERTURA: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de [ORGANO COMPLETO] del CEIP Capitulaciones, en modalidad telematica."
+- ASISTENTES: nombre y puesto de cada persona, uno debajo del otro en lineas separadas. Si una persona aparece repetida en los datos, ponla una sola vez.
+- NO ASISTEN: solo si los datos incluyen ausentes.
+${bloqueOrdenDesarrollo}
+
+${bloqueTablaFunciones}
+
+FORMATO GENERAL:
+- En todas las paginas el contenido debe comenzar lo mas arriba posible, con margenes normales y compactos y cero espaciado extra entre el encabezado y el cuerpo.
 - Sin bloque de firmas al final. Las firmas se gestionan por Seneca.
-- Margenes normales y compactos en todas las paginas. Cero espaciado extra entre el encabezado y el cuerpo del documento.
 
 IMPORTANTE AL FINALIZAR:
 Una vez hayas generado el acta formateada, pregunta al usuario:
@@ -7126,14 +7156,18 @@ PASO 1 - ANTES DE GENERAR EL ACTA, pregunta al usuario:
 "Para completar el acta necesito saber quien asistio. Puedes decirme los nombres (o quien falto, que es mas rapido si la asistencia fue mayoritaria)."
 Espera la respuesta e identifica a cada persona por nombre de pila y primer apellido.
 
-PASO 2 - Una vez confirmada la asistencia, genera el ACTA DE REUNION oficial con este formato:
-- Encabezado institucional con nombre del centro.
-- Titulo centrado y en negrita: "ACTA DE REUNION DE CLAUSTRO" y "ACTA N. ___".
-- ANTES del parrafo de apertura, incluye una seccion titulada "FUNCIONES DEL ORGANO (Decreto 328/2010, art. 66)" y preséntala como una TABLA de dos columnas con encabezado: "Función del órgano" y "Trabajada en la sesión". Reproduce TODAS las funciones que aparecen en los datos de la reunion, una por fila. En la columna "Trabajada en la sesión" escribe un check (✔) y pon esa fila en NEGRITA cuando la funcion venga marcada con [X] en los datos; deja esa columna vacia cuando venga marcada con [ ]. No incluyas los simbolos [X] ni [ ] en el documento final.
-- Parrafo de apertura: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de Claustro de Maestros del CEIP Capitulaciones, en modalidad telematica."
-- Seccion ASISTENTES con nombre completo y puesto de cada persona, uno debajo del otro.
-- Si hubo ausentes, seccion NO ASISTEN con sus nombres.
-- Seccion DESARROLLO con cada punto del orden del dia numerado.
+PASO 2 - Una vez confirmada la asistencia, genera el ACTA DE REUNION oficial respetando EXACTAMENTE estas secciones y en este orden:
+- ENCABEZADO institucional con nombre del centro.
+- TITULO centrado y en negrita: "ACTA DE REUNION DE CLAUSTRO" y "ACTA N. ___".
+- FUNCIONES DEL ORGANO (Decreto 328/2010, art. 66): tabla segun las instrucciones de mas abajo.
+- PARRAFO DE APERTURA: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de Claustro de Maestros del CEIP Capitulaciones, en modalidad telematica."
+- ASISTENTES: nombre completo y puesto de cada persona, uno debajo del otro.
+- NO ASISTEN: si hubo ausentes, con sus nombres.
+${bloqueOrdenDesarrollo}
+
+${bloqueTablaFunciones}
+
+FORMATO GENERAL:
 - Sin bloque de firmas al final. Las firmas se gestionan por Seneca.
 
 IMPORTANTE AL FINALIZAR:
