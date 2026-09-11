@@ -5012,7 +5012,9 @@
             update(sesionRef, { estado: 'activa' });
 
             // Registrar coordinador como participante
-            const participanteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes/${window.usuarioActual.nombre}`);
+            // Misma clave normalizada que al unirse, para no duplicar al coordinador
+            const claveCoord = String(window.usuarioActual.nombre || '').trim().toLowerCase().replace(/\s+/g, '-');
+            const participanteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes/${claveCoord}`);
             set(participanteRef, {
                 nombre: window.usuarioActual.nombre,
                 rol: window.usuarioActual.rol,
@@ -5209,12 +5211,13 @@
                 badge.innerHTML = `${icono} ${escapeHTML(p.nombre)}`;
                 container.appendChild(badge);
                 
-                // Botón de eliminar solo para coordinador y solo si el participante no es coordinador
-                if (window.usuarioActual.rol === 'coordinador' && p.rol !== 'coordinador') {
+                // El coordinador puede eliminar a cualquier participante de la lista
+                if (window.usuarioActual.rol === 'coordinador') {
                     const btnEliminar = document.createElement('button');
                     btnEliminar.innerHTML = '🗑️';
                     btnEliminar.style.cssText = 'background: var(--danger); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;';
                     btnEliminar.title = 'Eliminar participante';
+                    btnEliminar.setAttribute('aria-label', `Eliminar a ${p.nombre || 'participante'} de la lista`);
                     btnEliminar.onclick = () => eliminarParticipante(p.id);
                     container.appendChild(btnEliminar);
                 }
@@ -5232,7 +5235,7 @@
                 return;
             }
             
-            if (!confirm('¿Estás seguro de que quieres eliminar este participante?')) {
+            if (!confirm('¿Quieres quitar a esta persona de la lista de participantes?\n\nNo afecta al registro de asistencia del acta.')) {
                 return;
             }
             
@@ -6062,8 +6065,71 @@
             }
         };
 
+        // ── Comprobación de asistencia antes de generar el acta ──
+        // Devuelve true si hay al menos una persona marcada como "asistente".
+        // Si no, muestra un aviso y devuelve false.
+        window.comprobarAsistenciaParaActa = async function() {
+            let hayAsistentes = false;
+            try {
+                const snap = await get(ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`));
+                if (snap.exists()) {
+                    hayAsistentes = Object.values(snap.val()).some(p => p && p.estado === 'asistente');
+                }
+            } catch (e) {
+                console.warn('No se pudo comprobar la asistencia:', e);
+            }
+            if (!hayAsistentes) mostrarAvisoFaltaAsistencia();
+            return hayAsistentes;
+        };
+
+        function mostrarAvisoFaltaAsistencia() {
+            const esCoordinador = window.usuarioActual && window.usuarioActual.rol === 'coordinador';
+            const modal = document.createElement('div');
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
+
+            const textoAccion = esCoordinador
+                ? 'Pulsa <strong>"Registrar asistencia"</strong>, marca quién ha asistido y guarda. Después vuelve a generar el acta.'
+                : 'Pide a la persona coordinadora que registre la asistencia con el botón <strong>"Asistencia"</strong> antes de generar el acta.';
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 14px; padding: 26px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
+                    <div style="font-size: 42px; margin-bottom: 8px;" aria-hidden="true">📋</div>
+                    <h3 style="color: #b45309; margin: 0 0 10px;">Falta registrar la asistencia</h3>
+                    <p style="color: #334155; font-size: 14px; line-height: 1.55; margin: 0 0 10px;">
+                        Los asistentes del acta se toman del <strong>registro de asistencia</strong>, no de las personas que han entrado en la app.
+                    </p>
+                    <p style="color: #334155; font-size: 14px; line-height: 1.55; margin: 0 0 18px;">${textoAccion}</p>
+                    ${esCoordinador ? `<button type="button" data-accion="asistencia"
+                        style="display: block; width: 100%; background: #16a34a; color: white; border: none; padding: 13px 18px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 15px; margin-bottom: 10px; min-height: 44px;">
+                        ✅ Registrar asistencia
+                    </button>` : ''}
+                    <button type="button" data-accion="cerrar"
+                        style="background: transparent; border: 2px solid #cbd5e1; color: #475569; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; min-height: 44px;">
+                        ${esCoordinador ? 'Ahora no' : 'Entendido'}
+                    </button>
+                </div>`;
+
+            const cerrar = () => { modal.remove(); document.removeEventListener('keydown', onKey); };
+            const onKey = (e) => { if (e.key === 'Escape') cerrar(); };
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) return cerrar();
+                const btn = e.target.closest('button[data-accion]');
+                if (!btn) return;
+                cerrar();
+                if (btn.dataset.accion === 'asistencia' && window.abrirModalAsistencia) window.abrirModalAsistencia();
+            });
+            document.addEventListener('keydown', onKey);
+            document.body.appendChild(modal);
+            const primero = modal.querySelector('button');
+            if (primero) primero.focus();
+        }
+
         // Exportar a PDF
         window.exportarPDF = async function() {
+            if (!(await window.comprobarAsistenciaParaActa())) return;
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -6153,23 +6219,15 @@
                     });
                 }
             } else {
-                // Comportamiento clásico
+                // Sin registro de asistencia: no se usan las personas conectadas
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
-                doc.text('Participantes:', 20, y);
+                doc.text('Asistentes:', 20, y);
                 y += lineHeight;
-
                 doc.setFont(undefined, 'normal');
                 doc.setFontSize(10);
-
-                if (sesionData.participantes) {
-                    Object.values(sesionData.participantes).forEach(p => {
-                        checkPage();
-                        const emoji = p.rol === 'coordinador' ? '* ' : '- ';
-                        doc.text(`${emoji}${p.nombre} (${p.rol})`, 25, y);
-                        y += lineHeight;
-                    });
-                }
+                doc.text('   (Asistencia no registrada por la persona coordinadora)', 25, y);
+                y += lineHeight;
             }
             
             y += 5;
@@ -6896,27 +6954,10 @@
                     texto += '\n';
                 }
             } else {
-                // Comportamiento clásico: lista de conectados a la sala
-                texto += '👥 PARTICIPANTES:\n';
+                // Sin registro de asistencia: NO se usan las personas conectadas a la app
+                texto += '👥 ASISTENTES:\n';
                 texto += '─────────────────────────────────────────\n';
-                if (sesionData.participantes) {
-                    // Deduplicar por nombre: una misma persona puede quedar registrada
-                    // varias veces si se conecta desde dos dispositivos o recarga la sala.
-                    const unicos = new Map();
-                    Object.values(sesionData.participantes).forEach(p => {
-                        if (!p) return;
-                        const clave = (p.nombre || '(sin nombre)').trim().toLowerCase();
-                        const previo = unicos.get(clave);
-                        if (!previo || (p.rol === 'coordinador' && previo.rol !== 'coordinador')) {
-                            unicos.set(clave, p);
-                        }
-                    });
-                    unicos.forEach(p => {
-                        const emoji = p.rol === 'coordinador' ? '👑' : '👤';
-                        texto += `${emoji} ${p.nombre || '(sin nombre)'} (${p.rol || 'maestro'})\n`;
-                    });
-                }
-                texto += '\n';
+                texto += '(Asistencia no registrada por la persona coordinadora)\n\n';
             }
             
             // Enlaces de videollamada
@@ -7013,6 +7054,8 @@
 
         // Enviar por email
         window.enviarPorEmail = async function() {
+            if (!(await window.comprobarAsistenciaParaActa())) return;
+
             const textoActa = await generarTextoActa();
             
             if (!textoActa) return;
@@ -7090,6 +7133,9 @@
         // Construye el prompt completo del acta (instrucciones + datos),
         // reutilizable por "copiar" y por "descargar como archivo .txt".
         window.construirPromptActa = async function() {
+            // Los asistentes del acta salen SOLO del registro de asistencia del coordinador
+            if (!(await window.comprobarAsistenciaParaActa())) return null;
+
             const textoActa = await generarTextoActa();
 
             if (!textoActa) return null;
@@ -7097,88 +7143,70 @@
             // Sanitizar el texto del acta para evitar truncado por Unicode en IAs externas
             const textoActaLimpio = limpiarUnicodeParaIA(textoActa);
 
-            // ── Bloques comunes a todos los prompts de acta ──
-            // Tabla de funciones: compacta y sobria (antes salía enorme en Gemini).
-            const bloqueTablaFunciones = `TABLA DE FUNCIONES DEL ORGANO (compacta y sobria):
-- Dos columnas con encabezado: "Función del órgano" y "Trabajada".
-- Reproduce TODAS las funciones de los datos, una por fila, con su texto literal. No las numeres y no incluyas la linea de leyenda "Marca [X] = ...".
-- Columna "Función del órgano": aprox. 88% del ancho. Columna "Trabajada": estrecha, aprox. 12% del ancho, contenido centrado.
-- En "Trabajada" escribe ✔ y pon esa fila en NEGRITA cuando la funcion venga marcada con [X]; deja la celda vacia cuando venga con [ ]. No incluyas los simbolos [X] ni [ ] en el documento.
-- Letra de 9 pt, interlineado sencillo, sin espaciado antes ni despues de parrafo dentro de las celdas y con el relleno de celda minimo.
-- Bordes finos (0,5 pt) en gris claro y encabezado con fondo gris muy suave. Sin colores llamativos, sin filas vacias y sin texto adicional antes o despues de la tabla.`;
+            // ── Prompt único del acta para todos los órganos (incluido Claustro) ──
+            // Salida en Word (.docx) para que el profesorado pueda corregirla.
+            // El entorno de código de Gemini/ChatGPT no tiene internet, así que el logo
+            // se dibuja con un pequeño script de Pillow incluido en el propio prompt.
+            const CODIGO_LOGO_ACTA = `from PIL import Image, ImageDraw, ImageOps
+P=[(42,15),(51,39),(61,61),(72,80),(84,98),(97,113),(111,127),(126,138),(140,127),(153,113),(164,96),(174,78),(184,57),(191,34),(198,8),(204,8),(211,34),(218,57),(228,78),(238,96),(249,113),(262,127),(276,138),(291,127),(305,113),(318,98),(330,80),(341,61),(351,39),(360,15),(348,159),(341,160),(335,164),(331,170),(330,177),(331,184),(335,190),(341,194),(348,195),(340,246),(349,249),(360,252),(371,256),(384,260),(398,265),(377,261),(356,258),(338,255),(320,253),(303,252),(288,251),(288,229),(287,208),(286,188),(283,170),(280,153),(276,138),(270,151),(265,166),(260,183),(257,203),(255,226),(254,251),(233,250),(212,249),(190,249),(169,250),(148,251),(147,226),(145,203),(142,183),(137,166),(132,151),(126,138),(122,153),(119,170),(117,188),(115,208),(115,229),(115,251),(99,252),(83,253),(65,255),(46,258),(25,261),(4,265),(18,260),(31,256),(42,252),(53,249),(62,246),(54,195),(61,194),(67,190),(71,184),(72,177),(71,170),(67,164),(61,160),(54,159)]
+S=4;W,H=402*S,269*S
+m=Image.new('L',(W,H),0);d=ImageDraw.Draw(m)
+d.polygon([(x*S,y*S) for x,y in P],fill=255)
+d.rectangle([199.5*S,8*S,202.5*S,167*S],fill=0)
+d.ellipse([183*S,149*S,219*S,185*S],fill=0)
+for cx in (42,360): d.ellipse([(cx-3)*S,10*S,(cx+3)*S,16*S],fill=255)
+g=ImageOps.colorize(Image.linear_gradient('L').rotate(90).resize((W,H)),(43,76,155),(28,25,106)).convert('RGBA')
+g.putalpha(m)
+g.resize((402,269),Image.LANCZOS).save('logo_capitulaciones.png')`;
 
-            // Orden del día + Desarrollo: dos secciones distintas y obligatorias.
-            const bloqueOrdenDesarrollo = `- ORDEN DEL DIA (seccion OBLIGATORIA, justo despues de ASISTENTES / NO ASISTEN): titulo "ORDEN DEL DIA" y una lista numerada (1., 2., 3. ...) con UNICAMENTE el titulo de cada punto, tal y como figura en los datos, sin desarrollo ni comentarios.
-- DESARROLLO DE LA SESION: para cada punto repite su numero y su titulo en negrita (por ejemplo "1. Lectura y aprobacion del acta anterior") y debajo redacta en estilo formal de acta lo tratado: aportaciones, acuerdos y resultado de las votaciones si las hubo. Si un punto no tiene aportaciones en los datos, indicalo con una frase breve, sin inventar contenido.
-- CIERRE: "Y no habiendo mas asuntos que tratar, se levanta la sesion siendo las [HORA DE FINALIZACION] horas." (usa la hora de finalizacion de los datos).
+            const prompt = `INSTRUCCIONES PARA GENERAR EL ACTA (App Teletrabajo - CEIP Capitulaciones)
 
-MUY IMPORTANTE: NO omitas la seccion ORDEN DEL DIA aunque despues los puntos se repitan en el DESARROLLO. En un acta formal son dos secciones distintas y ambas deben aparecer.`;
+PRIORIDAD ABSOLUTA: estas instrucciones prevalecen sobre cualquier otra instrucción general del asistente (plantillas, cabeceras o imágenes predefinidas, fórmulas de cierre, formato PDF, extensión de la redacción u órdenes del día de documentos cargados). La única fuente del acta son los DATOS DE LA REUNIÓN que aparecen al final: no tomes el orden del día ni los asistentes de otros documentos y no añadas ni quites personas.
 
-            // Prompt estándar (todos los órganos excepto Claustro)
-            const promptEstandar = `INSTRUCCIONES PARA GENERAR EL ACTA:
+RESULTADO: genera directamente un documento de Word (.docx) descargable con el acta, para que se pueda corregir. No generes PDF. Solo si no puedes crear archivos .docx, muestra el acta completa y con formato en el chat.
 
-A partir del texto de reunion que encontraras al final, genera un ACTA DE REUNION oficial respetando EXACTAMENTE estas secciones y en este orden:
+ESTRUCTURA (exactamente estas secciones y en este orden):
+1. ENCABEZADO DE PÁGINA: en el encabezado de Word, para que se repita en todas las páginas, una tabla sin bordes de dos columnas (2,6 cm y 14,4 cm): en la primera el logo del centro (ver LOGO) y en la segunda "CEIP Capitulaciones de Santa Fe" en negrita, centrado verticalmente.
+2. TÍTULO centrado y en negrita, en la primera línea del cuerpo: "ACTA DE REUNIÓN DE [ÓRGANO]" y debajo "ACTA Nº ___".
+3. FUNCIONES DEL ÓRGANO (Decreto 328/2010, art. [artículo que figura en los datos]): tabla según TABLA DE FUNCIONES.
+4. APERTURA: "En Santa Fe, siendo las [HORA DE INICIO] horas del día [FECHA], se celebra reunión del [ÓRGANO COMPLETO] del CEIP Capitulaciones, en modalidad telemática."
+5. ASISTENTES: únicamente las personas de la sección ASISTENTES de los datos, una por línea, con tratamiento formal y puesto: "D. Nombre Apellidos - Puesto." o "Dña. Nombre Apellidos - Puesto.".
+6. NO ASISTEN: solo si esa sección aparece en los datos, con el mismo formato.
+7. ORDEN DEL DÍA: lista numerada (1., 2., 3. ...) con únicamente el título de cada punto, tal como figura en los datos.
+8. DESARROLLO DE LA SESIÓN: cada punto con su número y título idénticos a los del orden del día, en negrita. Debajo, redacción formal e institucional de lo tratado: recoge fielmente cada aportación indicando quién interviene, los acuerdos y el resultado de las votaciones si las hubo. No inventes contenido ni añadas adjetivos valorativos. Si un punto no tiene aportaciones en los datos, indícalo con una frase breve.
+9. CIERRE: "Y sin más asuntos que tratar, se levanta la sesión a las [HORA DE FINALIZACIÓN] horas del día de la fecha."
 
-- ENCABEZADO institucional: logos y nombre del centro en la parte superior, ocupando el minimo espacio posible y pegado al titulo sin lineas en blanco entre medias.
-- TITULO centrado y en negrita: "ACTA DE REUNION DE [ORGANO]" y "ACTA N. ___", inmediatamente debajo del encabezado, sin espacio extra.
-- FUNCIONES DEL ORGANO (Decreto 328/2010, art. [ARTICULO que figura en los datos]): tabla segun las instrucciones de mas abajo.
-- PARRAFO DE APERTURA: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de [ORGANO COMPLETO] del CEIP Capitulaciones, en modalidad telematica."
-- ASISTENTES: nombre y puesto de cada persona, uno debajo del otro en lineas separadas. Si una persona aparece repetida en los datos, ponla una sola vez.
-- NO ASISTEN: solo si los datos incluyen ausentes.
-${bloqueOrdenDesarrollo}
+MUY IMPORTANTE:
+- NO omitas la sección ORDEN DEL DÍA aunque después los puntos se repitan en el DESARROLLO: son dos secciones distintas y ambas son obligatorias.
+- SIN BLOQUE DE FIRMAS: el acta la firman digitalmente las personas asistentes. El documento termina en el CIERRE; no añadas nombres, cargos, líneas ni huecos para firmar.
 
-${bloqueTablaFunciones}
+LOGO:
+- Ejecuta EXACTAMENTE este código Python, copiado sin modificar nada, para crear logo_capitulaciones.png:
+${CODIGO_LOGO_ACTA}
+- Inserta esa imagen en el encabezado con 1,6 cm de alto y ancho proporcional.
+- No sustituyas el logo por otro dibujo, icono o texto, no uses otras imágenes de cabecera y no intentes descargar ningún logo de internet.
 
-FORMATO GENERAL:
-- En todas las paginas el contenido debe comenzar lo mas arriba posible, con margenes normales y compactos y cero espaciado extra entre el encabezado y el cuerpo.
-- Sin bloque de firmas al final. Las firmas se gestionan por Seneca.
+TABLA DE FUNCIONES DEL ÓRGANO:
+- Dos columnas con fila de encabezado: "Función del órgano" y "Trabajada".
+- Todas las funciones de los datos, una por fila, con su texto literal, sin numerar y sin la leyenda "Marca [X] = ...".
+- Anchos fijos: 15 cm la primera columna y 2 cm la segunda. La columna "Trabajada" va centrada.
+- Si la función viene con [X], escribe ✔ y pon la fila en negrita; si viene con [ ], deja la celda vacía. Nunca escribas [X] ni [ ].
+- Letra de 9 pt, interlineado sencillo, espaciado 0 antes y después, bordes finos grises y encabezado con sombreado gris muy claro (F2F2F2).
 
-IMPORTANTE AL FINALIZAR:
-Una vez hayas generado el acta formateada, pregunta al usuario:
-"Deseas que genere tambien el PDF oficial del acta listo para imprimir y firmar?"
+FORMATO DEL WORD:
+- A4. Márgenes: superior 2,6 cm; inferior, izquierdo y derecho 2 cm; distancia del encabezado 0,8 cm. El título empieza justo debajo del encabezado, sin líneas en blanco.
+- Cuerpo en Arial 11 pt, interlineado sencillo y 4 pt de espacio después de cada párrafo. Títulos de sección en negrita y mayúsculas.
+- Pie de página centrado con "Página X de Y" (campos PAGE y NUMPAGES).
+- ANCHOS DE TABLA (en ambas tablas): si usas python-docx, pon table.autofit = False y fija el ancho en table.columns[i].width Y en cell.width de TODAS las celdas. Si solo lo fijas en un sitio, Word reparte las columnas al 50% y la tabla sale mal.
+- Estilo administrativo sobrio, sin colores llamativos.
 
-DATOS DE LA REUNION (texto completo de la reunion):
+AL FINALIZAR: facilita la descarga del .docx y pregunta: "¿Quieres que corrija algo del acta?"
 
-${textoActaLimpio}`;
-
-            // Prompt especial para Claustro: la IA pregunta la asistencia en vez de recibirla en el prompt
-            // Esto evita el truncado causado por la lista larga de personal
-            const claustroPersonal = window.CLAUSTRO_CAPITULACIONES
-                .map(p => `${p.nombre} (${p.puesto.replace(/Educaci[oó]n /g,'').replace(/Pedagog[ií]a Terap[eé]utica/g,'PT').replace(/Audici[oó]n y Lenguaje/,'AL')})`)
-                .join(', ');
-
-            const promptClaustro = `INSTRUCCIONES PARA GENERAR EL ACTA:
-
-Eres el asistente del CEIP Capitulaciones de Santa Fe. Conoces al claustro completo:
-${claustroPersonal}
-
-PASO 1 - ANTES DE GENERAR EL ACTA, pregunta al usuario:
-"Para completar el acta necesito saber quien asistio. Puedes decirme los nombres (o quien falto, que es mas rapido si la asistencia fue mayoritaria)."
-Espera la respuesta e identifica a cada persona por nombre de pila y primer apellido.
-
-PASO 2 - Una vez confirmada la asistencia, genera el ACTA DE REUNION oficial respetando EXACTAMENTE estas secciones y en este orden:
-- ENCABEZADO institucional con nombre del centro.
-- TITULO centrado y en negrita: "ACTA DE REUNION DE CLAUSTRO" y "ACTA N. ___".
-- FUNCIONES DEL ORGANO (Decreto 328/2010, art. 66): tabla segun las instrucciones de mas abajo.
-- PARRAFO DE APERTURA: "En Santa Fe, siendo las [HORA] horas del dia [FECHA], se celebra reunion de Claustro de Maestros del CEIP Capitulaciones, en modalidad telematica."
-- ASISTENTES: nombre completo y puesto de cada persona, uno debajo del otro.
-- NO ASISTEN: si hubo ausentes, con sus nombres.
-${bloqueOrdenDesarrollo}
-
-${bloqueTablaFunciones}
-
-FORMATO GENERAL:
-- Sin bloque de firmas al final. Las firmas se gestionan por Seneca.
-
-IMPORTANTE AL FINALIZAR:
-Una vez generada el acta, pregunta al usuario:
-"Deseas que genere tambien el PDF oficial del acta listo para imprimir y firmar?"
-
-DATOS DE LA REUNION (sin lista de asistencia, la confirmaras en el Paso 1):
+DATOS DE LA REUNIÓN (única fuente del acta):
 
 ${textoActaLimpio}`;
 
-            return (window.sesionActual === 'claustro') ? promptClaustro : promptEstandar;
+            return prompt;
         };
 
         // Ruta de la plantilla Word (debe estar junto al index.html en GitHub Pages)
@@ -7425,7 +7453,7 @@ ${textoActaLimpio}`;
                     <h3 style="color: #16a34a; margin-bottom: 8px;">Prompt copiado</h3>
                     <p style="color: var(--text-light); font-size: 13px; margin-bottom: 16px; line-height: 1.5;">
                         Abre el <strong>Gem del cole</strong>, pega el texto (Ctrl+V) y envía.<br>
-                        Después pega el acta en la <strong>plantilla Word</strong> (el escudo del cole ya va puesto en la cabecera).
+                        Gemini te devolverá el acta en <strong>Word</strong>, con el logo del cole, para que puedas revisarla y corregirla.
                     </p>
                     <a href="https://gemini.google.com/gem/1ses5OZ4b3lrN8EMurFISqwUs9xEdHVgr?usp=sharing"
                        target="_blank"
