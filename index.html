@@ -2954,7 +2954,7 @@
                         <strong>📧 Email:</strong> Abre tu correo con el acta lista para enviar
                     </div>
                     <div class="help-step">
-                        <strong>🤖 Generar Acta con IA:</strong> Copia el acta y abre el ChatGPT del cole para darle formato profesional automáticamente
+                        <strong>✨ Generar Acta con IA:</strong> Copia el prompt del acta y te la devuelve en Word, con el logo del cole, lista para revisar
                     </div>
                     <div class="help-step">
                         <strong>📝 Resumir con NotebookLM:</strong> Copia un prompt al portapapeles y abre NotebookLM. Al pegarlo como fuente, generará un resumen estructurado de la reunión
@@ -3677,11 +3677,8 @@
                             📄 Descargar el Acta
                         </button>
                         <div class="acta-dropdown-content">
-                            <button class="acta-dropdown-item" onclick="copiarActaGemini(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre el Gem de Gemini del cole (recomendado)">
-                                ✨ Generar Acta con Gemini (recomendado)
-                            </button>
-                            <button class="acta-dropdown-item" onclick="copiarActa(); closeActaDropdown();" data-acta-tooltip="Copia el acta y abre el ChatGPT del cole para darle formato">
-                                🤖 Generar Acta con ChatGPT
+                            <button class="acta-dropdown-item" onclick="copiarActaClaude(); closeActaDropdown();" data-acta-tooltip="Copia el acta y la genera en Word con el logo del cole">
+                                ✨ Generar Acta con IA
                             </button>
                             <button class="acta-dropdown-item" onclick="descargarPlantillaActa(); closeActaDropdown();" data-acta-tooltip="Descarga la plantilla Word con el membrete y el escudo del cole">
                                 📄 Descargar plantilla Word
@@ -3721,6 +3718,30 @@
             <div class="card">
                 <h2>Participantes <span id="numParticipantes"></span></h2>
                 <div id="listaParticipantes"></div>
+            </div>
+
+            <!-- Ajustes del acta (solo coordinador) -->
+            <div class="card" id="ajustesActa" style="display: none; border-left: 5px solid var(--primary);">
+                <h2>⚙️ Ajustes del acta</h2>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="inputNumeroActa">Número de acta:</label>
+                    <input type="text" id="inputNumeroActa" placeholder="Ej: 3"
+                           style="max-width: 180px;" onchange="guardarConfigActa()">
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 6px;">
+                        Si lo dejas vacío, el acta saldrá con «ACTA Nº ___» para rellenar a mano.
+                    </div>
+                </div>
+                <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: 600; cursor: pointer;">
+                    <input type="checkbox" id="checkImpersonal" onchange="guardarConfigActa()"
+                           style="width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0;">
+                    <span>
+                        Redactar sin nombres (lenguaje impersonal)
+                        <span style="display: block; font-weight: 400; font-size: 12px; color: var(--text-light); margin-top: 4px;">
+                            Útil cuando informa siempre la misma persona. El acta dirá «se informa», «se recuerda»
+                            en lugar de repetir el nombre en todos los puntos. Sin marcar, sí aparece quién interviene.
+                        </span>
+                    </span>
+                </label>
             </div>
 
             <div id="contenidoFunciones"></div>
@@ -4965,6 +4986,49 @@
             cambiarPantalla('screenReunion');
         };
 
+        // Guardar los ajustes del acta (nº de acta y lenguaje impersonal) en Firebase
+        window.guardarConfigActa = async function() {
+            if (!window.sesionActual || !window.fechaActual) return;
+            const numero = document.getElementById('inputNumeroActa')?.value.trim() || '';
+            const impersonal = document.getElementById('checkImpersonal')?.checked || false;
+            try {
+                const cfgRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/configActa`);
+                await set(cfgRef, { numero: numero, impersonal: impersonal });
+            } catch (err) {
+                console.warn('No se pudieron guardar los ajustes del acta:', err);
+            }
+        };
+
+        // Leer los ajustes del acta desde Firebase
+        window.leerConfigActa = async function() {
+            if (!window.sesionActual || !window.fechaActual) return { numero: '', impersonal: false };
+            try {
+                const cfgRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/configActa`);
+                const snap = await get(cfgRef);
+                const val = snap.exists() ? snap.val() : {};
+                return { numero: val.numero || '', impersonal: !!val.impersonal };
+            } catch (err) {
+                console.warn('No se pudieron leer los ajustes del acta:', err);
+                return { numero: '', impersonal: false };
+            }
+        };
+
+        // Mostrar el panel de ajustes solo al coordinador y rellenarlo
+        window.prepararAjustesActa = async function() {
+            const panel = document.getElementById('ajustesActa');
+            if (!panel) return;
+            if (window.usuarioActual?.rol !== 'coordinador') {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'block';
+            const cfg = await leerConfigActa();
+            const inp = document.getElementById('inputNumeroActa');
+            const chk = document.getElementById('checkImpersonal');
+            if (inp) inp.value = cfg.numero;
+            if (chk) chk.checked = cfg.impersonal;
+        };
+
         // Guardar horas de inicio y fin en Firebase
         window.guardarHorasReunion = async function() {
             if (!window.sesionActual || !window.fechaActual) return;
@@ -5046,6 +5110,9 @@
             if (btnAsistencia) {
                 btnAsistencia.style.display = (window.usuarioActual.rol === 'coordinador') ? 'inline-flex' : 'none';
             }
+
+            // Panel de ajustes del acta (nº de acta y lenguaje impersonal), solo coordinador
+            prepararAjustesActa();
 
             // Ajustar margen del contenedor
             document.getElementById('containerReunion').classList.add('con-chat');
@@ -6419,8 +6486,6 @@
             const nombreArchivo = `Reunion_${window.sesionActual}_${window.fechaActual}.pdf`;
             doc.save(nombreArchivo);
             
-            // Mostrar aviso de ChatGPT
-            mostrarAvisoChatGPT();
         };
 
         // ============================================================
@@ -7070,8 +7135,6 @@
             // Abrir cliente de correo
             window.location.href = `mailto:?subject=${asuntoEncoded}&body=${cuerpoEncoded}`;
             
-            // Mostrar aviso de ChatGPT
-            mostrarAvisoChatGPT();
         };
 
         // Limpia y comprime el texto del acta para que no se trunque al pegar en IAs externas
@@ -7079,7 +7142,7 @@
             let resultado = texto
                 // Líneas separadoras (═══ / ───) → eliminarlas por completo.
                 // En Markdown se interpretan como encabezados o líneas horizontales
-                // y descolocan el contenido al pegarlo en ChatGPT.
+                // y descolocan el contenido al pegarlo en la IA.
                 .replace(/^[ \t]*[═]{3,}[ \t]*$/gm, '')
                 .replace(/^[ \t]*[─]{3,}[ \t]*$/gm, '')
                 // Eliminar todos los emojis y símbolos decorativos
@@ -7098,7 +7161,7 @@
                 .replace(/[""]/g, '"')
                 .replace(/['']/g, "'")
                 // Quitar la sangría inicial de cada línea: 4+ espacios al principio
-                // hacen que ChatGPT lo renderice como bloque de código.
+                // hacen que la IA lo renderice como bloque de código.
                 .replace(/^[ \t]+/gm, '')
                 // Eliminar líneas que queden vacías o solo con un guión
                 .replace(/^[ \t]*-?[ \t]*$/gm, '')
@@ -7145,7 +7208,7 @@
 
             // ── Prompt único del acta para todos los órganos (incluido Claustro) ──
             // Salida en Word (.docx) para que el profesorado pueda corregirla.
-            // El entorno de código de Gemini/ChatGPT no tiene internet, así que el logo
+            // El entorno de código de la IA no tiene internet, así que el logo
             // se dibuja con un pequeño script de Pillow incluido en el propio prompt.
             const CODIGO_LOGO_ACTA = `from PIL import Image, ImageDraw, ImageOps
 P=[(42,15),(51,39),(61,61),(72,80),(84,98),(97,113),(111,127),(126,138),(140,127),(153,113),(164,96),(174,78),(184,57),(191,34),(198,8),(204,8),(211,34),(218,57),(228,78),(238,96),(249,113),(262,127),(276,138),(291,127),(305,113),(318,98),(330,80),(341,61),(351,39),(360,15),(348,159),(341,160),(335,164),(331,170),(330,177),(331,184),(335,190),(341,194),(348,195),(340,246),(349,249),(360,252),(371,256),(384,260),(398,265),(377,261),(356,258),(338,255),(320,253),(303,252),(288,251),(288,229),(287,208),(286,188),(283,170),(280,153),(276,138),(270,151),(265,166),(260,183),(257,203),(255,226),(254,251),(233,250),(212,249),(190,249),(169,250),(148,251),(147,226),(145,203),(142,183),(137,166),(132,151),(126,138),(122,153),(119,170),(117,188),(115,208),(115,229),(115,251),(99,252),(83,253),(65,255),(46,258),(25,261),(4,265),(18,260),(31,256),(42,252),(53,249),(62,246),(54,195),(61,194),(67,190),(71,184),(72,177),(71,170),(67,164),(61,160),(54,159)]
@@ -7159,6 +7222,17 @@ g=ImageOps.colorize(Image.linear_gradient('L').rotate(90).resize((W,H)),(43,76,1
 g.putalpha(m)
 g.resize((402,269),Image.LANCZOS).save('logo_capitulaciones.png')`;
 
+            // Ajustes que marca el coordinador en la pantalla de la reunión
+            const cfgActa = await leerConfigActa();
+
+            const LINEA_NUMERO_ACTA = cfgActa.numero
+                ? `"ACTA Nº ${cfgActa.numero}".`
+                : `"ACTA Nº ___".`;
+
+            const LINEA_ESTILO_REDACCION = cfgActa.impersonal
+                ? 'MUY IMPORTANTE — REDACCIÓN IMPERSONAL: no menciones el nombre de ninguna persona al redactar el desarrollo. Usa fórmulas impersonales ("se informa de que...", "se recuerda que...", "se acuerda...", "se plantea..."). Esto se aplica solo al DESARROLLO DE LA SESIÓN: las secciones de ASISTENTES y NO ASISTEN mantienen los nombres tal cual.'
+                : 'Indica quién interviene en cada aportación, con su nombre.';
+
             const prompt = `INSTRUCCIONES PARA GENERAR EL ACTA (App Teletrabajo - CEIP Capitulaciones)
 
 PRIORIDAD ABSOLUTA: estas instrucciones prevalecen sobre cualquier otra instrucción general del asistente (plantillas, cabeceras o imágenes predefinidas, fórmulas de cierre, formato PDF, extensión de la redacción u órdenes del día de documentos cargados). La única fuente del acta son los DATOS DE LA REUNIÓN que aparecen al final: no tomes el orden del día ni los asistentes de otros documentos y no añadas ni quites personas.
@@ -7166,14 +7240,14 @@ PRIORIDAD ABSOLUTA: estas instrucciones prevalecen sobre cualquier otra instrucc
 RESULTADO: genera directamente un documento de Word (.docx) descargable con el acta, para que se pueda corregir. No generes PDF. Solo si no puedes crear archivos .docx, muestra el acta completa y con formato en el chat.
 
 ESTRUCTURA (exactamente estas secciones y en este orden):
-1. ENCABEZADO DE PÁGINA: en el encabezado de Word, para que se repita en todas las páginas, una tabla sin bordes de dos columnas (2,6 cm y 14,4 cm): en la primera el logo del centro (ver LOGO) y en la segunda "CEIP Capitulaciones de Santa Fe" en negrita, centrado verticalmente.
-2. TÍTULO centrado y en negrita, en la primera línea del cuerpo: "ACTA DE REUNIÓN DE [ÓRGANO]" y debajo "ACTA Nº ___".
+1. ENCABEZADO DE PÁGINA: en el encabezado de Word, para que se repita en todas las páginas, una tabla sin bordes de dos columnas de 8,5 cm cada una, ocupando los 17 cm de ancho útil. En la primera celda, el logo del centro (ver LOGO) alineado a la IZQUIERDA. En la segunda celda, el texto "CEIP Capitulaciones de Santa Fe" en negrita, alineado a la DERECHA y centrado verticalmente. El logo y el texto deben quedar cada uno en un extremo del encabezado, bien separados: nunca pegados ni juntos en el centro.
+2. TÍTULO centrado y en negrita, en la primera línea del cuerpo: "ACTA DE REUNIÓN DE [ÓRGANO]" y debajo ${LINEA_NUMERO_ACTA}
 3. FUNCIONES DEL ÓRGANO (Decreto 328/2010, art. [artículo que figura en los datos]): tabla según TABLA DE FUNCIONES.
 4. APERTURA: "En Santa Fe, siendo las [HORA DE INICIO] horas del día [FECHA], se celebra reunión del [ÓRGANO COMPLETO] del CEIP Capitulaciones, en modalidad telemática."
 5. ASISTENTES: únicamente las personas de la sección ASISTENTES de los datos, una por línea, con tratamiento formal y puesto: "D. Nombre Apellidos - Puesto." o "Dña. Nombre Apellidos - Puesto.".
 6. NO ASISTEN: solo si esa sección aparece en los datos, con el mismo formato.
 7. ORDEN DEL DÍA: lista numerada (1., 2., 3. ...) con únicamente el título de cada punto, tal como figura en los datos.
-8. DESARROLLO DE LA SESIÓN: cada punto con su número y título idénticos a los del orden del día, en negrita. Debajo, redacción formal e institucional de lo tratado: recoge fielmente cada aportación indicando quién interviene, los acuerdos y el resultado de las votaciones si las hubo. No inventes contenido ni añadas adjetivos valorativos. Si un punto no tiene aportaciones en los datos, indícalo con una frase breve.
+8. DESARROLLO DE LA SESIÓN: cada punto con su número y título idénticos a los del orden del día, en negrita. Debajo, redacción formal e institucional de lo tratado: recoge fielmente cada aportación, los acuerdos y el resultado de las votaciones si las hubo. ${LINEA_ESTILO_REDACCION} No inventes contenido ni añadas adjetivos valorativos. Si un punto no tiene aportaciones en los datos, indícalo con una frase breve.
 9. CIERRE: "Y sin más asuntos que tratar, se levanta la sesión a las [HORA DE FINALIZACIÓN] horas del día de la fecha."
 
 MUY IMPORTANTE:
@@ -7251,55 +7325,19 @@ ${textoActaLimpio}`;
             document.body.removeChild(a);
         };
 
-        // Copiar el prompt y abrir Gemini (Gem del cole) — opción recomendada
-        window.copiarActaGemini = async function() {
+        // Copiar el prompt y abrir Claude — devuelve el acta en Word (.docx)
+        window.copiarActaClaude = async function() {
             const prompt = await construirPromptActa();
             if (!prompt) return;
             const copiado = await copiarTextoPortapapeles(prompt);
             if (copiado) {
-                mostrarAvisoGemini();
-            } else {
-                alert('No se pudo copiar automáticamente. Usa Ctrl+C sobre el texto manualmente.');
-            }
-        };
-
-        // Copiar el prompt al portapapeles y abrir el ChatGPT del cole
-        window.copiarActa = async function() {
-            const prompt = await construirPromptActa();
-            if (!prompt) return;
-            const copiado = await copiarTextoPortapapeles(prompt);
-            if (copiado) {
-                mostrarAvisoChatGPT();
+                mostrarAvisoClaude();
             } else {
                 alert('No se pudo copiar automáticamente. Usa Ctrl+C sobre el texto manualmente.');
             }
         };
 
         // Descargar el prompt como archivo .txt para ADJUNTARLO al GPT del cole.
-        // Evita el recorte que ChatGPT hace al pegar textos largos en el cuadro de mensaje.
-        window.descargarPromptActa = async function() {
-            const prompt = await construirPromptActa();
-            if (!prompt) return;
-
-            const nombre = (getNombreReunion(window.sesionActual, window.fechaActual) || 'acta')
-                .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]/g, '')
-                .replace(/\s+/g, '_');
-            const fecha = window.fechaActual || '';
-            const nombreArchivo = `prompt-acta-${nombre}-${fecha}.txt`;
-
-            const blob = new Blob([prompt], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = nombreArchivo;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 1500);
-
-            mostrarAvisoChatGPTArchivo(nombreArchivo);
-        };
-
         // Resumir con NotebookLM
         window.resumirConNotebookLM = async function() {
             const textoActa = await generarTextoActa();
@@ -7441,101 +7479,33 @@ ${textoActaLimpio}`;
         }
 
 
-        // Mostrar aviso de ChatGPT después de exportar
-        // Aviso para el flujo con Gemini (Gem del cole) — opción recomendada
-        function mostrarAvisoGemini() {
+        function mostrarAvisoClaude() {
             const modal = document.createElement('div');
             modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
 
             modal.innerHTML = `
-                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
-                    <div style="font-size: 44px; margin-bottom: 10px;">✨</div>
+                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 460px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-height: 90vh; overflow-y: auto;">
+                    <div style="font-size: 44px; margin-bottom: 10px;">🟠</div>
                     <h3 style="color: #16a34a; margin-bottom: 8px;">Prompt copiado</h3>
-                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 16px; line-height: 1.5;">
-                        Abre el <strong>Gem del cole</strong>, pega el texto (Ctrl+V) y envía.<br>
-                        Gemini te devolverá el acta en <strong>Word</strong>, con el logo del cole, para que puedas revisarla y corregirla.
+                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 14px; line-height: 1.5;">
+                        Solo tienes que <strong>pegar el prompt en Claude</strong> (Ctrl+V) y enviarlo.
                     </p>
-                    <a href="https://gemini.google.com/gem/1ses5OZ4b3lrN8EMurFISqwUs9xEdHVgr?usp=sharing"
-                       target="_blank"
-                       onclick="this.closest('div').parentElement.remove()"
-                       style="display: block; background: linear-gradient(135deg, #4f8cff 0%, #8a5cf6 100%); color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 10px;">
-                        ✨ Abrir Gemini (Gem del cole)
-                    </a>
-                    <button onclick="descargarPlantillaActa()"
-                            style="display: block; width: 100%; background: #eef2ff; color: #4338ca; border: 2px solid #c7d2fe; padding: 11px 20px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; margin-bottom: 12px;">
-                        📄 Descargar plantilla Word
-                    </button>
-                    <button onclick="this.closest('div').parentElement.remove()"
-                            style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px;">
-                        Ahora no
-                    </button>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-            modal.onclick = function(e) {
-                if (e.target === modal) modal.remove();
-            };
-        }
-
-        function mostrarAvisoChatGPT() {
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
-
-            modal.innerHTML = `
-                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
-                    <div style="font-size: 44px; margin-bottom: 10px;">✅</div>
-                    <h3 style="color: #16a34a; margin-bottom: 8px;">Prompt copiado</h3>
-                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 16px; line-height: 1.5;">
-                        Abre el ChatGPT del cole, pega el texto (Ctrl+V) y envía.<br>
-                        Después pega el acta en la <strong>plantilla Word</strong> (el escudo ya va en la cabecera).
-                    </p>
-                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
-                       target="_blank"
-                       onclick="this.closest('div').parentElement.remove()"
-                       style="display: block; background: #10a37f; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 10px;">
-                        🤖 Abrir ChatGPT del cole
-                    </a>
-                    <button onclick="descargarPlantillaActa()"
-                            style="display: block; width: 100%; background: #eef2ff; color: #4338ca; border: 2px solid #c7d2fe; padding: 11px 20px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; margin-bottom: 12px;">
-                        📄 Descargar plantilla Word
-                    </button>
-                    <button onclick="this.closest('div').parentElement.remove()"
-                            style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px;">
-                        Ahora no
-                    </button>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-            modal.onclick = function(e) {
-                if (e.target === modal) modal.remove();
-            };
-        }
-
-        // Aviso para el flujo con archivo adjunto (recomendado para actas largas)
-        function mostrarAvisoChatGPTArchivo(nombreArchivo) {
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
-
-            modal.innerHTML = `
-                <div style="background: white; border-radius: 14px; padding: 28px; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
-                    <div style="font-size: 44px; margin-bottom: 10px;">📎</div>
-                    <h3 style="color: #16a34a; margin-bottom: 8px;">Prompt descargado</h3>
-                    <p style="color: var(--text-light); font-size: 13px; margin-bottom: 16px; line-height: 1.5;">
-                        Se ha descargado <strong>${nombreArchivo}</strong>.<br>
-                        Para que el acta salga <strong>completa</strong> (sin recortes al pegar):
-                    </p>
-                    <ol style="text-align: left; margin: 0 0 18px 0; padding-left: 22px; color: var(--text); font-size: 13.5px; line-height: 1.7;">
-                        <li>Abre el ChatGPT del cole.</li>
-                        <li>Pulsa el <strong>clip 📎</strong> y adjunta el archivo descargado.</li>
-                        <li>Escribe: <em>"Genera el acta a partir del archivo adjunto"</em>.</li>
+                    <ol style="text-align: left; font-size: 13px; color: var(--text); line-height: 1.6; margin: 0 0 16px 20px; padding: 0;">
+                        <li>Pulsa el botón naranja para abrir Claude.</li>
+                        <li>Pega el texto en el cuadro de mensaje (Ctrl+V) y envía.</li>
+                        <li>Claude te devolverá el acta en <strong>Word</strong>, con el logo del cole, para que puedas revisarla y corregirla.</li>
                     </ol>
-                    <a href="https://chatgpt.com/g/g-690a4f16ef6881919b013f61e39103da-ceip-capitulaciones"
+                    <p style="color: var(--text-light); font-size: 12px; margin-bottom: 14px; line-height: 1.5;">
+                        <strong style="color: var(--text); font-size: 13px;">Ten paciencia: ahora la generación del acta tarda bastante más, pero a cambio sale directamente en Word, ya maquetada y con el logo del cole.</strong>
+                    </p>
+                    <p style="color: var(--text-light); font-size: 12px; margin-bottom: 14px; line-height: 1.5;">
+                        Funciona también con cuenta gratuita de Claude.
+                    </p>
+                    <a href="https://claude.ai/new"
                        target="_blank"
                        onclick="this.closest('div').parentElement.remove()"
-                       style="display: block; background: #10a37f; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 12px;">
-                        🤖 Abrir ChatGPT del cole
+                       style="display: block; background: #d97757; color: white; padding: 14px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 10px;">
+                        🟠 Abrir Claude
                     </a>
                     <button onclick="this.closest('div').parentElement.remove()"
                             style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px;">
