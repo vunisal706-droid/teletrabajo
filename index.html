@@ -3731,6 +3731,24 @@
                         Si lo dejas vacío, el acta saldrá con «ACTA Nº ___» para rellenar a mano.
                     </div>
                 </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label>Horario de la reunión:</label>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 13px; color: var(--text-light);">Inicio:</span>
+                            <input type="time" id="inputHoraInicioActa" style="width: 130px;"
+                                   onchange="guardarHorasDesdeAjustes()">
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 13px; color: var(--text-light);">Fin:</span>
+                            <input type="time" id="inputHoraFinActa" style="width: 130px;"
+                                   onchange="guardarHorasDesdeAjustes()">
+                        </span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 6px;">
+                        Si se quedaron sin poner al crear la reunión, complétalas aquí para que aparezcan en el acta.
+                    </div>
+                </div>
                 <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: 600; cursor: pointer;">
                     <input type="checkbox" id="checkImpersonal" onchange="guardarConfigActa()"
                            style="width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0;">
@@ -5027,6 +5045,45 @@
             const chk = document.getElementById('checkImpersonal');
             if (inp) inp.value = cfg.numero;
             if (chk) chk.checked = cfg.impersonal;
+
+            // Rellenar las horas guardadas (para poder completarlas desde aquí)
+            const horas = await leerHorasReunion();
+            const hIni = document.getElementById('inputHoraInicioActa');
+            const hFin = document.getElementById('inputHoraFinActa');
+            if (hIni) hIni.value = horas.inicio;
+            if (hFin) hFin.value = horas.fin;
+        };
+
+        // Leer las horas guardadas de la reunión
+        window.leerHorasReunion = async function() {
+            if (!window.sesionActual || !window.fechaActual) return { inicio: '', fin: '' };
+            try {
+                const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                const snap = await get(horasRef);
+                const val = snap.exists() ? snap.val() : {};
+                return { inicio: val.inicio || '', fin: val.fin || '' };
+            } catch (err) {
+                console.warn('No se pudieron leer las horas:', err);
+                return { inicio: '', fin: '' };
+            }
+        };
+
+        // Guardar las horas escritas desde el panel de ajustes del acta
+        window.guardarHorasDesdeAjustes = async function() {
+            if (!window.sesionActual || !window.fechaActual) return;
+            const inicio = document.getElementById('inputHoraInicioActa')?.value || '';
+            const fin    = document.getElementById('inputHoraFinActa')?.value || '';
+            try {
+                const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                await set(horasRef, { inicio: inicio, fin: fin });
+                // Mantener sincronizado el campo de la pantalla de configuración si existe
+                const campoInicio = document.getElementById('inputHoraInicio');
+                const campoFin    = document.getElementById('inputHoraFin');
+                if (campoInicio) campoInicio.value = inicio;
+                if (campoFin) campoFin.value = fin;
+            } catch (err) {
+                console.warn('No se pudieron guardar las horas desde ajustes:', err);
+            }
         };
 
         // Guardar horas de inicio y fin en Firebase
