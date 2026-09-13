@@ -527,9 +527,8 @@
             .session-info .acta-dropdown > button {
                 width: 100%;
             }
-            /* La asistencia ocupa toda la fila si está visible */
-            .session-info #btnAsistencia[style*="inline-flex"],
-            .session-info #btnAsistencia:not([style*="display: none"]) {
+            /* El botón de chat ocupa toda la fila en móvil */
+            .session-info #btnChatInformal {
                 grid-column: 1 / -1;
             }
             /* Tooltip solo en escritorio: lo quitamos en móvil porque no hay hover */
@@ -2948,16 +2947,17 @@
                 <div class="help-section">
                     <h3>4️⃣ Exportar el Acta</h3>
                     <div class="help-step">
-                        <strong>📄 PDF:</strong> Descarga el acta en PDF
-                    </div>
-                    <div class="help-step">
                         <strong>📧 Email:</strong> Abre tu correo con el acta lista para enviar
                     </div>
                     <div class="help-step">
                         <strong>✨ Generar Acta con IA:</strong> Copia el prompt del acta y te la devuelve en Word, con el logo del cole, lista para revisar
                     </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>5️⃣ Chat de la reunión</h3>
                     <div class="help-step">
-                        <strong>📝 Resumir con NotebookLM:</strong> Copia un prompt al portapapeles y abre NotebookLM. Al pegarlo como fuente, generará un resumen estructurado de la reunión
+                        <strong>💬 Chat:</strong> Conversación informal en paralelo, para comentar cosas sin que queden en el acta. No se recoge en el acta y se borra cuando el coordinador cierra la reunión.
                     </div>
                 </div>
             </div>
@@ -3680,22 +3680,13 @@
                             <button class="acta-dropdown-item" onclick="copiarActaClaude(); closeActaDropdown();" data-acta-tooltip="Copia el acta y la genera en Word con el logo del cole">
                                 ✨ Generar Acta con IA
                             </button>
-                            <button class="acta-dropdown-item" onclick="descargarPlantillaActa(); closeActaDropdown();" data-acta-tooltip="Descarga la plantilla Word con el membrete y el escudo del cole">
-                                📄 Descargar plantilla Word
-                            </button>
-                            <button class="acta-dropdown-item" onclick="exportarPDF(); closeActaDropdown();" data-acta-tooltip="Descarga el acta en formato PDF">
-                                📄 Exportar PDF
-                            </button>
                             <button class="acta-dropdown-item" onclick="enviarPorEmail(); closeActaDropdown();" data-acta-tooltip="Abre tu correo con el acta lista">
                                 📧 Enviar por Email
                             </button>
-                            <button class="acta-dropdown-item" onclick="resumirConNotebookLM(); closeActaDropdown();" data-acta-tooltip="Genera un resumen automático del acta con NotebookLM">
-                                📝 Resumir con NotebookLM
-                            </button>
                         </div>
                     </div>
-                    <button id="btnAsistencia" class="btn btn-outline btn-small" onclick="abrirModalAsistencia()" title="Marcar asistentes y ausentes" style="display: none;">
-                        👥 Asistencia
+                    <button id="btnChatInformal" class="btn btn-outline btn-small" onclick="toggleChatInformal()" title="Chat informal de la reunión (no se recoge en el acta)">
+                        💬 Chat <span id="chatBadge" style="display: none; background: var(--danger, #dc2626); color: white; border-radius: 10px; padding: 0 6px; font-size: 11px; margin-left: 2px;"></span>
                     </button>
                     <button class="btn btn-outline btn-small" onclick="abrirActaAnterior()" title="Ver el acta de la reunión anterior de este equipo">
                         📜 Acta anterior
@@ -3760,11 +3751,58 @@
                         </span>
                     </span>
                 </label>
+                <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
+                    <button id="btnAsistencia" class="btn btn-outline" onclick="abrirModalAsistencia()"
+                            title="Marcar asistentes y ausentes">
+                        👥 Asistencia
+                    </button>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 6px;">
+                        Marca quién asiste y quién no. Aparecerá en el acta.
+                    </div>
+                </div>
             </div>
 
             <div id="contenidoFunciones"></div>
 
             <div id="contenidoPuntos"></div>
+        </div>
+
+        <!-- Chat informal de la reunión (no se recoge en el acta) -->
+        <div id="chatInformalOverlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 15000;"
+             onclick="if(event.target===this) cerrarChatInformal()">
+            <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 100%; max-width: 420px; background: white; display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(0,0,0,0.2);">
+                <div style="padding: 16px 18px; border-bottom: 2px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <div>
+                        <strong style="font-size: 16px;">💬 Chat de la reunión</strong>
+                        <div style="font-size: 11px; color: var(--text-light); margin-top: 2px;">
+                            Conversación informal · No se recoge en el acta
+                        </div>
+                    </div>
+                    <button onclick="cerrarChatInformal()"
+                            style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); line-height: 1;">×</button>
+                </div>
+
+                <div style="background: #fef3c7; border-bottom: 1px solid #f59e0b; padding: 8px 18px; font-size: 11px; color: #92400e;">
+                    Lo que se escribe aquí <strong>no aparece en el acta</strong> y se borra al terminar la reunión.
+                </div>
+
+                <div id="chatInformalMensajes" style="flex: 1; overflow-y: auto; padding: 14px 18px; background: var(--background);"></div>
+
+                <div style="padding: 12px 18px; border-top: 2px solid var(--border); display: flex; gap: 8px;">
+                    <input type="text" id="inputChatInformal" placeholder="Escribe un mensaje..." maxlength="500"
+                           style="flex: 1; padding: 10px 12px; border: 2px solid var(--border); border-radius: 20px; font-size: 14px;"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeChat();}">
+                    <button class="btn btn-primary btn-small" onclick="enviarMensajeChat()" style="border-radius: 20px;">
+                        Enviar
+                    </button>
+                </div>
+
+                <div id="chatInformalAcciones" style="display: none; padding: 0 18px 12px;">
+                    <button class="btn btn-outline btn-small" onclick="vaciarChatInformal()" style="width: 100%; font-size: 12px;">
+                        🗑️ Vaciar el chat
+                    </button>
+                </div>
+            </div>
         </div>
 
 
@@ -5099,6 +5137,166 @@
             }
         };
 
+        // ============================================================
+        // CHAT INFORMAL DE LA REUNIÓN
+        // Conversación paralela, tipo grupo de mensajería. NO se recoge
+        // en el acta y se borra al cerrar la reunión el coordinador.
+        // ============================================================
+
+        window.chatInformalAbierto = false;
+        window.chatInformalListener = null;
+        window.chatInformalNoLeidos = 0;
+
+        function chatInformalRef() {
+            return ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatInformal`);
+        }
+
+        window.toggleChatInformal = function() {
+            if (window.chatInformalAbierto) {
+                cerrarChatInformal();
+            } else {
+                abrirChatInformal();
+            }
+        };
+
+        window.abrirChatInformal = function() {
+            const overlay = document.getElementById('chatInformalOverlay');
+            if (!overlay) return;
+            overlay.style.display = 'block';
+            window.chatInformalAbierto = true;
+
+            // Al abrir, se dan por leídos
+            window.chatInformalNoLeidos = 0;
+            actualizarBadgeChat();
+
+            // Botón de vaciar solo para el coordinador
+            const acciones = document.getElementById('chatInformalAcciones');
+            if (acciones) {
+                acciones.style.display = (window.usuarioActual?.rol === 'coordinador') ? 'block' : 'none';
+            }
+
+            setTimeout(() => {
+                const inp = document.getElementById('inputChatInformal');
+                if (inp) inp.focus();
+                scrollChatAlFinal();
+            }, 100);
+        };
+
+        window.cerrarChatInformal = function() {
+            const overlay = document.getElementById('chatInformalOverlay');
+            if (overlay) overlay.style.display = 'none';
+            window.chatInformalAbierto = false;
+        };
+
+        function scrollChatAlFinal() {
+            const cont = document.getElementById('chatInformalMensajes');
+            if (cont) cont.scrollTop = cont.scrollHeight;
+        }
+
+        function actualizarBadgeChat() {
+            const badge = document.getElementById('chatBadge');
+            if (!badge) return;
+            if (window.chatInformalNoLeidos > 0) {
+                badge.textContent = window.chatInformalNoLeidos > 9 ? '9+' : window.chatInformalNoLeidos;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        window.enviarMensajeChat = async function() {
+            const inp = document.getElementById('inputChatInformal');
+            if (!inp) return;
+            const texto = inp.value.trim();
+            if (!texto) return;
+            if (!window.sesionActual || !window.fechaActual) return;
+
+            inp.value = '';
+            try {
+                await set(push(chatInformalRef()), {
+                    autor: window.usuarioActual?.nombre || 'Anónimo',
+                    texto: texto,
+                    timestamp: Date.now()
+                });
+            } catch (err) {
+                console.warn('No se pudo enviar el mensaje:', err);
+                mostrarToast('No se pudo enviar el mensaje');
+                inp.value = texto;
+            }
+        };
+
+        function pintarMensajeChat(msg) {
+            const cont = document.getElementById('chatInformalMensajes');
+            if (!cont) return;
+
+            const propio = (msg.autor === (window.usuarioActual?.nombre || ''));
+            const hora = new Date(msg.timestamp || Date.now())
+                .toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+            const burbuja = document.createElement('div');
+            burbuja.style.cssText = `display: flex; flex-direction: column; align-items: ${propio ? 'flex-end' : 'flex-start'}; margin-bottom: 10px;`;
+            burbuja.innerHTML = `
+                <div style="max-width: 85%; background: ${propio ? 'var(--primary)' : 'white'}; color: ${propio ? 'white' : 'var(--text)'}; padding: 8px 12px; border-radius: 14px; border: 1px solid ${propio ? 'transparent' : 'var(--border)'}; word-break: break-word;">
+                    ${propio ? '' : `<div style="font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 2px;">${escapeHTML(msg.autor)}</div>`}
+                    <div style="font-size: 14px; line-height: 1.4;">${escapeHTML(msg.texto)}</div>
+                </div>
+                <div style="font-size: 10px; color: var(--text-light); margin-top: 2px;">${hora}</div>
+            `;
+            cont.appendChild(burbuja);
+        }
+
+        window.cargarChatInformal = function() {
+            const cont = document.getElementById('chatInformalMensajes');
+            if (cont) cont.innerHTML = '';
+            window.chatInformalNoLeidos = 0;
+            actualizarBadgeChat();
+
+            // Escuchar mensajes nuevos
+            window.chatInformalListener = onChildAdded(chatInformalRef(), (snap) => {
+                const msg = snap.val();
+                if (!msg) return;
+                pintarMensajeChat(msg);
+                if (window.chatInformalAbierto) {
+                    scrollChatAlFinal();
+                } else if (msg.autor !== (window.usuarioActual?.nombre || '')) {
+                    window.chatInformalNoLeidos++;
+                    actualizarBadgeChat();
+                }
+            });
+
+            // Si el coordinador vacía el chat, limpiar la vista de todos
+            onValue(chatInformalRef(), (snap) => {
+                if (!snap.exists()) {
+                    const c = document.getElementById('chatInformalMensajes');
+                    if (c) c.innerHTML = '';
+                    window.chatInformalNoLeidos = 0;
+                    actualizarBadgeChat();
+                }
+            });
+        };
+
+        // Vaciar el chat (solo coordinador)
+        window.vaciarChatInformal = async function() {
+            if (window.usuarioActual?.rol !== 'coordinador') return;
+            if (!confirm('¿Vaciar el chat de la reunión? Se borrará para todo el mundo.')) return;
+            try {
+                await remove(chatInformalRef());
+                mostrarToast('Chat vaciado');
+            } catch (err) {
+                console.warn('No se pudo vaciar el chat:', err);
+                mostrarToast('No se pudo vaciar el chat');
+            }
+        };
+
+        // Borrar el chat al cerrar la reunión (lo llama salirDeReunion en el coordinador)
+        window.borrarChatAlSalir = async function() {
+            try {
+                await remove(chatInformalRef());
+            } catch (err) {
+                console.warn('No se pudo borrar el chat al salir:', err);
+            }
+        };
+
         // Agregar punto del orden del día
         window.agregarPunto = function() {
             const texto = document.getElementById('inputNuevoPunto').value.trim();
@@ -5162,14 +5360,11 @@
                 actaDropdown.style.display = 'block';
             }
 
-            // Mostrar botón de Asistencia solo al coordinador
-            const btnAsistencia = document.getElementById('btnAsistencia');
-            if (btnAsistencia) {
-                btnAsistencia.style.display = (window.usuarioActual.rol === 'coordinador') ? 'inline-flex' : 'none';
-            }
-
-            // Panel de ajustes del acta (nº de acta y lenguaje impersonal), solo coordinador
+            // Panel de ajustes del acta (nº de acta, horas, asistencia), solo coordinador
             prepararAjustesActa();
+
+            // Chat informal de la reunión
+            cargarChatInformal();
 
             // Ajustar margen del contenedor
             document.getElementById('containerReunion').classList.add('con-chat');
@@ -6251,300 +6446,6 @@
         }
 
         // Exportar a PDF
-        window.exportarPDF = async function() {
-            if (!(await window.comprobarAsistenciaParaActa())) return;
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Configuración
-            let y = 20;
-            const lineHeight = 7;
-            const pageHeight = 280;
-            
-            // Función para añadir nueva página si es necesario
-            const checkPage = () => {
-                if (y > pageHeight) {
-                    doc.addPage();
-                    y = 20;
-                }
-            };
-            
-            // Encabezado
-            doc.setFontSize(18);
-            doc.setFont(undefined, 'bold');
-            doc.text('CEIP Capitulaciones de Santa Fe', 20, y);
-            y += 10;
-            
-            // Nombre de la reunión
-            doc.setFontSize(14);
-            const nombreReunion = getNombreReunion(window.sesionActual, window.fechaActual);
-            doc.text(nombreReunion, 20, y);
-            y += 10;
-            
-            // Obtener datos
-            const sesionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}`);
-            const snapshot = await get(sesionRef);
-            
-            if (!snapshot.exists()) {
-                alert('No se pueden cargar los datos de la reunión');
-                return;
-            }
-            
-            const sesionData = snapshot.val();
-            
-            // Participantes / Asistencia
-            const tieneAsistenciaPDF = sesionData.asistencia &&
-                Object.values(sesionData.asistencia).some(p => p.estado === 'asistente' || p.estado === 'no_asistente');
-
-            if (tieneAsistenciaPDF) {
-                const asistenPDF = Object.values(sesionData.asistencia).filter(p => p.estado === 'asistente');
-                const noAsistenPDF = Object.values(sesionData.asistencia).filter(p => p.estado === 'no_asistente');
-                asistenPDF.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-                noAsistenPDF.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text(`Asistentes (${asistenPDF.length}):`, 20, y);
-                y += lineHeight;
-
-                doc.setFont(undefined, 'normal');
-                doc.setFontSize(10);
-
-                if (asistenPDF.length === 0) {
-                    checkPage();
-                    doc.text('   (ninguno)', 25, y);
-                    y += lineHeight;
-                } else {
-                    asistenPDF.forEach(p => {
-                        checkPage();
-                        const marca = p.externo ? '* ' : '- ';
-                        const puesto = p.puesto ? ` (${p.puesto})` : '';
-                        const linea = doc.splitTextToSize(`${marca}${p.nombre}${puesto}`, 165);
-                        linea.forEach(l => { checkPage(); doc.text(l, 25, y); y += lineHeight; });
-                    });
-                }
-
-                if (noAsistenPDF.length > 0) {
-                    y += 3;
-                    checkPage();
-                    doc.setFontSize(12);
-                    doc.setFont(undefined, 'bold');
-                    doc.text(`No asisten (${noAsistenPDF.length}):`, 20, y);
-                    y += lineHeight;
-
-                    doc.setFont(undefined, 'normal');
-                    doc.setFontSize(10);
-                    noAsistenPDF.forEach(p => {
-                        checkPage();
-                        const puesto = p.puesto ? ` (${p.puesto})` : '';
-                        const linea = doc.splitTextToSize(`- ${p.nombre}${puesto}`, 165);
-                        linea.forEach(l => { checkPage(); doc.text(l, 25, y); y += lineHeight; });
-                    });
-                }
-            } else {
-                // Sin registro de asistencia: no se usan las personas conectadas
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text('Asistentes:', 20, y);
-                y += lineHeight;
-                doc.setFont(undefined, 'normal');
-                doc.setFontSize(10);
-                doc.text('   (Asistencia no registrada por la persona coordinadora)', 25, y);
-                y += lineHeight;
-            }
-            
-            y += 5;
-            
-            // Enlaces de videollamada
-            if (sesionData.videollamada) {
-                checkPage();
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text('Enlaces de Videollamada:', 20, y);
-                y += lineHeight;
-                
-                doc.setFont(undefined, 'normal');
-                doc.setFontSize(10);
-                
-                // Compatibilidad con versión antigua
-                const enlace1 = sesionData.videollamada.enlace1 || sesionData.videollamada.enlace;
-                const enlace2 = sesionData.videollamada.enlace2;
-                
-                if (enlace1) {
-                    checkPage();
-                    doc.setTextColor(0, 0, 255);
-                    doc.text('1. Enlace Principal:', 25, y);
-                    y += lineHeight;
-                    const lineas1 = doc.splitTextToSize(`   ${enlace1}`, 160);
-                    lineas1.forEach(linea => {
-                        checkPage();
-                        doc.text(linea, 25, y);
-                        y += lineHeight - 1;
-                    });
-                    doc.setTextColor(0, 0, 0);
-                }
-                
-                if (enlace2) {
-                    y += 2;
-                    checkPage();
-                    doc.setTextColor(0, 0, 255);
-                    doc.text('2. Enlace Alternativo:', 25, y);
-                    y += lineHeight;
-                    const lineas2 = doc.splitTextToSize(`   ${enlace2}`, 160);
-                    lineas2.forEach(linea => {
-                        checkPage();
-                        doc.text(linea, 25, y);
-                        y += lineHeight - 1;
-                    });
-                    doc.setTextColor(0, 0, 0);
-                }
-                
-                y += 5;
-            }
-            
-            // Orden del día
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            checkPage();
-            doc.text('Orden del Dia:', 20, y);
-            y += lineHeight + 2;
-            
-            if (sesionData.puntos) {
-                const puntosArray = Object.entries(sesionData.puntos).map(([id, data]) => ({ id, ...data }));
-                puntosArray.sort((a, b) => a.orden - b.orden);
-                
-                puntosArray.forEach((punto, index) => {
-                    checkPage();
-                    
-                    // Número y título del punto (en negrita y subrayado)
-                    doc.setFontSize(11);
-                    doc.setFont(undefined, 'bold');
-                    
-                    // Texto del punto con subrayado
-                    const textoPunto = `${index + 1}. ${punto.texto}`;
-                    doc.text(textoPunto, 20, y);
-                    
-                    // Añadir subrayado manualmente
-                    const textWidth = doc.getTextWidth(textoPunto);
-                    doc.setLineWidth(0.3);
-                    doc.line(20, y + 0.5, 20 + textWidth, y + 0.5);
-                    
-                    y += lineHeight;
-                    
-                    // Aportaciones
-                    if (punto.aportaciones) {
-                        doc.setFont(undefined, 'normal');
-                        doc.setFontSize(10);
-                        
-                        const aportacionesArray = Object.values(punto.aportaciones);
-                        aportacionesArray.sort((a, b) => a.timestamp - b.timestamp);
-                        
-                        aportacionesArray.forEach(aport => {
-                            checkPage();
-                            doc.text(`   ${aport.autor}:`, 25, y);
-                            y += lineHeight;
-                            
-                            // Dividir texto largo en líneas
-                            const maxWidth = 160;
-                            const lineas = doc.splitTextToSize(`   ${aport.texto}`, maxWidth);
-                            lineas.forEach(linea => {
-                                checkPage();
-                                doc.text(linea, 25, y);
-                                y += lineHeight - 1;
-                            });
-                            y += 2;
-                        });
-                    }
-                    
-                    // Votación
-                    if (punto.votacion && punto.votacion.activa) {
-                        checkPage();
-                        doc.setFont(undefined, 'bold');
-                        const tipoVotacion = punto.votacion.conNombres ? 'Votacion Publica' : 'Votacion Anonima';
-                        doc.text(`   ${tipoVotacion}:`, 25, y);
-                        y += lineHeight;
-                        
-                        doc.setFont(undefined, 'normal');
-                        
-                        const votos = { si: [], no: [], abstencion: [] };
-                        let total = 0;
-                        
-                        if (punto.votacion.votos) {
-                            Object.values(punto.votacion.votos).forEach(v => {
-                                total++;
-                                votos[v.voto].push(v.nombre);
-                            });
-                        }
-                        
-                        ['si', 'no', 'abstencion'].forEach(tipo => {
-                            checkPage();
-                            const count = votos[tipo].length;
-                            const porcentaje = total > 0 ? Math.round((count / total) * 100) : 0;
-                            const label = tipo === 'si' ? 'Si' : tipo === 'no' ? 'No' : 'Abstencion';
-                            doc.text(`      ${label}: ${count} (${porcentaje}%)`, 25, y);
-                            y += lineHeight;
-                            
-                            if (punto.votacion.conNombres && count > 0) {
-                                const nombres = votos[tipo].join(', ');
-                                const lineas = doc.splitTextToSize(`         ${nombres}`, 155);
-                                lineas.forEach(linea => {
-                                    checkPage();
-                                    doc.text(linea, 25, y);
-                                    y += lineHeight - 1;
-                                });
-                            }
-                        });
-                    }
-                    
-                    // Documentos adjuntos
-                    if (punto.documentos) {
-                        checkPage();
-                        doc.setFont(undefined, 'bold');
-                        doc.text('   Documentos adjuntos:', 25, y);
-                        y += lineHeight;
-                        
-                        doc.setFont(undefined, 'normal');
-                        
-                        const documentosArray = Object.values(punto.documentos);
-                        documentosArray.sort((a, b) => a.timestamp - b.timestamp);
-                        
-                        documentosArray.forEach(docum => {
-                            checkPage();
-                            doc.text(`      - ${docum.nombre}`, 25, y);
-                            y += lineHeight;
-                            
-                            // Enlace del documento
-                            doc.setTextColor(0, 0, 255);
-                            const lineas = doc.splitTextToSize(`        ${docum.link}`, 155);
-                            lineas.forEach(linea => {
-                                checkPage();
-                                doc.text(linea, 25, y);
-                                y += lineHeight - 1;
-                            });
-                            doc.setTextColor(0, 0, 0);
-                            
-                            // Info del autor (sin hora)
-                            doc.text(`        (Subido por ${docum.autor})`, 25, y);
-                            y += lineHeight + 1;
-                        });
-                    }
-                    
-                    y += 5;
-                });
-            } else {
-                doc.setFont(undefined, 'normal');
-                doc.setFontSize(10);
-                doc.text('No hay puntos del orden del dia', 25, y);
-                y += lineHeight;
-            }
-            
-            // Guardar PDF
-            const nombreArchivo = `Reunion_${window.sesionActual}_${window.fechaActual}.pdf`;
-            doc.save(nombreArchivo);
-            
-        };
-
         // ============================================================
         // MÓDULO DE ASISTENCIA
         // Permite al coordinador marcar quién asiste / no asiste / queda
@@ -7342,7 +7243,6 @@ ${textoActaLimpio}`;
         };
 
         // Ruta de la plantilla Word (debe estar junto al index.html en GitHub Pages)
-        const PLANTILLA_ACTA_URL = 'Plantilla_Acta_CEIP_Capitulaciones.docx';
 
         // Copia texto al portapapeles (con fallback a textarea). Devuelve true/false.
         async function copiarTextoPortapapeles(texto) {
@@ -7374,15 +7274,6 @@ ${textoActaLimpio}`;
         }
 
         // Descargar la plantilla Word con el membrete del cole
-        window.descargarPlantillaActa = function() {
-            const a = document.createElement('a');
-            a.href = PLANTILLA_ACTA_URL;
-            a.download = 'Plantilla_Acta_CEIP_Capitulaciones.docx';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        };
-
         // Copiar el prompt y abrir Claude — devuelve el acta en Word (.docx)
         window.copiarActaClaude = async function() {
             const prompt = await construirPromptActa();
@@ -7396,147 +7287,6 @@ ${textoActaLimpio}`;
         };
 
         // Descargar el prompt como archivo .txt para ADJUNTARLO al GPT del cole.
-        // Resumir con NotebookLM
-        window.resumirConNotebookLM = async function() {
-            const textoActa = await generarTextoActa();
-            
-            if (!textoActa) return;
-
-            const textoActaLimpio = limpiarUnicodeParaIA(textoActa);
-            
-            // Construir el prompt completo (instrucciones + acta) que se pegará en NotebookLM
-            const prompt = `INSTRUCCIONES PARA EL RESUMEN:
-
-A partir de la siguiente acta de reunion del CEIP Capitulaciones de Santa Fe, genera un RESUMEN claro, estructurado y conciso que incluya:
-
-1. PARTICIPANTES: lista de asistentes con su rol (coordinador/maestro).
-2. PUNTOS PRINCIPALES: sintesis de cada punto del orden del dia.
-3. ACUERDOS Y DECISIONES: acuerdos alcanzados en cada punto.
-4. RESULTADOS DE VOTACIONES: si las hubo, indica el resultado y porcentajes.
-5. TAREAS Y RESPONSABLES: acciones pendientes y persona responsable.
-6. CONCLUSIONES: cierre y aspectos relevantes para la proxima reunion.
-
-Usa un lenguaje formal, claro y propio de un acta institucional. Adapta el formato para que pueda usarse como resumen ejecutivo.
-
----
-ACTA A RESUMIR:
----
-
-${textoActaLimpio}`;
-            
-            // Mostrar modal de aviso ANTES de abrir NotebookLM
-            mostrarAvisoNotebookLM(prompt);
-        };
-
-        // Modal de aviso previo a abrir NotebookLM
-        function mostrarAvisoNotebookLM(prompt) {
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.65); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 20px;';
-            
-            modal.innerHTML = `
-                <div style="background: white; border-radius: 12px; padding: 28px; max-width: 560px; width: 100%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); max-height: 92vh; overflow-y: auto;">
-                    <div style="text-align: center; margin-bottom: 18px;">
-                        <div style="font-size: 48px; margin-bottom: 8px;">📝</div>
-                        <h3 style="color: var(--primary); margin: 0;">Resumen con NotebookLM</h3>
-                    </div>
-                    
-                    <div style="background: #fff8e1; border-left: 4px solid #f5a623; padding: 14px 16px; border-radius: 6px; margin-bottom: 18px;">
-                        <strong style="color: #8a5c00; display: block; margin-bottom: 6px;">⚠️ IMPORTANTE</strong>
-                        <p style="color: #333; margin: 0; line-height: 1.5; font-size: 14px;">
-                            Cuando se abra NotebookLM, tendrás que <strong>pegar el prompt</strong> que se va a copiar al portapapeles. Sigue estos pasos:
-                        </p>
-                    </div>
-                    
-                    <div style="background: #f5f7fa; border-radius: 8px; padding: 16px 18px 16px 14px; margin-bottom: 18px;">
-                        <ol style="margin: 0; padding-left: 22px; line-height: 1.8; color: #333; font-size: 14px;">
-                            <li>Pulsa <strong>"+ Crear nuevo"</strong> en NotebookLM.</li>
-                            <li>En "Añadir fuentes" elige <strong>"Texto copiado"</strong>.</li>
-                            <li>Pega el contenido (<code style="background:#e8eaf0;padding:1px 5px;border-radius:3px;">Ctrl + V</code> o <code style="background:#e8eaf0;padding:1px 5px;border-radius:3px;">Cmd + V</code>).</li>
-                            <li>Pulsa <strong>"Insertar"</strong>.</li>
-                            <li>En el chat escribe: <em>"Genera el resumen siguiendo las instrucciones"</em>.</li>
-                        </ol>
-                    </div>
-                    
-                    <p style="color: #555; font-size: 13px; text-align: center; margin: 0 0 18px 0;">
-                        ✅ Al pulsar el botón se copiará el prompt y se abrirá NotebookLM.
-                    </p>
-                    
-                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                        <button id="btnCancelarNotebookLM" 
-                                style="background: transparent; border: 2px solid var(--border); color: var(--text); padding: 11px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            Cancelar
-                        </button>
-                        <button id="btnAbrirNotebookLM"
-                                style="background: var(--primary); border: none; color: white; padding: 11px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            📝 Copiar prompt y abrir NotebookLM
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Botón Cancelar
-            modal.querySelector('#btnCancelarNotebookLM').onclick = function() {
-                modal.remove();
-            };
-            
-            // Botón Abrir NotebookLM
-            modal.querySelector('#btnAbrirNotebookLM').onclick = async function() {
-                let copiado = false;
-
-                // Intento 1: Clipboard API moderna
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    try {
-                        await navigator.clipboard.writeText(prompt);
-                        copiado = true;
-                    } catch (err) {
-                        console.warn('Clipboard API falló, usando fallback textarea:', err);
-                    }
-                }
-
-                // Intento 2: fallback textarea (sin límite de tamaño)
-                if (!copiado) {
-                    const textarea = document.createElement('textarea');
-                    textarea.value = prompt;
-                    textarea.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
-                    document.body.appendChild(textarea);
-                    textarea.focus();
-                    textarea.select();
-                    try {
-                        document.execCommand('copy');
-                        copiado = true;
-                    } catch (err2) {
-                        console.error('Fallback textarea también falló:', err2);
-                    }
-                    document.body.removeChild(textarea);
-                }
-
-                if (copiado) {
-                    // Toast de confirmación
-                    const toast = document.createElement('div');
-                    toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 14px;';
-                    toast.textContent = '✅ Prompt copiado. Pégalo en NotebookLM como fuente nueva.';
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 4000);
-                    
-                    // Abrir NotebookLM en una pestaña nueva
-                    window.open('https://notebooklm.google.com/', '_blank', 'noopener,noreferrer');
-                    modal.remove();
-                } else {
-                    alert('No se pudo copiar automáticamente. Por favor, copia el texto manualmente.');
-                }
-            };
-            
-            // Cerrar al hacer clic fuera del cuadro
-            modal.onclick = function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            };
-        }
-
-
         function mostrarAvisoClaude() {
             const modal = document.createElement('div');
             modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
@@ -7587,6 +7337,16 @@ ${textoActaLimpio}`;
             }
             
             if (confirm('¿Seguro que quieres salir de la reunión?')) {
+                // Si sale el coordinador, la reunión se da por terminada:
+                // el chat informal se borra para todos. Si sale otro maestro,
+                // el chat sigue vivo para quienes continúan.
+                if (window.usuarioActual?.rol === 'coordinador') {
+                    borrarChatAlSalir().finally(() => {
+                        ocultarTituloReunion();
+                        location.reload();
+                    });
+                    return;
+                }
                 ocultarTituloReunion();
                 location.reload();
             }
