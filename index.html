@@ -2982,6 +2982,12 @@
                         <strong>💬 Conversación:</strong> Escribe comentarios en cada punto. Puedes editar y borrar solo TUS comentarios.
                     </div>
                     <div class="help-step">
+                        <strong>🎤 Dictar en voz alta:</strong> Pulsa el micrófono junto a la caja de texto y habla: se escribe solo. Vuelve a pulsarlo para terminar y revisa el texto antes de enviarlo. Si no te aparece el botón, tu navegador no lo permite: usa el micrófono del teclado del móvil.
+                    </div>
+                    <div class="help-step">
+                        <strong>💬 Chat de la reunión:</strong> Para comentarios informales que no van al acta. Se borra al cerrar la reunión.
+                    </div>
+                    <div class="help-step">
                         <strong>🗳️ Votar:</strong> Vota A favor / En contra / Abstención. Puedes cambiar tu voto mientras esté activa.
                     </div>
                     <div class="help-step">
@@ -5424,6 +5430,9 @@
                 const card = crearPuntoCard(punto, index + 1);
                 contenedor.appendChild(card);
             });
+
+            // Mostrar los micrófonos solo si el navegador soporta dictado
+            prepararBotonesDictado();
         };
 
         // ============================================================
@@ -5586,6 +5595,9 @@
                 const card = crearPuntoCard(punto, index + 1);
                 contenedor.appendChild(card);
             });
+
+            // Mostrar los micrófonos solo si el navegador soporta dictado
+            prepararBotonesDictado();
         };
 
         // Crear card de punto
@@ -5619,10 +5631,14 @@
                     <div id="aportaciones_${punto.id}" class="chat-container"></div>
                     <div style="display: flex; gap: 10px; align-items: flex-end;">
                         <textarea id="input_${punto.id}" placeholder="Escribe tu comentario... (Enter para enviar, Shift+Enter para nueva línea)" style="flex: 1; margin: 0; min-height: 60px;" rows="2" onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); agregarAportacion('${punto.id}'); }"></textarea>
+                        <button class="btn btn-outline btn-dictado" id="mic_${punto.id}" onclick="toggleDictado('${punto.id}')" title="Dictar en voz alta" style="width: auto; padding: 12px 14px; margin: 0; height: fit-content; display: none;">
+                            🎤
+                        </button>
                         <button class="btn btn-secondary" onclick="agregarAportacion('${punto.id}')" style="width: auto; padding: 12px 20px; margin: 0; height: fit-content;">
                             📝 Enviar
                         </button>
                     </div>
+                    <div id="dictadoEstado_${punto.id}" style="display: none; font-size: 12px; color: var(--text-light); margin-top: 6px;"></div>
                 </div>
 
                 <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
@@ -5673,7 +5689,190 @@
         };
 
         // Agregar aportación
+        // ============================================================
+        // DICTADO POR VOZ (Web Speech API)
+        // Se intenta primero el reconocimiento EN EL DISPOSITIVO
+        // (processLocally). Si el navegador no lo soporta, se avisa de
+        // que el audio se procesa en servidores del navegador.
+        // ============================================================
+
+        window.SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+        window.dictadoActivo = null;      // puntoId que está dictando ahora
+        window.dictadoRec = null;         // instancia en curso
+        window.dictadoTextoPrevio = '';   // texto que ya había en la caja
+        window.dictadoAvisoVisto = false;
+
+        // ¿Soporta este navegador el dictado?
+        window.hayDictado = function() {
+            return !!window.SpeechRec;
+        };
+
+        // Mostrar los botones de micrófono solo si el navegador lo soporta
+        window.prepararBotonesDictado = function() {
+            const soportado = hayDictado();
+            document.querySelectorAll('.btn-dictado').forEach(btn => {
+                btn.style.display = soportado ? 'inline-flex' : 'none';
+            });
+        };
+
+        function estadoDictado(puntoId, mensaje, visible) {
+            const el = document.getElementById(`dictadoEstado_${puntoId}`);
+            if (!el) return;
+            el.textContent = mensaje || '';
+            el.style.display = visible ? 'block' : 'none';
+        }
+
+        function pintarMicActivo(puntoId, activo) {
+            const btn = document.getElementById(`mic_${puntoId}`);
+            if (!btn) return;
+            if (activo) {
+                btn.style.background = '#dc2626';
+                btn.style.color = 'white';
+                btn.style.borderColor = '#dc2626';
+                btn.textContent = '⏹️';
+                btn.title = 'Detener el dictado';
+            } else {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.borderColor = '';
+                btn.textContent = '🎤';
+                btn.title = 'Dictar en voz alta';
+            }
+        }
+
+        window.toggleDictado = async function(puntoId) {
+            // Si ya está dictando en este punto, parar
+            if (window.dictadoActivo === puntoId) {
+                pararDictado();
+                return;
+            }
+            // Si estaba dictando en otro punto, parar aquel primero
+            if (window.dictadoActivo) pararDictado();
+
+            if (!hayDictado()) {
+                alert('Tu navegador no permite dictar por voz.\n\nPuedes usar el micrófono del teclado de tu móvil, que funciona igual de bien.');
+                return;
+            }
+
+            // Aviso la primera vez sobre dónde se procesa el audio
+            if (!window.dictadoAvisoVisto) {
+                const ok = confirm(
+                    'Dictado por voz\n\n' +
+                    'Se transcribe en tu propio dispositivo siempre que el navegador lo permita. ' +
+                    'Si no puede, el audio se envía a los servidores del navegador (Google en Chrome, Apple en Safari) para transcribirlo.\n\n' +
+                    'Tenlo en cuenta al hablar de alumnado concreto.\n\n' +
+                    '¿Quieres continuar?'
+                );
+                if (!ok) return;
+                window.dictadoAvisoVisto = true;
+            }
+
+            iniciarDictado(puntoId);
+        };
+
+        async function iniciarDictado(puntoId) {
+            const textarea = document.getElementById(`input_${puntoId}`);
+            if (!textarea) return;
+
+            let rec;
+            try {
+                rec = new window.SpeechRec();
+            } catch (err) {
+                alert('No se pudo iniciar el dictado en este navegador.');
+                return;
+            }
+
+            rec.lang = 'es-ES';
+            rec.continuous = true;
+            rec.interimResults = true;
+
+            // Preferir transcripción en el propio dispositivo si el navegador lo permite
+            let enLocal = false;
+            try {
+                if ('processLocally' in rec) {
+                    rec.processLocally = true;
+                    enLocal = true;
+                }
+            } catch (e) { /* el navegador no lo admite: seguirá por servidor */ }
+
+            window.dictadoTextoPrevio = textarea.value;
+            window.dictadoActivo = puntoId;
+            window.dictadoRec = rec;
+            pintarMicActivo(puntoId, true);
+            estadoDictado(puntoId,
+                enLocal ? '🎤 Escuchando (en tu dispositivo)... Pulsa ⏹️ para terminar.'
+                        : '🎤 Escuchando... Pulsa ⏹️ para terminar.',
+                true);
+
+            let textoFinal = '';
+
+            rec.onresult = (event) => {
+                let interino = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const trozo = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        textoFinal += trozo + ' ';
+                    } else {
+                        interino += trozo;
+                    }
+                }
+                const base = window.dictadoTextoPrevio;
+                const separador = (base && !base.endsWith(' ') && !base.endsWith('\n')) ? ' ' : '';
+                textarea.value = base + separador + textoFinal + interino;
+                textarea.scrollTop = textarea.scrollHeight;
+            };
+
+            rec.onerror = (event) => {
+                let msg = 'No se pudo dictar.';
+                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                    msg = 'Permiso de micrófono denegado. Actívalo en el navegador para poder dictar.';
+                } else if (event.error === 'no-speech') {
+                    msg = 'No se ha detectado voz.';
+                } else if (event.error === 'network') {
+                    msg = 'Sin conexión para transcribir. Prueba con el micrófono del teclado.';
+                }
+                estadoDictado(puntoId, '⚠️ ' + msg, true);
+                setTimeout(() => estadoDictado(puntoId, '', false), 5000);
+                pararDictado(true);
+            };
+
+            rec.onend = () => {
+                // Si el navegador corta solo y el usuario no ha parado, cerrar limpio
+                if (window.dictadoActivo === puntoId) {
+                    pararDictado(true);
+                }
+            };
+
+            try {
+                rec.start();
+            } catch (err) {
+                console.warn('No se pudo arrancar el dictado:', err);
+                pararDictado(true);
+            }
+        }
+
+        window.pararDictado = function(silencioso) {
+            const puntoId = window.dictadoActivo;
+            if (window.dictadoRec) {
+                try { window.dictadoRec.onend = null; window.dictadoRec.stop(); } catch (e) {}
+            }
+            window.dictadoRec = null;
+            window.dictadoActivo = null;
+            if (puntoId) {
+                pintarMicActivo(puntoId, false);
+                if (!silencioso) {
+                    estadoDictado(puntoId, '✅ Dictado terminado. Revisa el texto antes de enviarlo.', true);
+                    setTimeout(() => estadoDictado(puntoId, '', false), 4000);
+                } else {
+                    estadoDictado(puntoId, '', false);
+                }
+            }
+        };
+
         window.agregarAportacion = async function(puntoId) {
+            // Si se estaba dictando en este punto, cerrar el micrófono antes de enviar
+            if (window.dictadoActivo === puntoId) pararDictado(true);
+
             const input = document.getElementById('input_' + puntoId);
             const texto = input.value.trim();
 
