@@ -5436,6 +5436,128 @@
         };
 
         // ============================================================
+        // SEGUIMIENTO DE FUNCIONES A LO LARGO DEL CURSO
+        // Recorre TODAS las sesiones de este mismo órgano dentro del
+        // curso escolar (1 de septiembre → 31 de agosto) y acumula qué
+        // funciones se han trabajado ya. Solo se ve en la app: NO va al acta.
+        // ============================================================
+
+        // Curso escolar al que pertenece una fecha 'YYYY-MM-DD'
+        function cursoEscolarDe(fechaStr) {
+            const [a, m] = fechaStr.split('-').map(Number);
+            if (!a || !m) return null;
+            // Septiembre (9) en adelante → curso a/a+1 ; antes → curso a-1/a
+            return (m >= 9) ? a : a - 1;
+        }
+
+        window.calcularSeguimientoFunciones = async function() {
+            const organo = mapeoReunionOrgano[window.sesionActual];
+            const datos = organo ? FUNCIONES_ORGANO[organo] : null;
+            if (!datos || !datos.funciones || !window.fechaActual) return null;
+
+            const cursoActual = cursoEscolarDe(window.fechaActual);
+            if (cursoActual === null) return null;
+
+            // Acumulado: para cada índice de función, en qué fechas se trabajó
+            const acumulado = {};
+            let totalSesiones = 0;
+            try {
+                const todasRef = ref(database, `sesiones/${window.sesionActual}`);
+                const snap = await get(todasRef);
+                if (snap.exists()) {
+                    const sesiones = snap.val() || {};
+                    Object.keys(sesiones).forEach(fecha => {
+                        if (cursoEscolarDe(fecha) !== cursoActual) return;
+                        totalSesiones++;
+                        const funcs = sesiones[fecha]?.funciones || {};
+                        Object.keys(funcs).forEach(i => {
+                            if (!funcs[i]) return;
+                            if (!acumulado[i]) acumulado[i] = [];
+                            acumulado[i].push(fecha);
+                        });
+                    });
+                }
+            } catch (err) {
+                console.warn('No se pudo calcular el seguimiento de funciones:', err);
+                return null;
+            }
+
+            const total = datos.funciones.length;
+            const trabajadas = Object.keys(acumulado).filter(i => acumulado[i].length > 0).length;
+            return {
+                total: total,
+                trabajadas: trabajadas,
+                totalSesiones: totalSesiones,
+                porcentaje: total ? Math.round((trabajadas / total) * 100) : 0,
+                acumulado: acumulado,
+                curso: `${cursoActual}/${String(cursoActual + 1).slice(-2)}`,
+                funciones: datos.funciones
+            };
+        };
+
+        // Barra de progreso de UNA función concreta, para pintarla bajo su casilla
+        window.barraFuncion = function(veces, totalSesiones) {
+            const pct = totalSesiones ? Math.round((veces / totalSesiones) * 100) : 0;
+            const color = veces === 0 ? '#dc2626' : (pct >= 50 ? '#16a34a' : '#f59e0b');
+            const etiqueta = veces === 0
+                ? 'Sin trabajar este curso'
+                : `${veces} de ${totalSesiones} sesion${totalSesiones === 1 ? '' : 'es'} · ${pct}%`;
+            return `
+                <div style="margin-top: 6px;">
+                    <div style="background: #e5e7eb; border-radius: 999px; height: 6px; overflow: hidden;">
+                        <div style="width: ${pct}%; height: 100%; background: ${color}; border-radius: 999px;"></div>
+                    </div>
+                    <div style="font-size: 10.5px; color: ${veces === 0 ? '#b91c1c' : 'var(--text-light)'}; margin-top: 3px; font-weight: ${veces === 0 ? '700' : '600'};">
+                        ${etiqueta}
+                    </div>
+                </div>
+            `;
+        };
+
+        // Pintar el panel de seguimiento debajo de las funciones del órgano
+        window.pintarSeguimientoFunciones = async function() {
+            const seg = await calcularSeguimientoFunciones();
+            if (!seg) return;
+
+            // 1) Barra propia bajo cada función
+            for (let i = 0; i < seg.total; i++) {
+                const hueco = document.getElementById(`barraFuncion_${i}`);
+                if (!hueco) continue;
+                const veces = seg.acumulado[i] ? seg.acumulado[i].length : 0;
+                hueco.innerHTML = barraFuncion(veces, seg.totalSesiones);
+            }
+
+            // 2) Resumen global debajo
+            const cont = document.getElementById('seguimientoFunciones');
+            if (!cont) return;
+
+            const sinTrabajar = seg.total - seg.trabajadas;
+            const p = seg.porcentaje;
+            const color = p >= 100 ? '#16a34a' : (p >= 50 ? '#f59e0b' : '#dc2626');
+
+            cont.innerHTML = `
+                <div style="margin-top: 14px; padding: 12px 14px; background: white; border: 2px solid var(--border); border-radius: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                        <strong style="font-size: 13.5px;">📊 Curso ${seg.curso} · ${seg.totalSesiones} sesion${seg.totalSesiones === 1 ? '' : 'es'}</strong>
+                        <span style="font-weight: 800; color: ${color}; font-size: 14px;">
+                            ${seg.trabajadas} de ${seg.total} funciones · ${p}%
+                        </span>
+                    </div>
+                    ${sinTrabajar > 0
+                        ? `<div style="font-size: 12px; color: #b91c1c; font-weight: 700; margin-top: 6px;">
+                             ⏳ Quedan ${sinTrabajar} función${sinTrabajar === 1 ? '' : 'es'} sin trabajar este curso (en rojo arriba).
+                           </div>`
+                        : `<div style="font-size: 12px; color: #14532d; font-weight: 700; margin-top: 6px;">
+                             ✅ Todas las funciones se han trabajado este curso.
+                           </div>`}
+                    <div style="font-size: 10.5px; color: var(--text-light); margin-top: 5px;">
+                        El porcentaje de cada función indica en cuántas sesiones del curso se ha trabajado. Solo se ve aquí: no aparece en el acta.
+                    </div>
+                </div>
+            `;
+        };
+
+        // ============================================================
         // FUNCIONES DEL ÓRGANO (Decreto 328/2010)
         // Se marcan durante la sesión y se reflejan en el acta.
         // ============================================================
@@ -5481,17 +5603,24 @@
                         <input type="checkbox" ${estaMarcada ? 'checked' : ''} ${soloLectura ? 'disabled' : ''}
                                onchange="toggleFuncionOrgano(${i}, this.checked)"
                                style="width: 20px; height: 20px; margin-top: 1px; accent-color: var(--coordinador); flex-shrink: 0; cursor: ${soloLectura ? 'default' : 'pointer'};">
-                        <span style="font-size: 14px; line-height: 1.4; color: var(--text);">${funcion}</span>
+                        <span style="font-size: 14px; line-height: 1.4; color: var(--text); flex: 1;">
+                            ${funcion}
+                            <span id="barraFuncion_${i}"></span>
+                        </span>
                     </label>
                 `;
             });
 
             html += `
                     </div>
+                    <div id="seguimientoFunciones"></div>
                 </div>
             `;
 
             contenedor.innerHTML = html;
+
+            // Recalcular el acumulado del curso (mira todas las sesiones del órgano)
+            pintarSeguimientoFunciones();
         };
 
         // Marcar/desmarcar una función del órgano (se guarda en Firebase y sincroniza)
@@ -7404,7 +7533,12 @@ ESTRUCTURA (exactamente estas secciones y en este orden):
 5. ASISTENTES: únicamente las personas de la sección ASISTENTES de los datos, una por línea, con tratamiento formal y puesto: "D. Nombre Apellidos - Puesto." o "Dña. Nombre Apellidos - Puesto.".
 6. NO ASISTEN: solo si esa sección aparece en los datos, con el mismo formato.
 7. ORDEN DEL DÍA: lista numerada (1., 2., 3. ...) con únicamente el título de cada punto, tal como figura en los datos.
-8. DESARROLLO DE LA SESIÓN: cada punto con su número y título idénticos a los del orden del día, en negrita. Debajo, redacción formal e institucional de lo tratado: recoge fielmente cada aportación, los acuerdos y el resultado de las votaciones si las hubo. ${LINEA_ESTILO_REDACCION} No inventes contenido ni añadas adjetivos valorativos. Si un punto no tiene aportaciones en los datos, indícalo con una frase breve.
+8. DESARROLLO DE LA SESIÓN: cada punto con su número y título idénticos a los del orden del día, en negrita. Debajo, redacción formal e institucional de lo tratado: recoge fielmente cada aportación, los acuerdos y el resultado de las votaciones si las hubo. ${LINEA_ESTILO_REDACCION}
+
+   REGISTRO Y DESARROLLO (muy importante): el acta es un documento oficial que leerán la inspección educativa y la administración. Las aportaciones llegan escritas de forma coloquial, telegráfica o con notas sueltas: tu trabajo es REDACTARLAS de nuevo en registro administrativo culto, con párrafos completos y trabados, terminología educativa precisa y conectores propios de un documento oficial ("En relación con este punto...", "Asimismo, se traslada que...", "Por último, se señala que..."). Desarrolla con amplitud: una nota breve debe convertirse en una o varias frases bien construidas. Ejemplo de la transformación esperada: "los niños van bien en lenguaje" debe redactarse como "se informa de que el alumnado presenta una evolución favorable en el área de Lengua Castellana y Literatura".
+   LÍMITE ABSOLUTO DE ESA AMPLIACIÓN: enriqueces la FORMA de decirlo, nunca el CONTENIDO. Está terminantemente prohibido añadir información que no esté en los datos: no inventes causas ni explicaciones ("gracias al trabajo desarrollado en el aula..."), ni grados o matices que nadie expresó ("un progreso notable", "una mejora significativa"), ni consecuencias, medidas, responsables, plazos, cifras ni valoraciones. Tampoco añadas adjetivos valorativos. Si una aportación afirma un hecho sin explicar el porqué, el acta lo recoge igual: sin el porqué. Toda afirmación del acta debe poder rastrearse hasta algo que alguien escribió realmente.
+   Cuando una aportación sea una simple enumeración o un listado (asignaciones, composición de equipos, coordinaciones, planes), introdúcelo con una frase de encuadre y preséntalo como lista con viñetas, respetando los datos literalmente.
+   Si un punto no tiene aportaciones en los datos, indícalo con una frase breve: ahí no hay nada que desarrollar y el párrafo debe ser corto.
 9. ACUERDOS ADOPTADOS: sección con ese título (sin numerar como punto del orden del día), colocada justo después del último punto del DESARROLLO (habitualmente "Ruegos y preguntas") y antes del CIERRE. Repasa todo el desarrollo y extrae en una lista los acuerdos o compromisos concretos que se hayan adoptado, redactados de forma breve (una línea cada uno). Reglas estrictas: incluye SOLO compromisos claros y explícitos ("se acuerda...", "se decide...", "queda establecido que..."); no conviertas en acuerdo una simple propuesta, idea o comentario al aire; no inventes responsables ni plazos que no figuren en el texto. Si en la sesión no se adoptó ningún acuerdo, escribe una única frase: "No se adoptaron acuerdos formales en esta sesión."
 10. CIERRE: "Y sin más asuntos que tratar, se levanta la sesión a las [HORA DE FINALIZACIÓN] horas del día de la fecha."
 
