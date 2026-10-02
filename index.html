@@ -9612,6 +9612,19 @@ ${textoActaLimpio}`;
                 navigator.serviceWorker.register('/teletrabajo/sw.js', { scope: '/teletrabajo/' })
                     .then(registration => {
                         console.log('✅ Service Worker registrado:', registration.scope);
+
+                        // iPhone: la app instalada no se recarga al volver a abrirla, solo "despierta".
+                        // Por eso buscamos versión nueva cada vez que vuelve a primer plano y cada 30 min.
+                        const buscar = () => registration.update().catch(() => {});
+                        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') buscar(); });
+                        window.addEventListener('pageshow', buscar);
+                        setInterval(buscar, 30 * 60 * 1000);
+                        // Si ya había una versión nueva esperando, mostrar el aviso
+                        if (registration.waiting && navigator.serviceWorker.controller) {
+                            window.ttNuevoWorker = registration.waiting;
+                            const barra = document.getElementById('ttUpdateBar');
+                            if (barra) barra.style.display = 'flex';
+                        }
                         
                         // Verificar actualizaciones
                         registration.addEventListener('updatefound', () => {

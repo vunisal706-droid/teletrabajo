@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teletrabajo-capitulaciones-v41';
+const CACHE_NAME = 'teletrabajo-capitulaciones-v42';
 
 // Obtener la ruta base de la app
 const getBaseUrl = () => {
@@ -21,12 +21,12 @@ const urlsToCache = [
 
 // Instalar service worker y cachear archivos
 self.addEventListener('install', event => {
-  console.log('Service Worker v41: Installing...');
+  console.log('Service Worker v42: Installing...');
   console.log('Base URL:', baseUrl);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker v41: Caching files');
+        console.log('Service Worker v42: Caching files');
         return cache.addAll(urlsToCache).catch(err => {
           console.error('Error caching files:', err);
           // Intentar cachear uno por uno
@@ -40,7 +40,7 @@ self.addEventListener('install', event => {
         });
       })
       .then(() => {
-        console.log('Service Worker v41: Skip waiting');
+        console.log('Service Worker v42: Skip waiting');
         return self.skipWaiting();
       })
   );
@@ -48,19 +48,19 @@ self.addEventListener('install', event => {
 
 // Activar service worker y limpiar cachés antiguas
 self.addEventListener('activate', event => {
-  console.log('Service Worker v41: Activating...');
+  console.log('Service Worker v42: Activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker v41: Deleting old cache:', cacheName);
+            console.log('Service Worker v42: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker v41: Claiming clients');
+      console.log('Service Worker v42: Claiming clients');
       return self.clients.claim();
     })
   );
@@ -91,7 +91,7 @@ self.addEventListener('fetch', event => {
   // sin tener que borrar la caché. Si no hay conexión, tira de la copia guardada.
   if (esDocumentoApp(request)) {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })   // sin pasar por la caché HTTP (clave en Safari)
         .then(response => {
           if (response && response.status === 200) {
             const copia = response.clone();
