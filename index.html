@@ -8722,7 +8722,13 @@ ${textoActaLimpio}`;
         }
 
         // Devuelve el cargo del convocante según el órgano
-        function getCargoConvocatoria() {
+        function getCargoConvocatoria(convocante) {
+            // CLAUSTRO: el cargo depende de quién convoca
+            if (window.sesionActual === 'claustro' && convocante) {
+                const n = convocante.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                if (n.includes('munoz romero') && n.includes('encarnacion')) return 'Secretaria';
+                if (n.includes('unica salas')) return 'Director';
+            }
             // Órganos donde el convocante actúa como Director/a (sin mencionar el órgano,
             // porque el director convoca por su cargo, no como coordinador del órgano)
             const cargosDirectivos = {
@@ -8929,7 +8935,7 @@ ${textoActaLimpio}`;
                 // --- Encabezado administrativo ---
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'normal');
-                const cargoConvocante = getCargoConvocatoria();
+                const cargoConvocante = getCargoConvocatoria(convocante);
                 // Para familias del Consejo Escolar, ajustar a quién se convoca
                 const aQuienConvoca = etiquetaDestinatarios === 'Para representantes de familias'
                     ? 'a las familias representantes en el Consejo Escolar'
