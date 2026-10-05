@@ -2819,6 +2819,7 @@
         <div class="tt-foot">
             ¿No apareces en la lista o no te deja entrar?<br>
             Habla con la dirección del centro para que te dé de alta.
+            <div style="margin-top:6px;font-size:11px;opacity:.6">versión 45</div>
         </div>
     </div>
 </div>
@@ -2836,6 +2837,7 @@
                 Quien no lo tenga registrado podrá escribirlo la primera vez que entre. Todo el personal de la lista cuenta como claustro.
             </p>
             <div id="ttAvisoDB" class="tt-warn" style="display:none"></div>
+            <button class="tt-btn" style="margin:0 0 12px" onclick="ttRepararAccesos()">🔧 Reparar accesos de todo el personal</button>
             <div id="ttListaPersonal"></div>
 
             <details class="tt-alta" id="ttDetAnteriores">
@@ -10256,16 +10258,22 @@ ${textoActaLimpio}`;
                             if (e2.code === 'auth/email-already-in-use') {
                                 return ttError('Tu cuenta existe pero no está bien configurada. Avisa a dirección para que edite tu ficha y la vuelva a guardar.');
                             }
-                            if (e2.code === 'auth/operation-not-allowed') {
-                                return ttError('El acceso por usuario no está activado en el servidor. Avisa a dirección.');
-                            }
+                            return ttError('No se pudo activar tu acceso. Avisa a dirección.' +
+                                ' <small style="opacity:.6">(' + (e2.code || e2.message) + ')</small>');
                         }
                     }
                     if (!cred) {
+                        const cod = ' <small style="opacity:.6">(' + (e.code || 'error') + ')</small>';
+                        if (!ttNormIdea(persona.idea)) {
+                            return ttError('Tu ficha no tiene usuario IdEA registrado. Avisa a dirección.' + cod);
+                        }
+                        if (ttNormIdea(persona.idea) !== idea) {
+                            return ttError('Ese no es el usuario que dirección tiene registrado para ti. Revísalo o avisa a dirección.' + cod);
+                        }
                         if (e.code === 'auth/user-not-found') {
                             return ttError('Tu acceso aún no está dado de alta. Habla con la dirección del centro.');
                         }
-                        return ttError('El usuario no coincide. Escribe tu <strong>usuario de Séneca (IdEA)</strong>, no la contraseña. Si crees que hay un error, avisa a dirección.');
+                        return ttError('El usuario no coincide. Escribe tu <strong>usuario de Séneca (IdEA)</strong>, no la contraseña. Si crees que hay un error, avisa a dirección.' + cod);
                     }
                 }
 
@@ -10508,6 +10516,19 @@ ${textoActaLimpio}`;
             }
             ttSincronizarClaustro();
             ttRenderPersonal();
+        };
+
+        window.ttRepararAccesos = async function () {
+            if (!window.ttUsuario || !window.ttUsuario.admin) return;
+            const con = ttPersonal.filter(p => ttNormIdea(p.idea));
+            const fallos = [];
+            for (const p of con) {
+                try { await ttConcederAcceso(p); }
+                catch (e) { fallos.push(p.nombre + ' (' + p.idea + '): ' + ttErrorCuenta(e)); }
+            }
+            alert(fallos.length
+                ? 'Revisados ' + con.length + '. Fallan ' + fallos.length + ':\n\n' + fallos.join('\n')
+                : 'Listo: ' + con.length + ' accesos revisados y activos.');
         };
 
         window.ttBajaPersona = async function (key) {
