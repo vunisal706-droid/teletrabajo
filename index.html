@@ -10246,10 +10246,27 @@ ${textoActaLimpio}`;
                     if (e.code === 'auth/too-many-requests') {
                         return ttError('Demasiados intentos fallidos. Espera unos minutos.');
                     }
-                    if (e.code === 'auth/user-not-found') {
-                        return ttError('Tu acceso aún no está dado de alta. Habla con la dirección del centro.');
+                    // Autorreparación: si dirección le dio de alta con este IdEA pero la
+                    // cuenta de acceso no llegó a crearse, se crea ahora.
+                    if (ttNormIdea(persona.idea) === idea) {
+                        try {
+                            cred = await window.fbCreateUser(window.auth, idea + TT_DOMINIO, idea);
+                        } catch (e2) {
+                            console.warn('No se pudo crear la cuenta:', e2.code);
+                            if (e2.code === 'auth/email-already-in-use') {
+                                return ttError('Tu cuenta existe pero no está bien configurada. Avisa a dirección para que edite tu ficha y la vuelva a guardar.');
+                            }
+                            if (e2.code === 'auth/operation-not-allowed') {
+                                return ttError('El acceso por usuario no está activado en el servidor. Avisa a dirección.');
+                            }
+                        }
                     }
-                    return ttError('El usuario no coincide. Escribe tu <strong>usuario de Séneca (IdEA)</strong>, no la contraseña. Si crees que hay un error, avisa a dirección.');
+                    if (!cred) {
+                        if (e.code === 'auth/user-not-found') {
+                            return ttError('Tu acceso aún no está dado de alta. Habla con la dirección del centro.');
+                        }
+                        return ttError('El usuario no coincide. Escribe tu <strong>usuario de Séneca (IdEA)</strong>, no la contraseña. Si crees que hay un error, avisa a dirección.');
+                    }
                 }
 
                 // Comprobar que ese acceso corresponde al nombre elegido
@@ -10259,6 +10276,12 @@ ${textoActaLimpio}`;
                     if (snap.exists()) ficha = snap.val();
                 } catch (e) { console.warn('No se pudo leer el acceso:', e); }
 
+                // Sin ficha pero con IdEA asignado en su ficha de personal: se crea
+                if (!ficha && ttNormIdea(persona.idea) === idea) {
+                    ficha = { nombre: persona.nombre, key: key, admin: idea === ADMIN_IDEA, creado: new Date().toISOString() };
+                    try { await window.set(window.ref(window.database, 'acceso/' + cred.user.uid), ficha); }
+                    catch (e) { console.warn('No se pudo registrar el acceso:', e); }
+                }
                 if (!ficha) {
                     await window.fbSignOut(window.auth).catch(() => {});
                     return ttError('Tu acceso no está activo. Habla con la dirección del centro.');
