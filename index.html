@@ -3206,7 +3206,23 @@
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1; padding-right: 2px;">
-                <div>
+                <div id="convocatoriaClaustroWrap" style="display: none;">
+                    <div id="convocatoriaCaracterInfo" style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; margin-bottom: 10px;"></div>
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">
+                        ¿Quién emite la citación?
+                    </label>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                            <input type="radio" name="convocatoriaEmisor" value="director" checked style="margin: 0;">
+                            El Director convoca y firma
+                        </label>
+                        <label style="padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                            <input type="radio" name="convocatoriaEmisor" value="secretaria" style="margin: 0;">
+                            La Secretaria cita por orden del Director
+                        </label>
+                    </div>
+                </div>
+                <div id="convocatoriaConvocanteWrap">
                     <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text);">
                         Coordinador/a (firma):
                     </label>
@@ -3551,7 +3567,7 @@
                 <h2>Seleccionar Reunión</h2>
                 <div class="form-group">
                     <label>Curso / Ciclo / Equipo / Órgano Colegiado:</label>
-                    <select id="selectReunion">
+                    <select id="selectReunion" onchange="actualizarCaracterClaustro()">
                         <option value="">-- Selecciona --</option>
                         <optgroup label="🎨 Educación Infantil">
                             <option value="infantil-3">Infantil 3 años</option>
@@ -3582,6 +3598,18 @@
                             <option value="consejo-escolar">Consejo Escolar</option>
                         </optgroup>
                     </select>
+                </div>
+                <div class="form-group" id="caracterClaustroWrap" style="display: none;">
+                    <label>Carácter de la sesión del Claustro:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <label style="flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500;">
+                            <input type="radio" name="caracterClaustro" value="ordinario" checked style="margin: 0; width: auto;"> Ordinario
+                        </label>
+                        <label style="flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500;">
+                            <input type="radio" name="caracterClaustro" value="extraordinario" style="margin: 0; width: auto;"> Extraordinario
+                        </label>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-light); margin: 6px 0 0 0;">Un mismo día puede haber un Claustro ordinario y otro extraordinario: son reuniones independientes.</p>
                 </div>
                 <div class="form-group">
                     <label>Fecha de la reunión:</label>
@@ -4672,7 +4700,7 @@
             "ciclo-infantil": "EQUIPOS DE CICLO", "primer-ciclo": "EQUIPOS DE CICLO",
             "segundo-ciclo": "EQUIPOS DE CICLO", "tercer-ciclo": "EQUIPOS DE CICLO",
             "orientacion": "EQUIPO DE ORIENTACIÓN", "aula-tea": "EQUIPO DE ORIENTACIÓN",
-            "claustro": "CLAUSTRO", "etcp": "ETCP", "consejo-escolar": "CONSEJO ESCOLAR"
+            "claustro": "CLAUSTRO", "claustro-extraordinario": "CLAUSTRO", "etcp": "ETCP", "consejo-escolar": "CONSEJO ESCOLAR"
         };
 
         // Funciones de cada órgano (Decreto 328/2010, Reglamento Orgánico de los CEIP)
@@ -4772,7 +4800,8 @@
             'tercer-ciclo': 'Tercer Ciclo Primaria',
             'orientacion': 'Equipo de Orientación',
             'aula-tea': 'Aula TEA',
-            'claustro': 'Claustro',
+            'claustro': 'Claustro ordinario',
+            'claustro-extraordinario': 'Claustro extraordinario',
             'etcp': 'ETCP (Equipo Técnico de Coordinación Pedagógica)',
             'consejo-escolar': 'Consejo Escolar'
         };
@@ -4797,11 +4826,37 @@
         // Establecer fecha de hoy por defecto
         document.getElementById('inputFecha').valueAsDate = new Date();
 
+        // ===== Claustro ordinario / extraordinario =====
+        // El extraordinario se guarda como reunión independiente ('claustro-extraordinario')
+        // para que pueda coexistir con uno ordinario el mismo día.
+        window.actualizarCaracterClaustro = function() {
+            const v = document.getElementById('selectReunion').value;
+            const wrap = document.getElementById('caracterClaustroWrap');
+            if (wrap) wrap.style.display = v === 'claustro' ? 'block' : 'none';
+        };
+        window.getIdReunionSeleccionada = function() {
+            const v = document.getElementById('selectReunion').value;
+            if (v !== 'claustro') return v;
+            const r = document.querySelector('input[name="caracterClaustro"]:checked');
+            return (r && r.value === 'extraordinario') ? 'claustro-extraordinario' : 'claustro';
+        };
+        window.setReunionSeleccionada = function(id) {
+            const sel = document.getElementById('selectReunion');
+            const extra = id === 'claustro-extraordinario';
+            sel.value = extra ? 'claustro' : id;
+            const r = document.querySelector(`input[name="caracterClaustro"][value="${extra ? 'extraordinario' : 'ordinario'}"]`);
+            if (r) r.checked = true;
+            window.actualizarCaracterClaustro();
+        };
+        window.esClaustro = function(id) {
+            return id === 'claustro' || id === 'claustro-extraordinario';
+        };
+
         // Crear sesión
         window.crearSesion = async function() {
             const nombre = window.getNombreInicio();
             const rol = document.getElementById('selectRol').value;
-            const idReunion = document.getElementById('selectReunion').value;
+            const idReunion = window.getIdReunionSeleccionada();
             const fecha = document.getElementById('inputFecha').value;
 
             if (!nombre) {
@@ -4940,6 +4995,8 @@
 
         // Función para cargar puntos predefinidos
         window.cargarPuntosPredefinidos = async function(tipoReunion, fecha) {
+            // El Claustro extraordinario lleva su propio orden del día
+            if (tipoReunion === 'claustro-extraordinario') return;
             // Obtener mes de la fecha (formato MM)
             const mes = fecha.split('-')[1]; // fecha está en formato YYYY-MM-DD
             
@@ -4980,7 +5037,7 @@
         window.unirseASesion = async function() {
             const nombre = window.getNombreInicio();
             const rol = document.getElementById('selectRol').value;
-            const idReunion = document.getElementById('selectReunion').value;
+            const idReunion = window.getIdReunionSeleccionada();
             const fecha = document.getElementById('inputFecha').value;
 
             if (!nombre) {
@@ -7780,7 +7837,8 @@ ${textoActaLimpio}`;
             'tercer-ciclo': 'Tercer Ciclo de Primaria',
             'orientacion': 'Equipo de Orientación',
             'aula-tea': 'Aula TEA',
-            'claustro': 'Claustro',
+            'claustro': 'Claustro ordinario',
+            'claustro-extraordinario': 'Claustro extraordinario',
             'etcp': 'ETCP',
             'consejo-escolar': 'Consejo Escolar'
         };
@@ -8004,7 +8062,7 @@ ${textoActaLimpio}`;
                 manual.value = e.nombre;
             }
             document.getElementById('selectRol').value = e.rol;
-            document.getElementById('selectReunion').value = e.reunion;
+            window.setReunionSeleccionada(e.reunion);
             document.getElementById('inputFecha').value = e.fecha;
 
             // Llamar a la función adecuada según el rol
@@ -8369,7 +8427,7 @@ ${textoActaLimpio}`;
 
             try {
                 // Llenar información del modal
-                document.getElementById('citacion-tipo-reunion').textContent = window.sesionActual;
+                document.getElementById('citacion-tipo-reunion').textContent = window.getNombreReunion(window.sesionActual, window.fechaActual).split(' - ')[0];
                 
                 // Formatear fecha
                 const [year, month, day] = window.fechaActual.split('-');
@@ -8526,6 +8584,21 @@ ${textoActaLimpio}`;
                 }
             } catch (err) {
                 console.warn('No se pudieron precargar enlaces de videollamada:', err);
+            }
+
+            // Claustro: convoca la Dirección (o la Secretaría por orden de la Dirección)
+            const _esClaustro = window.esClaustro(window.sesionActual);
+            document.getElementById('convocatoriaClaustroWrap').style.display = _esClaustro ? 'block' : 'none';
+            document.getElementById('convocatoriaConvocanteWrap').style.display = _esClaustro ? 'none' : 'block';
+            if (_esClaustro) {
+                const extra = window.sesionActual === 'claustro-extraordinario';
+                document.getElementById('convocatoriaCaracterInfo').textContent =
+                    extra ? '⚡ Claustro en sesión EXTRAORDINARIA' : '📅 Claustro en sesión ORDINARIA';
+                // Preseleccionar según quién está usando la app
+                const yo = (window.usuarioActual && window.usuarioActual.nombre || '')
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                const emisor = yo.includes('munoz romero') ? 'secretaria' : 'director';
+                document.querySelector(`input[name="convocatoriaEmisor"][value="${emisor}"]`).checked = true;
             }
 
             document.getElementById('convocatoriaModal').classList.add('active');
@@ -8711,7 +8784,8 @@ ${textoActaLimpio}`;
             const otros = {
                 'orientacion': 'Equipo de Orientación',
                 'aula-tea': 'Aula TEA',
-                'claustro': 'Claustro',
+                'claustro': 'Claustro de Profesorado (sesión ordinaria)',
+                'claustro-extraordinario': 'Claustro de Profesorado (sesión extraordinaria)',
                 'etcp': 'ETCP (Equipo Técnico de Coordinación Pedagógica)',
                 'consejo-escolar': 'Consejo Escolar'
             };
@@ -8759,6 +8833,7 @@ ${textoActaLimpio}`;
                 'orientacion': 'Equipo de Orientación',
                 'aula-tea': 'Aula TEA',
                 'claustro': 'Claustro',
+                'claustro-extraordinario': 'Claustro',
                 'etcp': 'ETCP',
                 'consejo-escolar': 'Consejo Escolar'
             };
@@ -8767,7 +8842,16 @@ ${textoActaLimpio}`;
 
         window.generarConvocatoriaPDF = async function() {
             // 1) Validar y leer datos del formulario
-            let convocante = document.getElementById('convocatoriaConvocante').value;
+            const esClaustroConv = window.esClaustro(window.sesionActual);
+            const esExtraordinario = window.sesionActual === 'claustro-extraordinario';
+            const DIRECTOR_NOMBRE = 'Víctor Manuel Única Salas';
+            const SECRETARIA_NOMBRE = 'Encarnación Muñoz Romero';
+            const emisorClaustro = esClaustroConv
+                ? (document.querySelector('input[name="convocatoriaEmisor"]:checked')?.value || 'director')
+                : null;
+            let convocante = esClaustroConv
+                ? (emisorClaustro === 'secretaria' ? SECRETARIA_NOMBRE : DIRECTOR_NOMBRE)
+                : document.getElementById('convocatoriaConvocante').value;
             if (!convocante) {
                 alert('Selecciona el coordinador/a que firma la convocatoria.');
                 return;
@@ -8912,12 +8996,14 @@ ${textoActaLimpio}`;
                 // --- Título principal ---
                 doc.setFontSize(14);           // reducido de 15
                 doc.setFont('helvetica', 'bold');
-                doc.text('CONVOCATORIA DE REUNIÓN', pageW / 2, y, { align: 'center' });
+                doc.text(esClaustroConv
+                    ? (esExtraordinario ? 'CONVOCATORIA DE SESIÓN EXTRAORDINARIA' : 'CONVOCATORIA DE SESIÓN ORDINARIA')
+                    : 'CONVOCATORIA DE REUNIÓN', pageW / 2, y, { align: 'center' });
                 y += 6;                        // reducido de 7
                 doc.setFontSize(11);           // reducido de 12
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(60, 60, 60);
-                doc.text(nombreOrganoOficial.toUpperCase(), pageW / 2, y, { align: 'center' });
+                doc.text(esClaustroConv ? 'CLAUSTRO DE PROFESORADO' : nombreOrganoOficial.toUpperCase(), pageW / 2, y, { align: 'center' });
                 doc.setTextColor(0, 0, 0);
 
                 // Si es Consejo Escolar, distinguir el destinatario del PDF
@@ -8935,12 +9021,20 @@ ${textoActaLimpio}`;
                 // --- Encabezado administrativo ---
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'normal');
-                const cargoConvocante = getCargoConvocatoria(convocante);
+                const cargoConvocante = esClaustroConv
+                    ? (emisorClaustro === 'secretaria' ? 'La Secretaria' : 'El Director')
+                    : getCargoConvocatoria(convocante);
                 // Para familias del Consejo Escolar, ajustar a quién se convoca
                 const aQuienConvoca = etiquetaDestinatarios === 'Para representantes de familias'
                     ? 'a las familias representantes en el Consejo Escolar'
                     : (esConsejoEscolar ? 'a los miembros del Consejo Escolar' : 'al profesorado correspondiente');
-                const intro = `Por la presente, ${convocante}, en su condición de ${cargoConvocante} del CEIP Capitulaciones de Santa Fe, convoca ${aQuienConvoca} a la siguiente reunión:`;
+                const caracterTxt = esExtraordinario ? 'extraordinaria' : 'ordinaria';
+                let intro = `Por la presente, ${convocante}, en su condición de ${cargoConvocante} del CEIP Capitulaciones de Santa Fe, convoca ${aQuienConvoca} a la siguiente reunión:`;
+                if (esClaustroConv && emisorClaustro === 'secretaria') {
+                    intro = `Por orden del Director del CEIP Capitulaciones de Santa Fe, D. ${DIRECTOR_NOMBRE}, la Secretaria del centro, Dña. ${SECRETARIA_NOMBRE}, cita a los miembros del Claustro de Profesorado a la sesión ${caracterTxt} que se celebrará conforme a los siguientes datos:`;
+                } else if (esClaustroConv) {
+                    intro = `D. ${DIRECTOR_NOMBRE}, Director del CEIP Capitulaciones de Santa Fe, convoca a los miembros del Claustro de Profesorado a la sesión ${caracterTxt} que se celebrará conforme a los siguientes datos:`;
+                }
                 const introLineas = doc.splitTextToSize(intro, usableW);
                 doc.setFontSize(10);           // ligeramente más pequeño
                 introLineas.forEach(l => { checkPage(6); doc.text(l, marginX, y); y += 5.5; });
@@ -8948,7 +9042,8 @@ ${textoActaLimpio}`;
 
                 // --- Datos de la reunión ---
                 const datosReunion = [
-                    ['Tipo de reunión:', nombreOrganoOficial],
+                    ['Tipo de reunión:', esClaustroConv ? 'Claustro de Profesorado' : nombreOrganoOficial],
+                    ...(esClaustroConv ? [['Carácter:', esExtraordinario ? 'Sesión extraordinaria' : 'Sesión ordinaria']] : []),
                     ['Fecha:', fechaConDia.charAt(0).toUpperCase() + fechaConDia.slice(1)],
                     ['Hora de inicio:', horaInicio + ' h'],
                     ['Modalidad:', modalidad === 'telematica' ? 'Telemática' : 'Presencial']
@@ -9052,7 +9147,9 @@ ${textoActaLimpio}`;
                 doc.setFontSize(9);            // reducido de 10
                 doc.setFont('helvetica', 'italic');
                 doc.setTextColor(70, 70, 70);
-                const pie = 'De conformidad con lo establecido en la normativa vigente, se ruega la asistencia puntual y, en caso de no poder asistir, su justificación previa al coordinador/a.';
+                const pie = esClaustroConv
+                    ? 'De conformidad con lo establecido en la normativa vigente, la asistencia a las sesiones del Claustro es obligatoria para todos sus miembros. En caso de no poder asistir, se ruega comunicarlo y justificarlo previamente a la Dirección del centro.'
+                    : 'De conformidad con lo establecido en la normativa vigente, se ruega la asistencia puntual y, en caso de no poder asistir, su justificación previa al coordinador/a.';
                 const pieLineas = doc.splitTextToSize(pie, usableW);
                 pieLineas.forEach(l => { checkPage(5); doc.text(l, marginX, y); y += 4.5; });
                 doc.setTextColor(0, 0, 0);
@@ -9093,6 +9190,23 @@ ${textoActaLimpio}`;
                 doc.setTextColor(80, 80, 80);
                 doc.text(cargoConvocante, marginX, y);
                 doc.setTextColor(0, 0, 0);
+
+                if (esClaustroConv && emisorClaustro === 'secretaria') {
+                    const xVB = pageW / 2 + 10;
+                    const yVB = y - 9;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10);
+                    doc.text('Vº Bº', xVB, yVB - 14);
+                    doc.text('Fdo.:', xVB, yVB);
+                    doc.line(xVB + 10, yVB, xVB + 70, yVB);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(DIRECTOR_NOMBRE, xVB, yVB + 5);
+                    doc.setFont('helvetica', 'italic');
+                    doc.setFontSize(9);
+                    doc.setTextColor(80, 80, 80);
+                    doc.text('El Director', xVB, yVB + 9);
+                    doc.setTextColor(0, 0, 0);
+                }
 
                 // --- Pie de página ---
                 const totalPaginas = doc.internal.getNumberOfPages();
