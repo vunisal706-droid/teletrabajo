@@ -2819,7 +2819,7 @@
         <div class="tt-foot">
             ¿No apareces en la lista o no te deja entrar?<br>
             Habla con la dirección del centro para que te dé de alta.
-            <div style="margin-top:6px;font-size:11px;opacity:.6">versión 45</div>
+            <div style="margin-top:6px;font-size:11px;opacity:.6">versión 46</div>
         </div>
     </div>
 </div>
@@ -5036,6 +5036,16 @@
         };
 
         // Unirse a sesión
+        window.avisoSinPermiso = function (err) {
+            console.error('Firebase:', err);
+            const c = (err && (err.code || err.message)) || 'error';
+            if (/permission|denied/i.test(c)) {
+                alert('Tu acceso no está activado del todo y no puedes entrar en la reunión.\n\nAvisa a dirección para que pulse «🔧 Reparar accesos» en Personal. Después cierra sesión y vuelve a entrar.');
+            } else {
+                alert('No se ha podido conectar con la reunión. Comprueba la conexión y vuelve a intentarlo.\n(' + c + ')');
+            }
+        };
+
         window.unirseASesion = async function() {
             const nombre = window.getNombreInicio();
             const rol = document.getElementById('selectRol').value;
@@ -5071,7 +5081,9 @@
 
             // Verificar si existe la reunión
             const sesionRef = ref(database, `sesiones/${idReunion}/${fecha}`);
-            const snapshot = await get(sesionRef);
+            let snapshot;
+            try { snapshot = await get(sesionRef); }
+            catch (err) { return window.avisoSinPermiso(err); }
 
             if (!snapshot.exists()) {
                 alert('La reunión no existe. El coordinador debe crearla primero.');
@@ -5082,11 +5094,13 @@
 
             // Registrar como participante usando nombre normalizado como key
             const participanteRef = ref(database, `sesiones/${idReunion}/${fecha}/participantes/${nombreNormalizado}`);
-            await set(participanteRef, {
-                nombre: nombre.trim(),
-                rol: rol,
-                timestamp: Date.now()
-            });
+            try {
+                await set(participanteRef, {
+                    nombre: nombre.trim(),
+                    rol: rol,
+                    timestamp: Date.now()
+                });
+            } catch (err) { return window.avisoSinPermiso(err); }
 
             // Si la reunión aún está en configuración y eres coordinador, ir a configuración
             if (sesionData.estado === 'configurando' && rol === 'coordinador') {
@@ -10288,7 +10302,11 @@ ${textoActaLimpio}`;
                 if (!ficha && ttNormIdea(persona.idea) === idea) {
                     ficha = { nombre: persona.nombre, key: key, admin: idea === ADMIN_IDEA, creado: new Date().toISOString() };
                     try { await window.set(window.ref(window.database, 'acceso/' + cred.user.uid), ficha); }
-                    catch (e) { console.warn('No se pudo registrar el acceso:', e); }
+                    catch (e) {
+                        console.warn('No se pudo registrar el acceso:', e);
+                        await window.fbSignOut(window.auth);
+                        return ttError('Tu cuenta ya está creada, pero falta activarla. Avisa a dirección para que pulse «🔧 Reparar accesos» en Personal.');
+                    }
                 }
                 if (!ficha) {
                     await window.fbSignOut(window.auth).catch(() => {});
