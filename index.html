@@ -2819,7 +2819,7 @@
         <div class="tt-foot">
             ¿No apareces en la lista o no te deja entrar?<br>
             Habla con la dirección del centro para que te dé de alta.
-            <div style="margin-top:6px;font-size:11px;opacity:.6">versión 46</div>
+            <div style="margin-top:6px;font-size:11px;opacity:.6">versión 47</div>
         </div>
     </div>
 </div>
@@ -5483,25 +5483,42 @@
         // Recargar puntos completamente desde cero
         window.cargarPuntosDesdeCero = function(snapshot) {
             const contenedor = document.getElementById('contenidoPuntos');
-            
-            // Limpiar listeners antiguos (los listeners de Firebase se limpian cuando se borra el DOM)
-            listenersPorPunto.clear();
-            
-            // Limpiar TODO el contenedor
+
+            // OJO: este listener escucha "puntos/" entero, así que salta con CADA
+            // comentario, voto o documento. Si los puntos (id, texto, orden) no han
+            // cambiado, no se repinta nada: así no se borra lo que alguien está
+            // escribiendo o dictando, ni se duplican los listeners.
+            const puntos = snapshot.exists() ? (snapshot.val() || {}) : {};
+            const puntosArray = Object.entries(puntos)
+                .filter(([id, data]) => data && typeof data === 'object')
+                .map(([id, data]) => ({ id, ...data }));
+            puntosArray.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+            const firma = JSON.stringify(puntosArray.map(p => [p.id, p.texto, p.orden]));
+            if (window._firmaPuntos === firma && contenedor.children.length > 0) return;
+            window._firmaPuntos = firma;
+
+            // Guardar lo que haya a medio escribir para no perderlo al repintar
+            const borradores = {};
+            contenedor.querySelectorAll('textarea[id^="input_"]').forEach(t => {
+                if (t.value) borradores[t.id] = t.value;
+            });
+            if (window.dictadoActivo) pararDictado(true);
+
             contenedor.innerHTML = '';
 
-            if (!snapshot.exists()) {
+            if (puntosArray.length === 0) {
                 contenedor.innerHTML = '<div class="empty-state"><div class="emoji">📋</div><p>No hay puntos del orden del día</p></div>';
                 return;
             }
 
-            const puntos = snapshot.val();
-            const puntosArray = Object.entries(puntos).map(([id, data]) => ({ id, ...data }));
-            puntosArray.sort((a, b) => a.orden - b.orden);
-
             puntosArray.forEach((punto, index) => {
                 const card = crearPuntoCard(punto, index + 1);
                 contenedor.appendChild(card);
+            });
+
+            Object.entries(borradores).forEach(([id, valor]) => {
+                const t = document.getElementById(id);
+                if (t) t.value = valor;
             });
 
             // Mostrar los micrófonos solo si el navegador soporta dictado
@@ -5892,35 +5909,56 @@
 
         // Agregar aportación
         // ============================================================
-        // DICTADO POR VOZ (Web Speech API)
-        // Se intenta primero el reconocimiento EN EL DISPOSITIVO
-        // (processLocally). Si el navegador no lo soporta, se avisa de
-        // que el audio se procesa en servidores del navegador.
+        // DICTADO POR VOZ (Web Speech API) — v47
+        // Funciona por tramos cortos (continuous = false) que se encadenan
+        // solos mientras el micro está activo. Es lo único que va fiable a la
+        // vez en Chrome Android (que duplica texto en modo continuo) y en
+        // Safari iPhone (que corta el modo continuo).
+        // La transcripción en el propio dispositivo solo se pide si el
+        // navegador confirma que tiene el modelo de español instalado.
         // ============================================================
 
         window.SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
         window.dictadoActivo = null;      // puntoId que está dictando ahora
-        window.dictadoRec = null;         // instancia en curso
-        window.dictadoTextoPrevio = '';   // texto que ya había en la caja
+        window.dictadoRec = null;         // tramo en curso
         window.dictadoAvisoVisto = false;
+        window.dictadoLocalOK = false;    // ¿hay modelo de español en el dispositivo?
+        let _dictadoLocalComprobado = false;
 
-        // ¿Soporta este navegador el dictado?
+        const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const esAppInstalada = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
         window.hayDictado = function() {
             return !!window.SpeechRec;
         };
 
-        // Mostrar los botones de micrófono solo si el navegador lo soporta
+        // Se comprueba una vez, en segundo plano, para no retrasar el toque del micro
+        function comprobarDictadoLocal() {
+            if (_dictadoLocalComprobado || !window.SpeechRec) return;
+            _dictadoLocalComprobado = true;
+            try {
+                if (typeof window.SpeechRec.available === 'function') {
+                    window.SpeechRec.available({ langs: ['es-ES'], processLocally: true })
+                        .then(r => { window.dictadoLocalOK = (r === 'available'); })
+                        .catch(() => { window.dictadoLocalOK = false; });
+                }
+            } catch (e) { window.dictadoLocalOK = false; }
+        }
+
         window.prepararBotonesDictado = function() {
             const soportado = hayDictado();
             document.querySelectorAll('.btn-dictado').forEach(btn => {
                 btn.style.display = soportado ? 'inline-flex' : 'none';
             });
+            if (soportado) comprobarDictadoLocal();
         };
 
-        function estadoDictado(puntoId, mensaje, visible) {
+        function estadoDictado(puntoId, mensaje, visible, color) {
             const el = document.getElementById(`dictadoEstado_${puntoId}`);
             if (!el) return;
             el.textContent = mensaje || '';
+            el.style.color = color || 'var(--text-light)';
             el.style.display = visible ? 'block' : 'none';
         }
 
@@ -5942,14 +5980,35 @@
             }
         }
 
-        window.toggleDictado = async function(puntoId) {
+        function unirTexto(base, extra) {
+            extra = (extra || '').trim();
+            if (!extra) return base;
+            if (!base) return extra;
+            return base + (/[\s\n]$/.test(base) ? '' : ' ') + extra;
+        }
+
+        function mensajeErrorDictado(codigo) {
+            if (codigo === 'not-allowed' || codigo === 'service-not-allowed') {
+                if (esIOS) {
+                    return esAppInstalada
+                        ? 'El iPhone no deja dictar dentro de la app instalada. Abre la reunión en Safari, o usa el micrófono del teclado.'
+                        : 'Permiso denegado. En el iPhone: Ajustes › General › Teclado › activa «Dictado», y permite el micrófono a Safari.';
+                }
+                return 'Permiso de micrófono denegado. Pulsa el candado de la barra de direcciones y permite el micrófono.';
+            }
+            if (codigo === 'audio-capture') return 'No se encuentra el micrófono o lo está usando otra app (por ejemplo, la videollamada).';
+            if (codigo === 'network') return 'Sin conexión para transcribir. Usa el micrófono del teclado.';
+            if (codigo === 'language-not-supported') return 'Este navegador no tiene el español disponible para dictar. Usa el micrófono del teclado.';
+            return 'No se pudo dictar (' + codigo + '). Usa el micrófono del teclado.';
+        }
+
+        window.toggleDictado = function(puntoId) {
             // Si ya está dictando en este punto, parar
             if (window.dictadoActivo === puntoId) {
                 pararDictado();
                 return;
             }
-            // Si estaba dictando en otro punto, parar aquel primero
-            if (window.dictadoActivo) pararDictado();
+            if (window.dictadoActivo) pararDictado(true);
 
             if (!hayDictado()) {
                 alert('Tu navegador no permite dictar por voz.\n\nPuedes usar el micrófono del teclado de tu móvil, que funciona igual de bien.');
@@ -5972,94 +6031,130 @@
             iniciarDictado(puntoId);
         };
 
-        async function iniciarDictado(puntoId) {
+        function iniciarDictado(puntoId) {
             const textarea = document.getElementById(`input_${puntoId}`);
             if (!textarea) return;
 
+            // Estado compartido por todos los tramos de este dictado
+            const d = {
+                puntoId: puntoId,
+                textarea: textarea,
+                base: textarea.value,      // texto ya fijado
+                usarLocal: !!window.dictadoLocalOK,
+                seguir: true,
+                tramosSinVoz: 0
+            };
+            window.dictadoActivo = puntoId;
+            window._dictado = d;
+            pintarMicActivo(puntoId, true);
+            estadoDictado(puntoId,
+                d.usarLocal ? '🎤 Escuchando (en tu dispositivo)... Pulsa ⏹️ para terminar.'
+                            : '🎤 Escuchando... Pulsa ⏹️ para terminar.',
+                true);
+            arrancarTramo(d);
+        }
+
+        function arrancarTramo(d) {
             let rec;
             try {
                 rec = new window.SpeechRec();
             } catch (err) {
-                alert('No se pudo iniciar el dictado en este navegador.');
-                return;
+                return finDictadoConError(d, 'start-failed');
+            }
+            rec.lang = 'es-ES';
+            rec.continuous = false;
+            rec.interimResults = true;
+            rec.maxAlternatives = 1;
+            if (d.usarLocal) {
+                try { rec.processLocally = true; } catch (e) { d.usarLocal = false; }
             }
 
-            rec.lang = 'es-ES';
-            rec.continuous = true;
-            rec.interimResults = true;
-
-            // Preferir transcripción en el propio dispositivo si el navegador lo permite
-            let enLocal = false;
-            try {
-                if ('processLocally' in rec) {
-                    rec.processLocally = true;
-                    enLocal = true;
-                }
-            } catch (e) { /* el navegador no lo admite: seguirá por servidor */ }
-
-            window.dictadoTextoPrevio = textarea.value;
-            window.dictadoActivo = puntoId;
-            window.dictadoRec = rec;
-            pintarMicActivo(puntoId, true);
-            estadoDictado(puntoId,
-                enLocal ? '🎤 Escuchando (en tu dispositivo)... Pulsa ⏹️ para terminar.'
-                        : '🎤 Escuchando... Pulsa ⏹️ para terminar.',
-                true);
-
-            let textoFinal = '';
+            let finalTramo = '';
+            let huboVoz = false;
+            let errorTramo = null;
 
             rec.onresult = (event) => {
-                let interino = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const trozo = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        textoFinal += trozo + ' ';
-                    } else {
-                        interino += trozo;
-                    }
+                // Se reconstruye el tramo entero en cada evento: evita textos duplicados
+                let fin = '', provisional = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    const t = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) fin += t + ' ';
+                    else provisional += t;
                 }
-                const base = window.dictadoTextoPrevio;
-                const separador = (base && !base.endsWith(' ') && !base.endsWith('\n')) ? ' ' : '';
-                textarea.value = base + separador + textoFinal + interino;
-                textarea.scrollTop = textarea.scrollHeight;
+                finalTramo = fin;
+                if ((fin + provisional).trim()) huboVoz = true;
+                d.textarea.value = unirTexto(d.base, fin + provisional);
+                d.textarea.scrollTop = d.textarea.scrollHeight;
             };
 
             rec.onerror = (event) => {
-                let msg = 'No se pudo dictar.';
-                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                    msg = 'Permiso de micrófono denegado. Actívalo en el navegador para poder dictar.';
-                } else if (event.error === 'no-speech') {
-                    msg = 'No se ha detectado voz.';
-                } else if (event.error === 'network') {
-                    msg = 'Sin conexión para transcribir. Prueba con el micrófono del teclado.';
-                }
-                estadoDictado(puntoId, '⚠️ ' + msg, true);
-                setTimeout(() => estadoDictado(puntoId, '', false), 5000);
-                pararDictado(true);
+                errorTramo = event.error || 'desconocido';
             };
 
             rec.onend = () => {
-                // Si el navegador corta solo y el usuario no ha parado, cerrar limpio
-                if (window.dictadoActivo === puntoId) {
-                    pararDictado(true);
+                if (d.descartar) return;   // ya se ha enviado: no volver a escribir
+                // Fijar lo reconocido en este tramo
+                d.base = unirTexto(d.base, finalTramo);
+                if (d.textarea.isConnected) d.textarea.value = d.base;
+                if (window.dictadoRec === rec) window.dictadoRec = null;
+
+                if (!d.seguir) return;
+
+                // El modo "en el dispositivo" no está disponible: seguir por servidor
+                if (errorTramo === 'language-not-supported' && d.usarLocal) {
+                    d.usarLocal = false;
+                    window.dictadoLocalOK = false;
+                    return arrancarTramo(d);
                 }
+                // Silencio o corte normal: se encadena otro tramo
+                if (!errorTramo || errorTramo === 'no-speech' || errorTramo === 'aborted') {
+                    d.tramosSinVoz = huboVoz ? 0 : d.tramosSinVoz + 1;
+                    if (d.tramosSinVoz >= 4) {
+                        // Mucho rato callado: se apaga solo
+                        pararDictado();
+                        return;
+                    }
+                    setTimeout(() => { if (d.seguir) arrancarTramo(d); }, 150);
+                    return;
+                }
+                finDictadoConError(d, errorTramo);
             };
 
+            window.dictadoRec = rec;
             try {
                 rec.start();
             } catch (err) {
                 console.warn('No se pudo arrancar el dictado:', err);
-                pararDictado(true);
+                finDictadoConError(d, (err && err.name === 'NotAllowedError') ? 'not-allowed' : 'start-failed');
             }
         }
 
-        window.pararDictado = function(silencioso) {
+        function finDictadoConError(d, codigo) {
+            d.seguir = false;
+            if (window.dictadoActivo === d.puntoId) {
+                window.dictadoActivo = null;
+                window.dictadoRec = null;
+                window._dictado = null;
+            }
+            pintarMicActivo(d.puntoId, false);
+            const msg = codigo === 'start-failed'
+                ? 'No se pudo encender el micrófono. Vuelve a pulsar 🎤 o usa el micrófono del teclado.'
+                : mensajeErrorDictado(codigo);
+            // El aviso se queda visible: así se sabe por qué ha fallado
+            estadoDictado(d.puntoId, '⚠️ ' + msg, true, '#b91c1c');
+        }
+
+        window.pararDictado = function(silencioso, descartar) {
+            const d = window._dictado;
             const puntoId = window.dictadoActivo;
+            if (d) { d.seguir = false; d.descartar = !!descartar; }
             if (window.dictadoRec) {
-                try { window.dictadoRec.onend = null; window.dictadoRec.stop(); } catch (e) {}
+                // stop() para que llegue el último trozo; abort() si el texto ya se envió
+                try { descartar ? window.dictadoRec.abort() : window.dictadoRec.stop(); } catch (e) {}
             }
             window.dictadoRec = null;
             window.dictadoActivo = null;
+            window._dictado = null;
             if (puntoId) {
                 pintarMicActivo(puntoId, false);
                 if (!silencioso) {
@@ -6073,7 +6168,7 @@
 
         window.agregarAportacion = async function(puntoId) {
             // Si se estaba dictando en este punto, cerrar el micrófono antes de enviar
-            if (window.dictadoActivo === puntoId) pararDictado(true);
+            if (window.dictadoActivo === puntoId) pararDictado(true, true);
 
             const input = document.getElementById('input_' + puntoId);
             const texto = input.value.trim();
