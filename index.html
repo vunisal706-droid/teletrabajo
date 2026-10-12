@@ -3356,7 +3356,7 @@
 
             <!-- Cabecera con progreso -->
             <div class="guia-cabecera">
-                <button class="guia-cerrar" onclick="cancelarModoGuia()" title="Salir del modo guía">✕</button>
+                <button class="guia-cerrar" onclick="cancelarModoGuia()" title="Salir del modo exprés">✕</button>
                 <div class="guia-progreso">
                     <div class="guia-progreso-barra"><div id="guiaProgresoFill"></div></div>
                     <div class="guia-progreso-texto"><span id="guiaPasoActual">1</span> de <span id="guiaPasoTotal">6</span></div>
@@ -3496,10 +3496,10 @@
         <div class="panel-guia-cabecera">
             <span class="panel-guia-emoji">🐣</span>
             <div class="panel-guia-titulo">
-                <strong>Modo Guía — Paso <span id="pgPasoActual">1</span> de <span id="pgPasoTotal">7</span></strong>
+                <strong>Modo Exprés fácil — Paso <span id="pgPasoActual">1</span> de <span id="pgPasoTotal">7</span></strong>
                 <small id="pgSubtitulo">Configura tu reunión paso a paso</small>
             </div>
-            <button class="panel-guia-cerrar" onclick="cerrarPanelGuiaConfig()" title="Salir del modo guía">✕</button>
+            <button class="panel-guia-cerrar" onclick="cerrarPanelGuiaConfig()" title="Salir del modo exprés">✕</button>
         </div>
         <div class="panel-guia-progreso">
             <div id="pgProgresoFill"></div>
@@ -3524,10 +3524,20 @@
 
             <!-- Botón modo guía: para usuarios que se pierden con el formulario completo -->
             <button id="btnModoGuia" class="btn-modo-guia" onclick="iniciarModoGuia()">
-                <span class="emoji">🐣</span>
+                <span class="emoji">⚡</span>
                 <span class="texto">
-                    <strong>Modo Guía</strong>
-                    <small>¿Te pierdes? Te llevo paso a paso</small>
+                    <strong>Modo Exprés fácil</strong>
+                    <small>Te llevo paso a paso, rápido y sin líos</small>
+                </span>
+                <span class="flecha">→</span>
+            </button>
+
+            <!-- Subir el acta firmada (Séneca) a su carpeta del Drive -->
+            <button type="button" class="btn-modo-guia" onclick="abrirSubirActa()" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#f59e0b;color:#78350f">
+                <span class="emoji">📁</span>
+                <span class="texto">
+                    <strong>Subir el acta firmada al Drive</strong>
+                    <small>Cuando ya la han firmado todos en Séneca</small>
                 </span>
                 <span class="flecha">→</span>
             </button>
@@ -7776,6 +7786,61 @@ ${textoActaLimpio}`;
 
         // Descargar la plantilla Word con el membrete del cole
         // Copiar el prompt y abrir Claude — devuelve el acta en Word (.docx)
+        // ── Carpetas del Drive donde se guarda cada acta firmada ──
+        const CARPETAS_ACTAS = {
+            'infantil-3':{n:'Infantil 3 años',id:'1Gbcd_hrBjuHa_hMrKO1l9Qb7s56RKfZv'},
+            'infantil-4':{n:'Infantil 4 años',id:'1UPuTJjB5ywte7WsbJP7QytFbGJdIk7dd'},
+            'infantil-5':{n:'Infantil 5 años',id:'1gLoapXmonH22lLEXSRuiw0Op12lkpZlQ'},
+            'primero':{n:'1º de Primaria',id:'1SBY4XWt-uAIXunX472SseSkAOVsHP6M2'},
+            'segundo':{n:'2º de Primaria',id:'1xkV07N9AnnjrCddVQhF7_volVAgaaLTb'},
+            'tercero':{n:'3º de Primaria',id:'1Y05DRlTSA6p7NT4IiERVHEZoKbiqLena'},
+            'cuarto':{n:'4º de Primaria',id:'1oRwQkHnyqb-H60gAJiks4cF1E6SGfJPt'},
+            'quinto':{n:'5º de Primaria',id:'1w-XXZLd8ay0P4ja1jGwt2agrVOYG4nB2'},
+            'sexto':{n:'6º de Primaria',id:'1xVTJ0egqFknQOx-6pkUrjpEhllIF9o7M'},
+            'ciclo-infantil':{n:'Ciclo de Infantil',id:'1eqfMYYWwv-yAliUiku4Mn81IdR9FJM2Y'},
+            'primer-ciclo':{n:'1.er Ciclo',id:'1FxyXoyV3y21OrvD6PweUPaBocnWU2nb6'},
+            'segundo-ciclo':{n:'2.º Ciclo',id:'1m59-yFABHEQdnhyKltxI8nx95GuwR93y'},
+            'tercer-ciclo':{n:'3.er Ciclo',id:'1OTwyTdyaIGN536siHyecrJXiz6sbz3Pw'},
+            'orientacion':{n:'Equipo de Orientación',id:'1VfQ5J4FK2Cdaigp9kvcZ9ADu-hcLcJhw'},
+            'aula-tea':{n:'Equipo de Orientación (Aula TEA)',id:'1VfQ5J4FK2Cdaigp9kvcZ9ADu-hcLcJhw'}
+        };
+        function htmlSubirActa(tipo){
+            const c = CARPETAS_ACTAS[tipo];
+            if (!c) return '';
+            return `<div style="text-align:left;background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:14px 16px;margin:4px 0 14px">
+                <div style="font-weight:800;color:#92400e;font-size:14px;margin-bottom:8px">📌 Después, ¿qué hago con el acta?</div>
+                <div style="font-size:13px;color:#78350f;line-height:1.7">
+                    <div>1️⃣ Envíala a <b>firmar por Séneca</b> a todos los asistentes.</div>
+                    <div>2️⃣ Cuando estén todas las firmas, <b>descarga el PDF firmado</b> desde Séneca.</div>
+                    <div>3️⃣ <b>Súbelo a su carpeta del Drive</b> 👇</div>
+                </div>
+                <a href="https://drive.google.com/drive/folders/${c.id}" target="_blank" rel="noopener"
+                   style="display:block;margin-top:10px;background:#d97706;color:#fff;padding:12px 14px;border-radius:10px;text-decoration:none;font-weight:800;font-size:14px;text-align:center">
+                   📁 Subir el acta firmada a la carpeta de «${c.n}»</a>
+                <div style="font-size:11.5px;color:#92400e;margin-top:6px;text-align:center">Se abre la carpeta: arrastra el PDF dentro o pulsa «+ Nuevo» → «Subir archivo».</div>
+            </div>`;
+        }
+        window.abrirSubirActa = function(){
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:20000;padding:20px';
+            const opts = Object.keys(CARPETAS_ACTAS).map(k=>`<option value="${k}">${CARPETAS_ACTAS[k].n}</option>`).join('');
+            modal.innerHTML = `<div style="background:#fff;border-radius:14px;padding:24px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <h3 style="margin:0 0 12px;color:#92400e">📁 Subir el acta firmada al Drive</h3>
+                <label style="font-size:13px;font-weight:700">¿De qué equipo es el acta?</label>
+                <select id="saSel" style="width:100%;padding:10px;border-radius:8px;border:2px solid #e5e7eb;font-size:15px;margin:6px 0 14px">
+                    <option value="">-- Elige el equipo --</option>${opts}</select>
+                <div id="saBox"></div>
+                <button type="button" id="saCerrar" style="width:100%;background:transparent;border:2px solid #e5e7eb;color:#6b7280;padding:10px;border-radius:8px;cursor:pointer;font-size:13px">Cerrar</button>
+            </div>`;
+            document.body.appendChild(modal);
+            const sel = modal.querySelector('#saSel');
+            if (CARPETAS_ACTAS[window.sesionActual]) sel.value = window.sesionActual;
+            const pintar = ()=>{ modal.querySelector('#saBox').innerHTML = htmlSubirActa(sel.value); };
+            sel.onchange = pintar; pintar();
+            modal.querySelector('#saCerrar').onclick = ()=>modal.remove();
+            modal.onclick = e=>{ if (e.target===modal) modal.remove(); };
+        };
+
         window.copiarActaClaude = async function() {
             const prompt = await construirPromptActa();
             if (!prompt) return;
@@ -7810,6 +7875,7 @@ ${textoActaLimpio}`;
                     <p style="color: var(--text-light); font-size: 12px; margin-bottom: 14px; line-height: 1.5;">
                         Funciona también con cuenta gratuita de Claude.
                     </p>
+                    ${htmlSubirActa(window.sesionActual)}
                     <a href="https://claude.ai/new"
                        target="_blank"
                        onclick="this.closest('div').parentElement.remove()"
@@ -8016,7 +8082,7 @@ ${textoActaLimpio}`;
         };
 
         window.cancelarModoGuia = function() {
-            if (confirm('¿Salir del Modo Guía y volver al menú principal?')) {
+            if (confirm('¿Salir del Modo Exprés fácil y volver al menú principal?')) {
                 window.cambiarPantalla('screenInicio');
             }
         };
