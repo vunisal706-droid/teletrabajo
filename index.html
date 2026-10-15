@@ -5911,10 +5911,13 @@
                 </div>
             `;
 
-            // Contenido inicial: si el punto ya tiene escuchas, se pinta ahora; si no, lo pintan las escuchas al conectarse (evita cargarlo dos veces)
-            if (listenersPorPunto.has(punto.id)) {
-                requestAnimationFrame(() => { cargarAportaciones(punto.id); cargarVotacion(punto.id); cargarDocumentos(punto.id); });
-            }
+            // Cargar contenido inicial cuando la tarjeta ya está en la página
+            // (las escuchas pueden saltar antes de que la tarjeta se añada y entonces no pintan nada)
+            setTimeout(() => {
+                cargarAportaciones(punto.id);
+                cargarVotacion(punto.id);
+                cargarDocumentos(punto.id);
+            }, 50);
 
             // Registrar que este punto tiene listeners activos
             if (!listenersPorPunto.has(punto.id)) {
