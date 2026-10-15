@@ -5826,6 +5826,35 @@
         };
 
         // Crear card de punto
+        // Ayuda por punto (qué tratar + propuesta) y enlaces al Drive: datos comunes con el Tablón de Avisos
+        // (/tablon/ayudas-orden.json y /tablon/enlaces-orden.json). Solo se muestra; no se guarda ni va al acta.
+        (function(){
+            window.AYUDAS_ORDEN = window.AYUDAS_ORDEN || {}; window.ENLACES_ORDEN = window.ENLACES_ORDEN || [];
+            const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            const norm = t => String(t ?? '').trim().replace(/\s+/g, ' ');
+            window.htmlAyudaPunto = function(texto){
+                const t = norm(texto);
+                const ay0 = window.AYUDAS_ORDEN[t];
+                const org = (typeof mapeoReunionOrgano !== 'undefined') ? mapeoReunionOrgano[window.sesionActual] : null;
+                const enl = [];
+                for (const e of window.ENLACES_ORDEN) {
+                    try { if (new RegExp(e.patron, 'i').test(t) && !enl.some(x => x.url === e.url)) enl.push(e); } catch(_) {}
+                    if (enl.length >= 3) break;
+                }
+                if (!ay0 && !enl.length) return '';
+                const prop = ay0 ? ((ay0.po && org && ay0.po[org]) || ay0.p) : '';
+                const chips = enl.map(e => `<a href="${esc(e.url)}" target="_blank" rel="noopener" style="display:inline-block;font-size:.82em;font-weight:700;color:#1565c0;background:#e3f2fd;border-radius:12px;padding:3px 10px;margin:4px 6px 0 0;text-decoration:none">${e.icono || '📁'} ${esc(e.titulo)}</a>`).join('');
+                return `<details class="ayuda-punto" style="margin:10px 0 4px"><summary style="cursor:pointer;font-weight:700;color:#8a5a00">💡 Ayuda para este punto</summary><div style="background:#fff8e1;border:1px solid #ffe08a;border-radius:8px;padding:10px 12px;margin-top:6px;line-height:1.5;font-size:.95em">${ay0 ? `<p style="margin:0 0 8px"><b>Qué tratar:</b> ${esc(ay0.q)}</p><p style="margin:0"><b>Propuesta:</b> ${esc(prop)}</p>` : ''}${chips ? `<div style="margin-top:${ay0 ? 8 : 0}px">${chips}</div>` : ''}</div></details>`;
+            };
+            const rellenar = () => document.querySelectorAll('.ayuda-punto-slot').forEach(el => { if (!el.innerHTML.trim()) el.innerHTML = window.htmlAyudaPunto(el.dataset.texto); });
+            const get = u => fetch(u, {cache: 'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null);
+            Promise.all([get('/tablon/ayudas-orden.json'), get('/tablon/enlaces-orden.json')]).then(([a, e]) => {
+                const m = {}; for (const [k, v] of Object.entries((a && a.ayudas) || {})) m[norm(k)] = v;
+                window.AYUDAS_ORDEN = m; window.ENLACES_ORDEN = (e && e.enlaces) || [];
+                rellenar();
+            });
+        })();
+
         window.crearPuntoCard = function(punto, numero) {
             const card = document.createElement('div');
             card.className = 'card';
@@ -5835,6 +5864,7 @@
                     <div class="punto-numero">${numero}</div>
                     <div class="punto-titulo">${escapeHTML(punto.texto)}</div>
                 </div>
+                <div class="ayuda-punto-slot" data-texto="${escapeHTML(punto.texto)}">${window.htmlAyudaPunto ? window.htmlAyudaPunto(punto.texto) : ''}</div>
 
                 ${window.usuarioActual.rol === 'coordinador' ? `
                 <div style="margin: 20px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
@@ -11599,7 +11629,7 @@ ${textoActaLimpio}`;
 <script>
 // ===== Novedades (salen una sola vez en cada dispositivo) =====
 (function(){
-  var ID='2026-10-12', K='novedades-teletrabajo', ITEMS=["📁 Nuevo botón <b>«Subir el acta firmada al Drive»</b> (abajo en la pantalla principal y al generar el acta): te dice los pasos (firmar en Séneca → descargar el PDF firmado) y abre directamente la carpeta de tu equipo para subirla.", "⚡ El «Modo Guía» ahora se llama <b>«Modo Exprés fácil»</b>."];
+  var ID='2026-10-15', K='novedades-teletrabajo', ITEMS=["💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
   function ver(){ try{ if(localStorage.getItem(K)===ID) return; }catch(e){ return; }
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit';
