@@ -2615,7 +2615,6 @@
 <style id="ttAuroraStyle">
     body {
         background: linear-gradient(180deg, #f8fbff 0%, #f6fdf9 45%, #fffdf6 100%);
-        background-attachment: fixed;
     }
     body::before, body::after {
         content: ''; position: fixed; inset: -30%; z-index: -1;
@@ -2643,7 +2642,12 @@
     }
     /* Las tarjetas dejan pasar un poco de color del fondo */
     .card { background: rgba(255, 255, 255, .88); }
-    .container > .card { backdrop-filter: saturate(1.2); -webkit-backdrop-filter: saturate(1.2); }
+    /* Sin backdrop-filter en las tarjetas: con muchas tarjetas hacía que el desplazamiento fuera a tirones */
+    .container > .card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+    /* Durante la reunión el fondo se queda quieto y las tarjetas son opacas: desplazamiento fluido */
+    body:has(#containerReunion.con-chat)::before, body:has(#containerReunion.con-chat)::after { animation: none; will-change: auto; }
+    body:has(#containerReunion.con-chat) .card { background: #fff; }
+    #contenidoPuntos > .card { contain: layout paint; }
     /* La cabecera y el pie del portal de acceso también respiran */
     #ttGate { background: rgba(248, 250, 252, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 
@@ -5907,12 +5911,10 @@
                 </div>
             `;
 
-            // Cargar contenido inicial
-            setTimeout(() => {
-                cargarAportaciones(punto.id);
-                cargarVotacion(punto.id);
-                cargarDocumentos(punto.id);
-            }, 50);
+            // Contenido inicial: si el punto ya tiene escuchas, se pinta ahora; si no, lo pintan las escuchas al conectarse (evita cargarlo dos veces)
+            if (listenersPorPunto.has(punto.id)) {
+                requestAnimationFrame(() => { cargarAportaciones(punto.id); cargarVotacion(punto.id); cargarDocumentos(punto.id); });
+            }
 
             // Registrar que este punto tiene listeners activos
             if (!listenersPorPunto.has(punto.id)) {
