@@ -10673,8 +10673,14 @@ ${textoActaLimpio}`;
                 return 'Habilita Correo/contrase\u00f1a en la consola de Firebase (Authentication).';
             if (c === 'auth/weak-password')
                 return 'El IdEA es demasiado corto: Firebase exige al menos 6 caracteres.';
-            if (c === 'auth/wrong-password')
-                return 'Ya existe una cuenta con ese IdEA pero con otra contrase\u00f1a. Rev\u00edsala en la consola.';
+            if (c === 'auth/wrong-password' || c === 'auth/invalid-credential' || c === 'auth/invalid-login-credentials')
+                return 'Ya existe una cuenta con ese IdEA pero con otra contrase\u00f1a. Bórrala en la consola de Firebase (Authentication → Usuarios) y vuelve a pulsar «Reparar accesos».';
+            if (c === 'auth/invalid-email')
+                return 'El IdEA tiene caracteres no válidos (espacios, tildes o símbolos).';
+            if (c === 'auth/too-many-requests')
+                return 'Demasiados intentos seguidos. Espera unos minutos y vuelve a probar.';
+            if (c === 'PERMISSION_DENIED' || /permission/i.test((e && e.message) || ''))
+                return 'La base de datos no deja guardar el acceso (reglas de /acceso).';
             if (c === 'auth/network-request-failed')
                 return 'Sin conexi\u00f3n. Int\u00e9ntalo de nuevo.';
             return 'No se pudo crear el acceso: ' + (c || e.message || e);
@@ -11629,7 +11635,7 @@ ${textoActaLimpio}`;
 <script>
 // ===== Novedades (salen una sola vez en cada dispositivo) =====
 (function(){
-  var ID='2026-10-15d', K='novedades-teletrabajo', ITEMS=["🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
+  var ID='2026-10-16', K='novedades-teletrabajo', ITEMS=["🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
   function ver(){ try{ if(localStorage.getItem(K)===ID) return; }catch(e){ return; }
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit';
