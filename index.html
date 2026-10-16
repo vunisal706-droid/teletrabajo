@@ -10675,6 +10675,10 @@ ${textoActaLimpio}`;
                 return 'El IdEA es demasiado corto: Firebase exige al menos 6 caracteres.';
             if (c === 'auth/wrong-password' || c === 'auth/invalid-credential' || c === 'auth/invalid-login-credentials')
                 return 'Ya existe una cuenta con ese IdEA pero con otra contrase\u00f1a. Bórrala en la consola de Firebase (Authentication → Usuarios) y vuelve a pulsar «Reparar accesos».';
+            if (c === 'auth/admin-restricted-operation')
+                return 'Firebase no deja crear cuentas nuevas. En la consola: Authentication → Configuración → Acciones del usuario → activa «Habilitar la creación (registro)».';
+            if (c === 'auth/quota-exceeded')
+                return 'Firebase ha llegado al límite de altas por hoy. Inténtalo mañana.';
             if (c === 'auth/invalid-email')
                 return 'El IdEA tiene caracteres no válidos (espacios, tildes o símbolos).';
             if (c === 'auth/too-many-requests')
