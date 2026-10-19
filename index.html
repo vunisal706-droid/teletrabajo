@@ -5854,7 +5854,18 @@
             });
         })();
 
+        // Punto "Lectura y aprobación del acta anterior": se aprueba por asentimiento
+        // salvo que alguien proponga una corrección u objeción. En el acta no salen nombres.
+        window.esPuntoActaAnterior = function(texto) {
+            return /aprob/i.test(texto || '') && /acta\s+(de\s+la\s+(sesi[oó]n|reuni[oó]n)\s+)?anterior/i.test(texto || '');
+        };
+        // Mensajes que solo dicen "se aprueba", "conforme"... cuentan como asentimiento, no como corrección
+        window.esAsentimientoActa = function(texto) {
+            return /^\s*(s[ií][,.]?\s*)?(se\s+)?(aprueb[oa]|apruebo|aprobad[oa]|de\s+acuerdo|conforme|ok|vale|s[ií])[\s.!👍]*$/i.test(texto || '');
+        };
+
         window.crearPuntoCard = function(punto, numero) {
+            const esActaAnterior = window.esPuntoActaAnterior(punto.texto);
             const card = document.createElement('div');
             card.className = 'card';
             card.setAttribute('data-punto-id', punto.id);
@@ -5881,15 +5892,23 @@
                 <div id="documentos_${punto.id}" style="margin: 20px 0;"></div>
 
                 <div style="margin: 20px 0;">
+                    ${esActaAnterior ? `
+                    <div style="background: #e8f5e9; border: 2px solid #66bb6a; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; line-height: 1.5;">
+                        <strong>✅ El acta anterior se aprueba por asentimiento.</strong><br>
+                        No hace falta escribir "se aprueba". Escribe aquí <b>solo</b> si quieres proponer una <b>corrección u objeción</b>. En el acta no aparecerá tu nombre.
+                    </div>
+                    <strong style="display: block; margin-bottom: 10px;">✏️ Correcciones al acta anterior:</strong>
+                    ` : `
                     <strong style="display: block; margin-bottom: 10px;">💬 Conversación:</strong>
+                    `}
                     <div id="aportaciones_${punto.id}" class="chat-container"></div>
                     <div style="display: flex; gap: 10px; align-items: flex-end;">
-                        <textarea id="input_${punto.id}" placeholder="Escribe tu comentario... (Enter para enviar, Shift+Enter para nueva línea)" style="flex: 1; margin: 0; min-height: 60px;" rows="2" onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); agregarAportacion('${punto.id}'); }"></textarea>
+                        <textarea id="input_${punto.id}" placeholder="${esActaAnterior ? 'Solo si hay que corregir algo del acta anterior: indica qué y cómo debe quedar...' : 'Escribe tu comentario... (Enter para enviar, Shift+Enter para nueva línea)'}" style="flex: 1; margin: 0; min-height: 60px;" rows="2" onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); agregarAportacion('${punto.id}'); }"></textarea>
                         <button class="btn btn-outline btn-dictado" id="mic_${punto.id}" onclick="toggleDictado('${punto.id}')" title="Dictar en voz alta" style="width: auto; padding: 12px 14px; margin: 0; height: fit-content; display: none;">
                             🎤
                         </button>
                         <button class="btn btn-secondary" onclick="agregarAportacion('${punto.id}')" style="width: auto; padding: 12px 20px; margin: 0; height: fit-content;">
-                            📝 Enviar
+                            ${esActaAnterior ? '✏️ Proponer corrección' : '📝 Enviar'}
                         </button>
                     </div>
                     <div id="dictadoEstado_${punto.id}" style="display: none; font-size: 12px; color: var(--text-light); margin-top: 6px;"></div>
@@ -5897,7 +5916,14 @@
 
                 <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
                     <strong style="display: block; margin-bottom: 10px;">🗳️ Votación:</strong>
-                    ${window.usuarioActual.rol === 'coordinador' ? `
+                    ${window.usuarioActual.rol === 'coordinador' && esActaAnterior ? `
+                        <p style="margin: 0 0 10px; font-size: .92em; color: var(--text-light);">Solo es necesaria si alguien se opone a aprobar el acta. Es siempre anónima: en el acta saldrá el resultado sin nombres.</p>
+                        <div class="btn-group">
+                            <button class="btn btn-outline btn-small" onclick="crearVotacion('${punto.id}', false)">
+                                Votación Anónima
+                            </button>
+                        </div>
+                    ` : window.usuarioActual.rol === 'coordinador' ? `
                         <div class="btn-group">
                             <button class="btn btn-outline btn-small" onclick="crearVotacion('${punto.id}', false)">
                                 Votación Anónima
@@ -6214,6 +6240,13 @@
                 return;
             }
 
+            const tituloPunto = document.querySelector(`[data-punto-id="${puntoId}"] .punto-titulo`);
+            if (tituloPunto && window.esPuntoActaAnterior(tituloPunto.textContent) && window.esAsentimientoActa(texto)) {
+                alert('No hace falta escribirlo: el acta anterior ya se aprueba por asentimiento. Escribe aquí solo si quieres proponer una corrección.');
+                input.value = '';
+                return;
+            }
+
             const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones`);
             const nuevaAportacionRef = push(aportacionesRef);
 
@@ -6238,7 +6271,10 @@
                 const snapshot = await get(aportacionesRef);
 
                 if (!snapshot.exists()) {
-                    contenedor.innerHTML = '<div class="empty-state"><div class="emoji">💭</div><p>No hay comentarios aún. ¡Sé el primero!</p></div>';
+                    const tituloPunto = document.querySelector(`[data-punto-id="${puntoId}"] .punto-titulo`);
+                    contenedor.innerHTML = (tituloPunto && window.esPuntoActaAnterior(tituloPunto.textContent))
+                        ? '<div class="empty-state"><div class="emoji">✅</div><p>Sin correcciones: el acta anterior queda aprobada por asentimiento.</p></div>'
+                        : '<div class="empty-state"><div class="emoji">💭</div><p>No hay comentarios aún. ¡Sé el primero!</p></div>';
                     return;
                 }
 
@@ -7544,6 +7580,30 @@
                     texto += `\nPUNTO ${index + 1}. ${punto.texto || '(sin título)'}\n`;
                     texto += '─────────────────────────────────────────\n';
 
+                    // Aprobación del acta anterior: por asentimiento salvo correcciones u oposición. Sin nombres.
+                    if (window.esPuntoActaAnterior(punto.texto)) {
+                        const correcciones = Object.values(punto.aportaciones || {})
+                            .filter(a => a && a.texto && !window.esAsentimientoActa(a.texto))
+                            .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                        const votosActa = (punto.votacion && punto.votacion.activa && punto.votacion.votos)
+                            ? Object.values(punto.votacion.votos) : [];
+
+                        if (votosActa.length) {
+                            const n = t => votosActa.filter(v => v.voto === t).length;
+                            texto += `RESULTADO: El acta anterior se somete a votación (anónima). A favor: ${n('si')}. En contra: ${n('no')}. Abstenciones: ${n('abstencion')}.\n`;
+                        } else if (correcciones.length) {
+                            texto += 'RESULTADO: Se aprueba por asentimiento el acta de la sesión anterior, con las correcciones siguientes.\n';
+                        } else {
+                            texto += 'RESULTADO: Se aprueba por asentimiento el acta de la sesión anterior, sin correcciones.\n';
+                        }
+                        if (correcciones.length) {
+                            texto += 'Correcciones propuestas (sin nombres):\n';
+                            correcciones.forEach(c => { texto += `   - ${c.texto}\n`; });
+                        }
+                        texto += '\n';
+                        return;
+                    }
+
                     // Aportaciones
                     if (punto.aportaciones) {
                         texto += 'Debate:\n';
@@ -7743,6 +7803,7 @@ ESTRUCTURA (exactamente estas secciones y en este orden):
    LÍMITE ABSOLUTO DE ESA AMPLIACIÓN: enriqueces la FORMA de decirlo, nunca el CONTENIDO. Está terminantemente prohibido añadir información que no esté en los datos: no inventes causas ni explicaciones ("gracias al trabajo desarrollado en el aula..."), ni grados o matices que nadie expresó ("un progreso notable", "una mejora significativa"), ni consecuencias, medidas, responsables, plazos, cifras ni valoraciones. Tampoco añadas adjetivos valorativos. Si una aportación afirma un hecho sin explicar el porqué, el acta lo recoge igual: sin el porqué. Toda afirmación del acta debe poder rastrearse hasta algo que alguien escribió realmente.
    Cuando una aportación sea una simple enumeración o un listado (asignaciones, composición de equipos, coordinaciones, planes), introdúcelo con una frase de encuadre y preséntalo como lista con viñetas, respetando los datos literalmente.
    Si un punto no tiene aportaciones en los datos, indícalo con una frase breve: ahí no hay nada que desarrollar y el párrafo debe ser corto.
+   PUNTO DE APROBACIÓN DEL ACTA ANTERIOR: redáctalo en una o dos frases a partir de la línea RESULTADO de los datos, sin nombrar a ninguna persona y sin desarrollarlo más. Sin correcciones: "Se aprueba por asentimiento el acta de la sesión anterior, sin enmiendas." Con correcciones: "Se aprueba por asentimiento el acta de la sesión anterior con las siguientes correcciones:" y la lista de correcciones tal como figuran. Si hubo votación, indica el resultado numérico (a favor, en contra, abstenciones) y si el acta queda aprobada (más votos a favor que en contra) o no aprobada, siempre sin nombres.
 9. ACUERDOS ADOPTADOS: sección con ese título (sin numerar como punto del orden del día), colocada justo después del último punto del DESARROLLO (habitualmente "Ruegos y preguntas") y antes del CIERRE. Repasa todo el desarrollo y extrae en una lista los acuerdos o compromisos concretos que se hayan adoptado, redactados de forma breve (una línea cada uno). Reglas estrictas: incluye SOLO compromisos claros y explícitos ("se acuerda...", "se decide...", "queda establecido que..."); no conviertas en acuerdo una simple propuesta, idea o comentario al aire; no inventes responsables ni plazos que no figuren en el texto. Si en la sesión no se adoptó ningún acuerdo, escribe una única frase: "No se adoptaron acuerdos formales en esta sesión."
 10. CIERRE: "Y sin más asuntos que tratar, se levanta la sesión a las [HORA DE FINALIZACIÓN] horas del día de la fecha."
 
