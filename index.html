@@ -4018,6 +4018,7 @@
             { nombre: "Castilla Alcalde, Eva María", puesto: "Educación Física" },
             { nombre: "Desviat García, María Lorena", puesto: "Audición y Lenguaje" },
             { nombre: "Flores Maldonado, Isabel Rosa", puesto: "Primaria-Bilingüe Inglés" },
+            { nombre: "García Jiménez, Alejandra", puesto: "Primaria-Bilingüe Inglés" },
             { nombre: "García Sánchez, Magdalena", puesto: "Educación Primaria" },
             { nombre: "Lucena González, María Noelia", puesto: "Educación Infantil" },
             { nombre: "Lupión Puente, Manuel", puesto: "Educación Primaria" },
@@ -10045,6 +10046,12 @@ ${textoActaLimpio}`;
         // Solo se usa la primera vez; a partir de ahí manda Firebase (nodo personal/).
         const PERSONAL_SEED = [
             {
+                        "nombre": "García Jiménez, Alejandra",
+                        "puesto": "Primaria-Bilingüe Inglés",
+                        "idea": "agarjim730",
+                        "claustro": true
+            },
+            {
                         "nombre": "Ballesteros González, Ana del Rosario",
                         "puesto": "Personal del centro",
                         "idea": "abalgon066",
@@ -10132,6 +10139,10 @@ ${textoActaLimpio}`;
 
         // Personal del curso pasado que no aparece en el listado de Séneca.
         // No se carga: dirección lo añade a mano si esa persona sigue en el centro.
+        // Personal que se da de alta solo (si no está ya en Firebase)
+        const ALTAS_AUTO = [
+            { nombre: "García Jiménez, Alejandra", puesto: "Primaria-Bilingüe Inglés", idea: "agarjim730" } // tutora de 5.º, sustituye a Yenifer Montuno Heredero hasta final de curso
+        ];
         const PERSONAL_ANTERIOR = [
             {
                         "nombre": "Flores Maldonado, Isabel Rosa",
@@ -10265,6 +10276,12 @@ ${textoActaLimpio}`;
                     const obj = snap.val();
                     ttPersonal = Object.keys(obj).map(k => Object.assign({ key: k }, obj[k]));
                     ttDesdeFirebase = true;
+                    // Altas automáticas de personal nuevo (sustituciones del curso)
+                    for (const n of ALTAS_AUTO) {
+                        if (ttPersonal.some(p => ttNormIdea(p.idea) === n.idea)) continue;
+                        const np = Object.assign({ key: ttClave(n.nombre), claustro: true }, n);
+                        try { await window.set(window.ref(window.database, 'personal/' + np.key), { nombre: np.nombre, puesto: np.puesto, idea: np.idea, claustro: true }); ttPersonal.push(np); } catch (e) { console.warn(e); }
+                    }
                 } else {
                     ttPersonal = PERSONAL_SEED.map(p => Object.assign({ key: ttClave(p.nombre) }, p));
                     const paquete = {};
@@ -11700,7 +11717,7 @@ ${textoActaLimpio}`;
 <script>
 // ===== Novedades (salen una sola vez en cada dispositivo) =====
 (function(){
-  var ID='2026-10-16', K='novedades-teletrabajo', ITEMS=["🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
+  var ID='2026-11-01', K='novedades-teletrabajo', ITEMS=["👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
   function ver(){ try{ if(localStorage.getItem(K)===ID) return; }catch(e){ return; }
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit';
