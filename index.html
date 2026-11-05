@@ -5401,6 +5401,18 @@
             document.getElementById('inputNuevoPunto').value = '';
         };
 
+        // Subir o bajar un punto del orden del día (dir: -1 sube, +1 baja)
+        window.moverPunto = async function(puntoId, dir) {
+            const L = (window._puntosConfig || []).map(p => p.id);
+            const i = L.indexOf(puntoId), j = i + dir;
+            if (i < 0 || j < 0 || j >= L.length) return;
+            [L[i], L[j]] = [L[j], L[i]];
+            // Se renumeran todos (1000, 2000, …) para que el orden quede siempre limpio
+            const cambios = {}, base = Date.now();
+            L.forEach((id, k) => { cambios[`${id}/orden`] = base + k; });
+            await update(ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`), cambios);
+        };
+
         // Eliminar punto
         window.eliminarPunto = function(puntoId) {
             if (!confirm('¿Seguro que quieres eliminar este punto del orden del día?')) {
@@ -8034,6 +8046,7 @@ ${textoActaLimpio}`;
                 const puntos = snapshot.val();
                 const puntosArray = Object.entries(puntos).map(([id, data]) => ({ id, ...data }));
                 puntosArray.sort((a, b) => a.orden - b.orden);
+                window._puntosConfig = puntosArray;
 
                 // Actualizar window.ordenDia con los textos de los puntos
                 window.ordenDia = puntosArray.map(punto => punto.texto);
@@ -8052,9 +8065,10 @@ ${textoActaLimpio}`;
                     }
                 } catch (e) { /* sin horas guardadas aún */ }
 
-                puntosArray.forEach(punto => {
+                puntosArray.forEach((punto, k) => {
                     const div = document.createElement('div');
                     div.className = 'punto-item';
+                    const _flecha = (d, ico, txt, off) => `<button type="button" class="btn btn-small" title="${txt}" aria-label="${txt}" ${off ? 'disabled' : ''} onclick="moverPunto('${punto.id}', ${d})" style="background:#eaf1f8;color:#1f4e79;border:1px solid #b9cde3;min-width:34px;${off ? 'opacity:.35;cursor:default;' : ''}">${ico}</button>`;
                     const _info = window.infoPunto ? window.infoPunto(punto.texto) : null;
                     const _btnAyuda = _info
                         ? `<button title="Qué hay que hacer en este punto" onclick="mostrarAyudaPunto(this.dataset.t)" data-t="${escapeHTML(punto.texto)}" style="margin-left:8px;border:1px solid #1f4e79;color:#1f4e79;background:#eaf1f8;border-radius:50%;width:22px;height:22px;font-size:13px;line-height:1;cursor:pointer;padding:0;flex:0 0 auto;">?</button>`
@@ -8062,7 +8076,11 @@ ${textoActaLimpio}`;
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-weight: 600;">${escapeHTML(punto.texto)}${_btnAyuda}</span>
-                            <button class="btn btn-danger btn-small" onclick="eliminarPunto('${punto.id}')">❌</button>
+                            <span style="display:flex;gap:6px;flex:0 0 auto;margin-left:8px">
+                                ${_flecha(-1, '⬆️', 'Subir este punto', k === 0)}
+                                ${_flecha(1, '⬇️', 'Bajar este punto', k === puntosArray.length - 1)}
+                                <button class="btn btn-danger btn-small" title="Eliminar este punto" onclick="eliminarPunto('${punto.id}')">❌</button>
+                            </span>
                         </div>
                     `;
                     lista.appendChild(div);
@@ -11717,7 +11735,7 @@ ${textoActaLimpio}`;
 <script>
 // ===== Novedades (salen una sola vez en cada dispositivo) =====
 (function(){
-  var ID='2026-11-01', K='novedades-teletrabajo', ITEMS=["👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
+  var ID='2026-11-05', K='novedades-teletrabajo', ITEMS=["↕️ <b>Ordenar el orden del día</b>: cada punto tiene ahora ⬆️ y ⬇️ para subirlo o bajarlo. Ya no hace falta borrar y volver a escribir."]; var _ITEMS_ANT=["👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
   function ver(){ try{ if(localStorage.getItem(K)===ID) return; }catch(e){ return; }
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit';
