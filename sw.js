@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teletrabajo-capitulaciones-v48-b2611051130';
+const CACHE_NAME = 'teletrabajo-capitulaciones-v49-b2611131200';
 
 // Obtener la ruta base de la app
 const getBaseUrl = () => {

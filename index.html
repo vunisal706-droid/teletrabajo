@@ -2801,7 +2801,17 @@
                 </select>
             </div>
 
-            <div class="tt-field">
+            <div class="tt-field" id="ttCampoInvitado" style="display:none">
+                <label for="ttNombreInvitado">2. Escribe tu nombre</label>
+                <div class="tt-aviso" style="background:#EEF2FF;border-color:#C7D2FE;color:#3730A3">
+                    🎓 <strong>Modo demostración para la formación.</strong><br>
+                    Entras en una copia de prueba que funciona igual que la real, pero separada:
+                    no ves nada del centro y <strong>todo lo que se cree se borra a las 24 horas</strong>.
+                </div>
+                <input type="text" id="ttNombreInvitado" placeholder="Nombre y apellidos" maxlength="60" autocomplete="name">
+            </div>
+
+            <div class="tt-field" id="ttCampoIdea">
                 <label for="ttIdea">2. Tu <u>usuario</u> de Séneca (IdEA)</label>
                 <div class="tt-aviso">
                     ⚠️ <strong>Escribe tu USUARIO de Séneca, NO tu contraseña.</strong><br>
@@ -2823,7 +2833,7 @@
         <div class="tt-foot">
             ¿No apareces en la lista o no te deja entrar?<br>
             Habla con la dirección del centro para que te dé de alta.
-            <div style="margin-top:6px;font-size:11px;opacity:.6">versión 47</div>
+            <div style="margin-top:6px;font-size:11px;opacity:.6">versión 48</div>
         </div>
     </div>
 </div>
@@ -3859,6 +3869,9 @@
     
     <!-- Firebase SDK -->
     <script>
+window.ttRaiz = function () { return (window.ttUsuario && window.ttUsuario.invitado) ? 'demo/' : ''; };
+</script>
+<script>
         // ===== UTILIDADES v2: seguridad, toasts y accesibilidad =====
 
         // Escapa HTML para insertar texto de usuario en innerHTML sin riesgo
@@ -4892,7 +4905,7 @@
             window.usuarioActual = { nombre, rol };
 
             // Verificar si ya existe la reunión
-            const sesionRef = ref(database, `sesiones/${idReunion}/${fecha}`);
+            const sesionRef = ref(database, `${window.ttRaiz()}sesiones/${idReunion}/${fecha}`);
             const snapshot = await get(sesionRef);
 
             if (snapshot.exists()) {
@@ -5025,7 +5038,7 @@
             }
             
             // Añadir cada punto predefinido a Firebase
-            const puntosRef = ref(database, `sesiones/${tipoReunion}/${fecha}/puntos`);
+            const puntosRef = ref(database, `${window.ttRaiz()}sesiones/${tipoReunion}/${fecha}/puntos`);
             
             for (let i = 0; i < puntosPredefinidos.length; i++) {
                 const nuevoPuntoRef = push(puntosRef);
@@ -5086,7 +5099,7 @@
             };
 
             // Verificar si existe la reunión
-            const sesionRef = ref(database, `sesiones/${idReunion}/${fecha}`);
+            const sesionRef = ref(database, `${window.ttRaiz()}sesiones/${idReunion}/${fecha}`);
             let snapshot;
             try { snapshot = await get(sesionRef); }
             catch (err) { return window.avisoSinPermiso(err); }
@@ -5099,7 +5112,7 @@
             const sesionData = snapshot.val();
 
             // Registrar como participante usando nombre normalizado como key
-            const participanteRef = ref(database, `sesiones/${idReunion}/${fecha}/participantes/${nombreNormalizado}`);
+            const participanteRef = ref(database, `${window.ttRaiz()}sesiones/${idReunion}/${fecha}/participantes/${nombreNormalizado}`);
             try {
                 await set(participanteRef, {
                     nombre: nombre.trim(),
@@ -5133,7 +5146,7 @@
             const numero = document.getElementById('inputNumeroActa')?.value.trim() || '';
             const impersonal = document.getElementById('checkImpersonal')?.checked || false;
             try {
-                const cfgRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/configActa`);
+                const cfgRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/configActa`);
                 await set(cfgRef, { numero: numero, impersonal: impersonal });
             } catch (err) {
                 console.warn('No se pudieron guardar los ajustes del acta:', err);
@@ -5144,7 +5157,7 @@
         window.leerConfigActa = async function() {
             if (!window.sesionActual || !window.fechaActual) return { numero: '', impersonal: false };
             try {
-                const cfgRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/configActa`);
+                const cfgRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/configActa`);
                 const snap = await get(cfgRef);
                 const val = snap.exists() ? snap.val() : {};
                 return { numero: val.numero || '', impersonal: !!val.impersonal };
@@ -5181,7 +5194,7 @@
         window.leerHorasReunion = async function() {
             if (!window.sesionActual || !window.fechaActual) return { inicio: '', fin: '' };
             try {
-                const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                const horasRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
                 const snap = await get(horasRef);
                 const val = snap.exists() ? snap.val() : {};
                 return { inicio: val.inicio || '', fin: val.fin || '' };
@@ -5197,7 +5210,7 @@
             const inicio = document.getElementById('inputHoraInicioActa')?.value || '';
             const fin    = document.getElementById('inputHoraFinActa')?.value || '';
             try {
-                const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                const horasRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
                 await set(horasRef, { inicio: inicio, fin: fin });
                 // Mantener sincronizado el campo de la pantalla de configuración si existe
                 const campoInicio = document.getElementById('inputHoraInicio');
@@ -5215,7 +5228,7 @@
             const horaInicio = document.getElementById('inputHoraInicio')?.value || '';
             const horaFin    = document.getElementById('inputHoraFin')?.value || '';
             try {
-                const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                const horasRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
                 await set(horasRef, { inicio: horaInicio, fin: horaFin });
             } catch (err) {
                 console.warn('No se pudieron guardar las horas:', err);
@@ -5233,7 +5246,7 @@
         window.chatInformalNoLeidos = 0;
 
         function chatInformalRef() {
-            return ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/chatInformal`);
+            return ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/chatInformal`);
         }
 
         window.toggleChatInformal = function() {
@@ -5390,7 +5403,7 @@
                 return;
             }
 
-            const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
+            const puntosRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
             const nuevoPuntoRef = push(puntosRef);
             
             set(nuevoPuntoRef, {
@@ -5410,7 +5423,7 @@
             // Se renumeran todos (1000, 2000, …) para que el orden quede siempre limpio
             const cambios = {}, base = Date.now();
             L.forEach((id, k) => { cambios[`${id}/orden`] = base + k; });
-            await update(ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`), cambios);
+            await update(ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos`), cambios);
         };
 
         // Eliminar punto
@@ -5418,19 +5431,19 @@
             if (!confirm('¿Seguro que quieres eliminar este punto del orden del día?')) {
                 return;
             }
-            const puntoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}`);
+            const puntoRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}`);
             remove(puntoRef);
         };
 
         // Iniciar reunión
         window.iniciarReunion = async function() {
-            const sesionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}`);
+            const sesionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}`);
             update(sesionRef, { estado: 'activa' });
 
             // Registrar coordinador como participante
             // Misma clave normalizada que al unirse, para no duplicar al coordinador
             const claveCoord = String(window.usuarioActual.nombre || '').trim().toLowerCase().replace(/\s+/g, '-');
-            const participanteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes/${claveCoord}`);
+            const participanteRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/participantes/${claveCoord}`);
             set(participanteRef, {
                 nombre: window.usuarioActual.nombre,
                 rol: window.usuarioActual.rol,
@@ -5467,13 +5480,13 @@
             document.getElementById('containerReunion').classList.add('con-chat');
 
             // Escuchar cambios en participantes
-            const participantesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
+            const participantesRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
             onValue(participantesRef, () => {
                 cargarParticipantes();
             });
 
             // Escuchar cambios en videollamada
-            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+            const videollamadaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             onValue(videollamadaRef, () => {
                 cargarVideollamada();
             });
@@ -5481,7 +5494,7 @@
             // Listener ÚNICO para puntos - solo se activa una vez
             if (!puntosListenerActivo) {
                 puntosListenerActivo = true;
-                const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
+                const puntosRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
                 onValue(puntosRef, (snapshot) => {
                     cargarPuntosDesdeCero(snapshot);
                 });
@@ -5490,7 +5503,7 @@
             // Listener ÚNICO para funciones del órgano - solo se activa una vez
             if (!funcionesListenerActivo) {
                 funcionesListenerActivo = true;
-                const funcionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/funciones`);
+                const funcionesRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/funciones`);
                 onValue(funcionesRef, (snapshot) => {
                     cargarFuncionesOrgano(snapshot);
                 });
@@ -5570,7 +5583,7 @@
             const acumulado = {};
             let totalSesiones = 0;
             try {
-                const todasRef = ref(database, `sesiones/${window.sesionActual}`);
+                const todasRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}`);
                 const snap = await get(todasRef);
                 if (snap.exists()) {
                     const sesiones = snap.val() || {};
@@ -5735,7 +5748,7 @@
         window.toggleFuncionOrgano = async function(indice, marcada) {
             if (!window.sesionActual || !window.fechaActual) return;
             if (window.usuarioActual && window.usuarioActual.rol === 'familia') return;
-            const funcionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/funciones/${indice}`);
+            const funcionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/funciones/${indice}`);
             try {
                 await set(funcionRef, marcada ? true : null);
             } catch (err) {
@@ -5750,7 +5763,7 @@
             const lista = document.getElementById('listaParticipantes');
             lista.innerHTML = '';
 
-            const participantesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
+            const participantesRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
             const snapshot = await get(participantesRef);
 
             if (!snapshot.exists()) {
@@ -5804,7 +5817,7 @@
                 return;
             }
             
-            const participanteRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes/${participanteId}`);
+            const participanteRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/participantes/${participanteId}`);
             await remove(participanteRef);
             
             // Recargar lista de participantes
@@ -5816,7 +5829,7 @@
             const contenedor = document.getElementById('contenidoPuntos');
             contenedor.innerHTML = '';
 
-            const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
+            const puntosRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
             const snapshot = await get(puntosRef);
 
             if (!snapshot.exists()) {
@@ -5963,17 +5976,17 @@
                 listenersPorPunto.set(punto.id, true);
                 
                 // Listeners en tiempo real
-                const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/aportaciones`);
+                const aportacionesRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/aportaciones`);
                 onValue(aportacionesRef, () => {
                     cargarAportaciones(punto.id);
                 });
 
-                const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/votacion`);
+                const votacionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/votacion`);
                 onValue(votacionRef, () => {
                     cargarVotacion(punto.id);
                 });
 
-                const documentosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/documentos`);
+                const documentosRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${punto.id}/documentos`);
                 onValue(documentosRef, () => {
                     cargarDocumentos(punto.id);
                 });
@@ -6260,7 +6273,7 @@
                 return;
             }
 
-            const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones`);
+            const aportacionesRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones`);
             const nuevaAportacionRef = push(aportacionesRef);
 
             await set(nuevaAportacionRef, {
@@ -6278,7 +6291,7 @@
             const contenedor = document.getElementById('aportaciones_' + puntoId);
             if (!contenedor) return;
 
-            const aportacionesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones`);
+            const aportacionesRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones`);
             
             try {
                 const snapshot = await get(aportacionesRef);
@@ -6346,7 +6359,7 @@
 
         // Editar aportación (autor o coordinador)
         window.editarAportacion = async function(puntoId, aportacionId) {
-            const aportacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones/${aportacionId}`);
+            const aportacionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones/${aportacionId}`);
             const snapshot = await get(aportacionRef);
             
             if (!snapshot.exists()) {
@@ -6415,7 +6428,7 @@
 
         // Borrar aportación (autor o coordinador)
         window.borrarAportacion = async function(puntoId, aportacionId) {
-            const aportacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones/${aportacionId}`);
+            const aportacionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/aportaciones/${aportacionId}`);
             const snapshot = await get(aportacionRef);
             
             if (!snapshot.exists()) {
@@ -6460,7 +6473,7 @@
                 return;
             }
 
-            const documentosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/documentos`);
+            const documentosRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/documentos`);
             const nuevoDocumentoRef = push(documentosRef);
 
             await set(nuevoDocumentoRef, {
@@ -6486,7 +6499,7 @@
                 return;
             }
             
-            const documentoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/documentos/${documentoId}`);
+            const documentoRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/documentos/${documentoId}`);
             await remove(documentoRef);
         };
 
@@ -6495,7 +6508,7 @@
             const contenedor = document.getElementById('documentos_' + puntoId);
             if (!contenedor) return;
 
-            const documentosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/documentos`);
+            const documentosRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/documentos`);
             
             try {
                 const snapshot = await get(documentosRef);
@@ -6556,7 +6569,7 @@
 
         // Crear votación
         window.crearVotacion = async function(puntoId, conNombres) {
-            const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
+            const votacionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
             try {
                 await set(votacionRef, {
                     activa: true,
@@ -6574,7 +6587,7 @@
             const contenedor = document.getElementById('votacion_' + puntoId);
             if (!contenedor) return;
 
-            const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
+            const votacionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
             
             try {
                 const snapshot = await get(votacionRef);
@@ -6663,7 +6676,7 @@
         window.votar = async function(puntoId, voto) {
             // Clave segura para Firebase (sin . # $ [ ] /)
             const claveVotante = String(window.usuarioActual.nombre).replace(/[.#$\[\]\/]/g, '');
-            const votoRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion/votos/${claveVotante}`);
+            const votoRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion/votos/${claveVotante}`);
             try {
                 await set(votoRef, {
                     nombre: window.usuarioActual.nombre,
@@ -6682,7 +6695,7 @@
                 return;
             }
             
-            const votacionRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
+            const votacionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos/${puntoId}/votacion`);
             try {
                 await update(votacionRef, { activa: false });
                 mostrarToast('Votación cerrada', 'success');
@@ -6695,7 +6708,7 @@
         // Gestión de videollamada
         window.gestionarVideollamada = async function() {
             // Obtener enlaces actuales
-            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+            const videollamadaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             const snapshot = await get(videollamadaRef);
             
             const enlaceActual1 = snapshot.exists() ? (snapshot.val().enlace1 || snapshot.val().enlace || '') : '';
@@ -6816,7 +6829,7 @@
                 return;
             }
             
-            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+            const videollamadaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             await set(videollamadaRef, {
                 enlace1: enlace1,
                 enlace2: enlace2 || null,
@@ -6832,7 +6845,7 @@
                 return;
             }
             
-            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+            const videollamadaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             await remove(videollamadaRef);
             
             cerrarModalVideollamada();
@@ -6856,7 +6869,7 @@
             const banner = document.getElementById('videollamadaBannerConfig');
             if (!banner) return;
             if (!window.sesionActual || !window.fechaActual) return;
-            const videollamadaRef = ref(database, 'sesiones/' + window.sesionActual + '/' + window.fechaActual + '/videollamada');
+            const videollamadaRef = ref(database, window.ttRaiz() + 'sesiones/' + window.sesionActual + '/' + window.fechaActual + '/videollamada');
             const snapshot = await get(videollamadaRef);
             if (!snapshot.exists()) {
                 banner.innerHTML = '<p style="color:#92400e;font-size:13px;margin:0 0 10px 0;">⚠️ Sin videollamada configurada todavía. Pulsa el botón para añadir el enlace de Meet o Zoom.</p>';
@@ -6884,7 +6897,7 @@
             const bannerContainer = document.getElementById('videollamadaBanner');
             const gestionContainer = document.getElementById('gestionVideollamada');
             
-            const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+            const videollamadaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
             const snapshot = await get(videollamadaRef);
             
             // Botón de gestión para coordinador
@@ -6971,7 +6984,7 @@
         window.comprobarAsistenciaParaActa = async function() {
             let hayAsistentes = false;
             try {
-                const snap = await get(ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`));
+                const snap = await get(ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`));
                 if (snap.exists()) {
                     hayAsistentes = Object.values(snap.val()).some(p => p && p.estado === 'asistente');
                 }
@@ -7044,12 +7057,12 @@
             }
 
             // 1) Cargar lo que ya esté guardado en Firebase
-            const asistenciaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`);
+            const asistenciaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`);
             const snap = await get(asistenciaRef);
             const guardado = snap.exists() ? snap.val() : {};
 
             // 2) Cargar la lista de participantes conectados (para preselección)
-            const participantesRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
+            const participantesRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/participantes`);
             const partSnap = await get(participantesRef);
             const conectados = partSnap.exists() ? Object.values(partSnap.val()).map(p => p.nombre) : [];
 
@@ -7248,7 +7261,7 @@
                 };
             });
 
-            const asistenciaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`);
+            const asistenciaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/asistencia`);
             try {
                 await set(asistenciaRef, datosAGuardar);
                 cerrarModalAsistencia();
@@ -7304,7 +7317,7 @@
             try {
                 console.log('[ActaAnterior] Listando fechas en sesiones/' + window.sesionActual);
 
-                const sesionRef = ref(database, `sesiones/${window.sesionActual}`);
+                const sesionRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}`);
                 const snap = await get(sesionRef);
 
                 if (!snap.exists()) {
@@ -7463,7 +7476,7 @@
             // Si no se pasan parámetros, usa la sesión y fecha actuales (comportamiento original)
             const sesion = sesionId || window.sesionActual;
             const fecha = fechaIso || window.fechaActual;
-            const sesionRef = ref(database, `sesiones/${sesion}/${fecha}`);
+            const sesionRef = ref(database, `${window.ttRaiz()}sesiones/${sesion}/${fecha}`);
             const snapshot = await get(sesionRef);
 
             if (!snapshot.exists()) {
@@ -7475,7 +7488,7 @@
 
             // Leer la asistencia de forma independiente para garantizar datos frescos
             // (el snapshot raíz puede no incluir subclaves guardadas por set() separado)
-            const asistenciaRef = ref(database, `sesiones/${sesion}/${fecha}/asistencia`);
+            const asistenciaRef = ref(database, `${window.ttRaiz()}sesiones/${sesion}/${fecha}/asistencia`);
             const asistenciaSnap = await get(asistenciaRef);
             if (asistenciaSnap.exists()) {
                 sesionData.asistencia = asistenciaSnap.val();
@@ -7506,7 +7519,7 @@
             if (datosFuncActa && datosFuncActa.funciones && datosFuncActa.funciones.length > 0) {
                 let marcadasFunc = {};
                 try {
-                    const funcRef = ref(database, `sesiones/${sesion}/${fecha}/funciones`);
+                    const funcRef = ref(database, `${window.ttRaiz()}sesiones/${sesion}/${fecha}/funciones`);
                     const funcSnap = await get(funcRef);
                     if (funcSnap.exists()) marcadasFunc = funcSnap.val() || {};
                 } catch (e) { /* sin funciones marcadas */ }
@@ -8028,7 +8041,7 @@ ${textoActaLimpio}`;
             if (puntosConfigListenerActivo) return; // ya hay un listener activo
             puntosConfigListenerActivo = true;
             
-            const puntosRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
+            const puntosRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/puntos`);
             onValue(puntosRef, async (snapshot) => {
                 const lista = document.getElementById('listaPuntos');
                 if (!lista) return;
@@ -8054,7 +8067,7 @@ ${textoActaLimpio}`;
 
                 // Cargar horas guardadas (solo una vez, sin listener continuo)
                 try {
-                    const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                    const horasRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
                     const horasSnap = await get(horasRef);
                     if (horasSnap.exists()) {
                         const h = horasSnap.val();
@@ -8678,7 +8691,7 @@ ${textoActaLimpio}`;
             // Obtener videollamadas si existen
             let videollamadas = null;
             try {
-                const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+                const videollamadaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
                 const snapshot = await get(videollamadaRef);
                 if (snapshot.exists()) {
                     videollamadas = snapshot.val();
@@ -8846,7 +8859,7 @@ ${textoActaLimpio}`;
             // Precargar los enlaces de videollamada que ya existan en Firebase
             try {
                 if (window.sesionActual && window.fechaActual) {
-                    const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+                    const videollamadaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
                     const snap = await get(videollamadaRef);
                     if (snap.exists()) {
                         const v = snap.val();
@@ -9177,7 +9190,7 @@ ${textoActaLimpio}`;
                 // Guardar en Firebase para que aparezcan en "Gestión de videollamada"
                 if (e1 || e2) {
                     try {
-                        const videollamadaRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
+                        const videollamadaRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/videollamada`);
                         const datosVideo = {};
                         if (e1) datosVideo.enlace1 = e1;
                         if (e2) datosVideo.enlace2 = e2;
@@ -9188,7 +9201,7 @@ ${textoActaLimpio}`;
                 }
                 // Sincronizar hora de inicio con el campo de la pantalla y Firebase
                 try {
-                    const horasRef = ref(database, `sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
+                    const horasRef = ref(database, `${window.ttRaiz()}sesiones/${window.sesionActual}/${window.fechaActual}/horas`);
                     const horasSnap = await get(horasRef);
                     const horasAct  = horasSnap.exists() ? horasSnap.val() : {};
                     horasAct.inicio = horaInicio;
@@ -9940,7 +9953,7 @@ ${textoActaLimpio}`;
                 console.log('🔍 Verificando si la reunión existe...');
 
                 // Verificar que la reunión existe
-                const sesionRef = ref(database, `sesiones/${tipoReunion}/${fecha}`);
+                const sesionRef = ref(database, `${window.ttRaiz()}sesiones/${tipoReunion}/${fecha}`);
                 const snapshot = await get(sesionRef);
 
                 if (!snapshot.exists()) {
@@ -9957,7 +9970,7 @@ ${textoActaLimpio}`;
 
                 // Registrar participante usando nombre normalizado como key
                 console.log('👤 Registrando participante...');
-                const participanteRef = ref(database, `sesiones/${tipoReunion}/${fecha}/participantes/${nombreNormalizado}`);
+                const participanteRef = ref(database, `${window.ttRaiz()}sesiones/${tipoReunion}/${fecha}/participantes/${nombreNormalizado}`);
                 await set(participanteRef, {
                     nombre: nombre.trim(),
                     rol: rol,
@@ -10370,13 +10383,24 @@ ${textoActaLimpio}`;
             otro.value = '__externo__';
             otro.textContent = '✏️ Otro / Externo (escribir nombre)';
             sel.appendChild(otro);
+            ttOpcionInvitado();
             if (previo) sel.value = previo;
+        }
+        function ttOpcionInvitado() {
+            const u = window.ttUsuario, sel = document.getElementById('selectNombre');
+            if (!u || !u.invitado || !sel) return;
+            if (![].some.call(sel.options, o => o.value === u.nombre)) {
+                const o = document.createElement('option');
+                o.value = u.nombre; o.textContent = u.nombre + ' — Invitado/a';
+                sel.insertBefore(o, sel.options[1] || null);
+            }
         }
 
         function ttRellenarSelectAcceso() {
             const sel = document.getElementById('ttNombre');
             if (!sel) return;
-            sel.innerHTML = '<option value="">— Selecciona tu nombre —</option>';
+            sel.innerHTML = '<option value="">— Selecciona tu nombre —</option>' +
+                '<option value="__invitado__">🎓 Invitado/a · formación (modo demostración)</option>';
             ttPersonal.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.key;
@@ -10451,6 +10475,7 @@ ${textoActaLimpio}`;
             window.ttUsuario = sesion;
             ttMostrarGate(false);
             ttBarraUsuario();
+            if (sesion.invitado) { ttOpcionInvitado(); ttModoDemo(); }
             // La identidad la fija el acceso: no se puede participar con otro nombre.
             const sel = document.getElementById('selectNombre');
             if (sel) {
@@ -10505,6 +10530,7 @@ ${textoActaLimpio}`;
             ttLimpiarError();
             const btn = document.getElementById('ttBtnEntrar');
             const key = document.getElementById('ttNombre').value;
+            if (key === '__invitado__') return ttEntrarInvitado();
             const escrito = document.getElementById('ttIdea').value;
             const idea = ttNormIdea(escrito);
             const recordar = document.getElementById('ttRecordar').checked;
@@ -10616,6 +10642,76 @@ ${textoActaLimpio}`;
                 btn.textContent = textoOriginal;
             }
         };
+
+        // ---------- modo demostración (invitados de la formación) ----------
+        const TT_DEMO_HORAS = 24;
+        function ttEntrarInvitado() {
+            const campo = document.getElementById('ttNombreInvitado');
+            let nombre = (campo.value || '').replace(/\s+/g, ' ').trim();
+            if (nombre.length < 3) return ttError('Escribe tu nombre para que salga en el acta de ejemplo.');
+            nombre = nombre.replace(/[.#$\[\]\/]/g, '').slice(0, 60);
+            const sesion = { nombre: nombre, puesto: 'Invitado/a', idea: '', uid: '', admin: false, invitado: true, ts: Date.now() };
+            // Solo dura lo que la pestaña: no se recuerda en el dispositivo
+            try { sessionStorage.setItem(CLAVE_SESION, JSON.stringify(sesion)); } catch (e) {}
+            ttAplicarSesion(sesion);
+            ttCargarPersonal().then(() => { ttRepoblarSelectNombre(); const sel = document.getElementById('selectNombre'); if (sel) { sel.value = nombre; ttBloquearNombre(nombre); } });
+            if (window.__ttPendiente) ttContinuarQR(nombre);
+        }
+        window.ttCambioAcceso = function () {
+            const inv = document.getElementById('ttNombre').value === '__invitado__';
+            document.getElementById('ttCampoInvitado').style.display = inv ? '' : 'none';
+            document.getElementById('ttCampoIdea').style.display = inv ? 'none' : '';
+            document.getElementById('ttBtnEntrar').textContent = inv ? 'Entrar en la demostración →' : 'Entrar →';
+            if (inv) setTimeout(() => document.getElementById('ttNombreInvitado').focus(), 30);
+            ttLimpiarError();
+        };
+        // Borra lo que tenga más de 24 horas y apunta la hora de creación de lo nuevo
+        async function ttLimpiarDemo() {
+            try {
+                const ok = await esperarFirebase(8000); if (!ok) return;
+                const snap = await window.get(window.ref(window.database, 'demo'));
+                const d = snap.val() || {}, reg = d._creado || {}, ses = d.sesiones || {};
+                const ahora = Date.now(), lim = TT_DEMO_HORAS * 3600 * 1000;
+                for (const tipo of Object.keys(ses)) {
+                    for (const fecha of Object.keys(ses[tipo] || {})) {
+                        const k = tipo + '__' + fecha, t = reg[k];
+                        if (!t) await window.set(window.ref(window.database, 'demo/_creado/' + k), ahora);
+                        else if (ahora - t > lim) {
+                            await window.remove(window.ref(window.database, 'demo/sesiones/' + tipo + '/' + fecha));
+                            await window.remove(window.ref(window.database, 'demo/_creado/' + k));
+                        }
+                    }
+                }
+                for (const k of Object.keys(reg)) {           // registros huérfanos
+                    const [tipo, fecha] = k.split('__');
+                    if (!(ses[tipo] && ses[tipo][fecha]) && ahora - reg[k] > lim)
+                        await window.remove(window.ref(window.database, 'demo/_creado/' + k));
+                }
+            } catch (e) { console.warn('[Demo] limpieza:', e); }
+        }
+        function ttModoDemo() {
+            document.documentElement.classList.add('tt-demo');
+            if (!document.getElementById('ttDemoBanda')) {
+                const b = document.createElement('div');
+                b.id = 'ttDemoBanda';
+                b.innerHTML = '🎓 <b>Modo demostración</b> · copia de prueba separada de Teletrabajo Capitulaciones · todo se borra a las 24 horas';
+                b.style.cssText = 'position:sticky;top:0;z-index:9000;background:#4F46E5;color:#fff;text-align:center;font-size:13px;padding:7px 12px;line-height:1.4';
+                document.body.insertBefore(b, document.body.firstChild);
+            }
+            ttLimpiarDemo();
+            // Apunta la hora de creación de cada reunión de prueba en cuanto existe
+            let ultima = '';
+            setInterval(async () => {
+                const t = window.sesionActual, f = window.fechaActual;
+                if (!t || !f || ultima === t + '__' + f) return;
+                ultima = t + '__' + f;
+                try {
+                    const r = window.ref(window.database, 'demo/_creado/' + t + '__' + f);
+                    const sn = await window.get(r);
+                    if (!sn.exists()) await window.set(r, Date.now());
+                } catch (e) {}
+            }, 4000);
+        }
 
         // ---------- panel de personal (solo dirección) ----------
         window.ttAbrirPersonal = function () {
@@ -10945,7 +11041,17 @@ ${textoActaLimpio}`;
                 });
             }
 
+            const selAcc = document.getElementById('ttNombre');
+            if (selAcc) selAcc.addEventListener('change', window.ttCambioAcceso);
+            const campoInv = document.getElementById('ttNombreInvitado');
+            if (campoInv) campoInv.addEventListener('keydown', e => { if (e.key === 'Enter') window.ttEntrar(); });
+
             const sesion = ttLeerSesion();
+            if (sesion && sesion.invitado) {
+                ttAplicarSesion(sesion);
+                ttCargarPersonal().then(() => { ttRepoblarSelectNombre(); const sel = document.getElementById('selectNombre'); if (sel) sel.value = sesion.nombre; if (window.__ttPendiente) ttContinuarQR(sesion.nombre); });
+                return;
+            }
             const usuarioFb = await ttEsperarAuth(6000);
 
             if (sesion && sesion.nombre && !usuarioFb) {
@@ -10973,6 +11079,7 @@ ${textoActaLimpio}`;
                 });
             } else {
                 ttMostrarGate(true);
+                ttRellenarSelectAcceso();
                 ttCargarPersonal().then(ttRellenarSelectAcceso);
             }
         }
@@ -11735,7 +11842,7 @@ ${textoActaLimpio}`;
 <script>
 // ===== Novedades (salen una sola vez en cada dispositivo) =====
 (function(){
-  var ID='2026-11-05', K='novedades-teletrabajo', ITEMS=["↕️ <b>Ordenar el orden del día</b>: cada punto tiene ahora ⬆️ y ⬇️ para subirlo o bajarlo. Ya no hace falta borrar y volver a escribir."]; var _ITEMS_ANT=["👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
+  var ID='2026-11-13', K='novedades-teletrabajo', ITEMS=["🎓 <b>Modo demostración para formaciones</b>: en la lista de acceso hay una opción «Invitado/a». Entra en una copia de prueba separada, sin ver nada del centro, y todo se borra a las 24 horas."]; var _ITEMS_ANT=["👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
   function ver(){ try{ if(localStorage.getItem(K)===ID) return; }catch(e){ return; }
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit';
