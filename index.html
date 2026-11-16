@@ -2968,6 +2968,9 @@
                     <div class="help-step">
                         <strong>✨ Generar Acta con IA:</strong> Copia el prompt del acta y te la devuelve en Word, con el logo del cole, lista para revisar
                     </div>
+                    <div class="help-step">
+                        <strong>📥 Descargar archivo para la IA:</strong> Si no quieres copiar y pegar, descarga un archivo .txt y adjúntalo en Claude o Gemini con el clip (📎) o el botón +
+                    </div>
                 </div>
 
                 <div class="help-section">
@@ -3735,6 +3738,9 @@
                         <div class="acta-dropdown-content">
                             <button class="acta-dropdown-item" onclick="copiarActaClaude(); closeActaDropdown();" data-acta-tooltip="Copia el acta y la genera en Word con el logo del cole">
                                 ✨ Generar Acta con IA
+                            </button>
+                            <button class="acta-dropdown-item" onclick="descargarPromptTxt(); closeActaDropdown();" data-acta-tooltip="Descarga el acta en un archivo para adjuntarlo a Claude o Gemini, sin copiar ni pegar">
+                                📥 Descargar archivo para la IA
                             </button>
                             <button class="acta-dropdown-item" onclick="enviarPorEmail(); closeActaDropdown();" data-acta-tooltip="Abre tu correo con el acta lista">
                                 📧 Enviar por Email
@@ -7965,7 +7971,58 @@ ${textoActaLimpio}`;
             }
         };
 
-        // Descargar el prompt como archivo .txt para ADJUNTARLO al GPT del cole.
+        // Descargar el prompt como archivo .txt para ADJUNTARLO a Claude o Gemini
+        // (alternativa a copiar y pegar).
+        window.descargarPromptTxt = async function() {
+            const prompt = await construirPromptActa();
+            if (!prompt) return;
+            const equipo = (CARPETAS_ACTAS[window.sesionActual]?.n || window.sesionActual || 'reunion')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
+            const nombre = `Acta_${equipo}_${window.fechaActual || new Date().toISOString().slice(0,10)}.txt`;
+            const blob = new Blob(['\ufeff' + prompt], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = nombre;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            mostrarAvisoTxt(nombre);
+        };
+
+        function mostrarAvisoTxt(nombre) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
+            const cerrar = () => modal.remove();
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 14px; padding: 26px; max-width: 470px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-height: 90vh; overflow-y: auto;">
+                    <div style="font-size: 44px; margin-bottom: 8px;">📥</div>
+                    <h3 style="color: #16a34a; margin-bottom: 6px;">Archivo descargado</h3>
+                    <p style="color: var(--text-light); font-size: 12.5px; margin-bottom: 14px; word-break: break-all;">${nombre}<br>(está en tu carpeta de <b>Descargas</b>)</p>
+                    <ol style="text-align: left; font-size: 13.5px; color: var(--text); line-height: 1.7; margin: 0 0 14px 20px; padding: 0;">
+                        <li>Abre <b>Claude</b> o <b>Gemini</b> con los botones de abajo.</li>
+                        <li>Pulsa el <b>clip 📎</b> o el botón <b>+</b> que hay junto al cuadro de mensaje y elige <b>«Subir archivo»</b>.</li>
+                        <li>Busca el archivo en <b>Descargas</b> y selecciónalo.</li>
+                        <li>Escribe <b>«Haz el acta»</b> y envía.</li>
+                    </ol>
+                    <p style="color: var(--text-light); font-size: 12px; margin-bottom: 14px; line-height: 1.5;">
+                        Claude te la devuelve en <b>Word</b> con el logo del cole. Gemini puede mostrarla en el chat en lugar de en Word.
+                    </p>
+                    ${htmlSubirActa(window.sesionActual)}
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <a href="https://claude.ai/new" target="_blank" rel="noopener" class="tt-ia-claude"
+                           style="flex: 1; background: #d97757; color: white; padding: 13px 10px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14.5px;">🟠 Abrir Claude</a>
+                        <a href="https://gemini.google.com/app" target="_blank" rel="noopener" class="tt-ia-gemini"
+                           style="flex: 1; background: #1a73e8; color: white; padding: 13px 10px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14.5px;">🔷 Abrir Gemini</a>
+                    </div>
+                    <button type="button" class="tt-ia-cerrar"
+                            style="background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px;">
+                        Cerrar
+                    </button>
+                </div>`;
+            document.body.appendChild(modal);
+            modal.querySelectorAll('.tt-ia-claude, .tt-ia-gemini, .tt-ia-cerrar').forEach(el => el.addEventListener('click', cerrar));
+            modal.onclick = e => { if (e.target === modal) cerrar(); };
+        }
+
         function mostrarAvisoClaude() {
             const modal = document.createElement('div');
             modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 20px;';
@@ -7987,6 +8044,9 @@ ${textoActaLimpio}`;
                     </p>
                     <p style="color: var(--text-light); font-size: 12px; margin-bottom: 14px; line-height: 1.5;">
                         Funciona también con cuenta gratuita de Claude.
+                    </p>
+                    <p style="color: var(--text-light); font-size: 12px; margin-bottom: 14px; line-height: 1.5;">
+                        ¿Se te olvida pegar? Usa <b>📥 Descargar archivo para la IA</b> en el menú del acta y adjunta el archivo.
                     </p>
                     ${htmlSubirActa(window.sesionActual)}
                     <a href="https://claude.ai/new"
@@ -11842,7 +11902,7 @@ ${textoActaLimpio}`;
 <script>
 // ===== Novedades (salen una sola vez en cada dispositivo) =====
 (function(){
-  var ID='2026-11-05', K='novedades-teletrabajo', ITEMS=["↕️ <b>Ordenar el orden del día</b>: cada punto tiene ahora ⬆️ y ⬇️ para subirlo o bajarlo. Ya no hace falta borrar y volver a escribir."]; var _ITEMS_ANT=["👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
+  var ID='2026-11-16', K='novedades-teletrabajo', ITEMS=["📥 <b>Acta sin copiar y pegar</b>: en «Descargar el Acta» tienes <b>«Descargar archivo para la IA»</b>. Se descarga un archivo que adjuntas en Claude o Gemini con el clip 📎 o el +, escribes «Haz el acta» y envías. Copiar y pegar sigue funcionando igual."]; var _ITEMS_ANT=["↕️ <b>Ordenar el orden del día</b>: cada punto tiene ahora ⬆️ y ⬇️ para subirlo o bajarlo. Ya no hace falta borrar y volver a escribir.", "👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
   function ver(){ try{ if(localStorage.getItem(K)===ID) return; }catch(e){ return; }
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit';
