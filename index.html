@@ -2823,11 +2823,23 @@
                        autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
             </div>
 
+            <div style="margin:-4px 0 10px;font-size:12.5px">
+                <a href="#" id="ttLinkClave" onclick="ttMostrarClave(event)" style="color:#475569">🔒 Tengo contraseña propia</a>
+            </div>
+            <div class="tt-field" id="ttCampoClave" style="display:none">
+                <label for="ttClave">3. Tu contraseña de esta app</label>
+                <input type="password" id="ttClave" placeholder="Solo si te has puesto una" autocomplete="current-password">
+            </div>
+
             <button class="tt-btn" id="ttBtnEntrar" onclick="ttEntrar()">Entrar →</button>
 
             <label class="tt-check">
                 <input type="checkbox" id="ttRecordar" checked>
                 <span>Recordarme en este dispositivo</span>
+            </label>
+            <label class="tt-check">
+                <input type="checkbox" id="ttCambiarClave">
+                <span>Ponerme o cambiar mi contraseña al entrar</span>
             </label>
         </div>
         <div class="tt-foot">
@@ -3956,7 +3968,7 @@ window.ttRaiz = function () { return (window.ttUsuario && window.ttUsuario.invit
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove, get, update, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence, browserLocalPersistence, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDchcaSp2M8uRZxMbMG7sop_ypkZP7w8CI",
@@ -4010,6 +4022,7 @@ window.ttRaiz = function () { return (window.ttUsuario && window.ttUsuario.invit
         window.fbOnAuthState = onAuthStateChanged;
         window.fbConfig = firebaseConfig;
         window.fbSignIn = signInWithEmailAndPassword;
+        window.fbUpdatePassword = updatePassword;
         window.fbSignOut = signOut;
         window.fbSetPersistence = setPersistence;
         window.fbPersistSession = browserSessionPersistence;
@@ -10131,6 +10144,40 @@ ${textoActaLimpio}`;
 
         const ADMIN_IDEA = 'vunisal706';
         const TT_DOMINIO = '@capitulaciones.local';
+
+        // Contraseña propia (opcional): sustituye al IdEA como contraseña de acceso
+        window.ttMostrarClave = function(e) {
+            if (e) e.preventDefault();
+            document.getElementById('ttCampoClave').style.display = '';
+            document.getElementById('ttLinkClave').style.display = 'none';
+            setTimeout(() => document.getElementById('ttClave').focus(), 30);
+        };
+        try { if (localStorage.getItem('tt-tengo-clave') === '1') setTimeout(() => window.ttMostrarClave(), 0); } catch (e) {}
+        { const c = document.getElementById('ttClave'); if (c) c.addEventListener('keydown', e => { if (e.key === 'Enter') window.ttEntrar(); }); }
+        function ttPedirNuevaClave(user) {
+            return new Promise(resolve => {
+                const m = document.createElement('div');
+                m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:30000;padding:20px';
+                m.innerHTML = `<div style="background:#fff;border-radius:14px;padding:24px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                    <h3 style="margin:0 0 8px;color:#1e3a5f">🔒 Tu contraseña de Teletrabajo</h3>
+                    <p style="font-size:13px;color:#475569;margin:0 0 12px;line-height:1.5">A partir de ahora entrarás con tu IdEA <b>y esta contraseña</b>. Usa una que no sea la de Séneca. Mínimo 8 caracteres.</p>
+                    <input type="password" id="ncA" placeholder="Nueva contraseña" autocomplete="new-password" style="width:100%;padding:10px;border:2px solid #d6dde6;border-radius:8px;font-size:15px;margin-bottom:8px;box-sizing:border-box">
+                    <input type="password" id="ncB" placeholder="Repite la contraseña" autocomplete="new-password" style="width:100%;padding:10px;border:2px solid #d6dde6;border-radius:8px;font-size:15px;box-sizing:border-box">
+                    <div id="ncE" style="color:#dc2626;font-size:13px;min-height:18px;margin:8px 0"></div>
+                    <div style="display:flex;gap:8px"><button id="ncOk" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:11px;font-weight:700;cursor:pointer">Guardar</button>
+                    <button id="ncNo" style="background:#f1f5f9;border:none;border-radius:8px;padding:11px 14px;cursor:pointer">Ahora no</button></div></div>`;
+                document.body.appendChild(m);
+                const fin = v => { m.remove(); resolve(v); };
+                m.querySelector('#ncNo').onclick = () => fin(false);
+                m.querySelector('#ncOk').onclick = async () => {
+                    const a = m.querySelector('#ncA').value, b = m.querySelector('#ncB').value, er = m.querySelector('#ncE');
+                    if (a.length < 8) return er.textContent = 'Tiene que tener al menos 8 caracteres.';
+                    if (a !== b) return er.textContent = 'Las dos contraseñas no coinciden.';
+                    try { await window.fbUpdatePassword(user, a); alert('✅ Contraseña guardada. La próxima vez entra con tu IdEA y esta contraseña.'); fin(true); }
+                    catch (e) { er.textContent = 'No se pudo guardar (' + (e.code || e.message) + '). Sal y vuelve a entrar, y repite el cambio.'; }
+                };
+            });
+        }
         const CLAVE_SESION = 'tt_sesion_v1';
 
         // Personal tal cual sale del listado de Séneca (RelPerCen.xls).
@@ -10622,8 +10669,13 @@ ${textoActaLimpio}`;
                 // Autenticación real contra Firebase
                 let cred;
                 try {
-                    cred = await window.fbSignIn(window.auth, idea + TT_DOMINIO, idea);
+                    const claveEscrita = (document.getElementById('ttClave').value || '');
+                    cred = await window.fbSignIn(window.auth, idea + TT_DOMINIO, claveEscrita || idea);
                 } catch (e) {
+                    if (document.getElementById('ttClave').value) {
+                        if (e.code === 'auth/too-many-requests') return ttError('Demasiados intentos fallidos. Espera unos minutos.');
+                        return ttError('La contraseña no es correcta. Si no te has puesto contraseña, deja ese campo vacío.');
+                    }
                     console.warn('Acceso rechazado:', e.code);
                     if (e.code === 'auth/network-request-failed') {
                         return ttError('Sin conexión. Comprueba tu red e inténtalo de nuevo.');
@@ -10639,7 +10691,7 @@ ${textoActaLimpio}`;
                         } catch (e2) {
                             console.warn('No se pudo crear la cuenta:', e2.code);
                             if (e2.code === 'auth/email-already-in-use') {
-                                return ttError('Tu cuenta existe pero no está bien configurada. Avisa a dirección para que edite tu ficha y la vuelva a guardar.');
+                                return ttError('No te deja entrar solo con el IdEA. Si te pusiste una contraseña propia, pulsa «🔒 Tengo contraseña propia» y escríbela. Si no, avisa a dirección.');
                             }
                             return ttError('No se pudo activar tu acceso. Avisa a dirección.' +
                                 ' <small style="opacity:.6">(' + (e2.code || e2.message) + ')</small>');
@@ -10694,6 +10746,10 @@ ${textoActaLimpio}`;
                     admin: ficha.admin === true,
                     ts: Date.now()
                 };
+                if (document.getElementById('ttCambiarClave').checked) {
+                    const ok = await ttPedirNuevaClave(cred.user);
+                    if (ok) { try { localStorage.setItem('tt-tengo-clave', '1'); } catch (e) {} }
+                }
                 ttEscribirSesion(sesion, recordar);
                 ttAplicarSesion(sesion);
                 if (window.__ttPendiente) ttContinuarQR(sesion.nombre);
@@ -11902,7 +11958,7 @@ ${textoActaLimpio}`;
 <script>
 // ===== Novedades (salen una sola vez en cada dispositivo) =====
 (function(){
-  var ID='2026-11-25b', K='novedades-teletrabajo', ITEMS=["🔍 <b>Buscar en actas</b>: dentro de la sesión, busca cualquier cosa en las actas de este curso y de cursos anteriores. Los coordinadores pueden importar actas antiguas en PDF o Word."]; var _ITEMS_ANT=["🔷 <b>Acta con Claude o con Gemini</b>: al copiar el acta puedes elegir en qué IA pegarla.", "📋 <b>ETCP de noviembre</b>: el punto del sociograma pasa a ser «Calendario y organización del sociograma».", "↕️ <b>Ordenar el orden del día</b>: cada punto tiene ahora ⬆️ y ⬇️ para subirlo o bajarlo. Ya no hace falta borrar y volver a escribir.", "👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
+  var ID='2026-11-25c', K='novedades-teletrabajo', ITEMS=["🔒 <b>Contraseña propia (opcional)</b>: al entrar puedes marcar «Ponerme o cambiar mi contraseña» para no entrar solo con el IdEA."]; var _ITEMS_ANT=["🔍 <b>Buscar en actas</b>: dentro de la sesión, busca cualquier cosa en las actas de este curso y de cursos anteriores. Los coordinadores pueden importar actas antiguas en PDF o Word.", "🔷 <b>Acta con Claude o con Gemini</b>: al copiar el acta puedes elegir en qué IA pegarla.", "📋 <b>ETCP de noviembre</b>: el punto del sociograma pasa a ser «Calendario y organización del sociograma».", "↕️ <b>Ordenar el orden del día</b>: cada punto tiene ahora ⬆️ y ⬇️ para subirlo o bajarlo. Ya no hace falta borrar y volver a escribir.", "👩‍🏫 Nueva en el personal: <b>Alejandra García Jiménez</b>, tutora de 5.º (Primaria-Bilingüe), que sustituye a Yenifer Montuno Heredero hasta final de curso. Entra con su usuario IdEA.", "🔧 «Reparar accesos» explica mejor por qué falla un acceso y qué hacer para arreglarlo.", "🗓️ Equipos docentes de octubre: se quita el punto del acta competencial de la evaluación inicial (ya se hizo esa sesión). El anexo de revisión de las programaciones vuelve al Equipo de ciclo.", "⚡ La pantalla de la sesión va ahora más fluida al bajar por los puntos del orden del día.", "📎 Nuevos enlaces en la ayuda de los puntos: <b>Anexo de revisión de las programaciones</b> (en los puntos de programaciones) y <b>Plantilla de actividades complementarias y extraescolares</b> (en los puntos de actividades).", "💡 En el desarrollo de la sesión, cada punto del orden del día tiene ahora <b>«Ayuda para este punto»</b>: qué tratar, una propuesta y los enlaces al Drive (los mismos del Tablón de Avisos)."];
   function ver(){ try{ if(localStorage.getItem(K)===ID) return; }catch(e){ return; }
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;font-family:inherit';
