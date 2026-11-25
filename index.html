@@ -12009,7 +12009,8 @@ ${textoActaLimpio}`;
 
   window.abrirBuscadorActas=async function(){
     document.getElementById('bqModal').classList.add('abierto');
-    document.getElementById('bqBtnImp').style.display=(window.usuarioActual&&window.usuarioActual.rol==='coordinador')?'':'none';
+    const _inv=window.ttUsuario&&window.ttUsuario.invitado;
+    document.getElementById('bqBtnImp').style.display=(!_inv&&window.usuarioActual&&window.usuarioActual.rol==='coordinador')?'':'none';
     const inp=document.getElementById('bqTexto');setTimeout(()=>inp.focus(),50);
     inp.onkeydown=e=>{if(e.key==='Enter')bqBuscar();};
     document.getElementById('bqEstado').textContent='Cargando las actas…';
